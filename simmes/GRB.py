@@ -122,7 +122,7 @@ class GRB(object):
 			self.get_duration(dur_per=dur_per)
 			return self.get_photon_fluence(dur_per=dur_per)/self.duration
 
-	def load_specfunc(self,specfunc,tstart=None,tend=None):
+	def load_specfunc(self, specfunc, tstart=None, tend=None):
 		"""
 		Method to load a spectrum
 
@@ -145,17 +145,17 @@ class GRB(object):
 
 			# Check if this is the first loaded spectrum 
 			if len(self.spectrafuncs) == 0:
-				self.spectrafuncs = np.insert(self.spectrafuncs,0,(tstart,tend,specfunc))
+				self.spectrafuncs = np.insert(self.spectrafuncs, 0, (tstart,tend,specfunc))
 				return 0;
 			else:
 				# If not, find the index where to insert this spectrum (according to the time)
 				for i in range(len(self.spectrafuncs)):
 					if self.spectrafuncs[i]['TSTART'] > tstart:
 						# Insert the new spectrum 
-						self.spectrafuncs = np.insert(self.spectra,i,(tstart,tend,specfunc))
+						self.spectrafuncs = np.insert(self.spectrafuncs, i, (tstart, tend, specfunc) )
 						return 0;
 					# If the new spectrum is the last to start, append it to the end
-					self.spectrafuncs = np.insert(self.spectra,len(self.spectra),(tstart,tend,specfunc))
+					self.spectrafuncs = np.insert(self.spectrafuncs, len(self.spectrafuncs), (tstart, tend, specfunc))
 					return 0;
 		# Time averaged spectrum
 		else:
