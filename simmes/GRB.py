@@ -181,7 +181,7 @@ class GRB(object):
 		if spec_num is None:
 			specfunc = self.specfunc
 		else:
-			specfunc = self.specfunc[spec_num]
+			specfunc = self.spectrafuncs[spec_num]['SPECFUNC']
 
 		spectrum = specfunc.make_spectrum(emin,emax,num_bins)
 
