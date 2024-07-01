@@ -94,8 +94,12 @@ class PLOTGRB(PLOTS):
 		----------
 		grbs : GRB, array of GRB
 			Either a single instance of a GRB or an array of GRBs for which the light curves will be plotted on the same axis
+		t_window : tuple 
+			Contains the minimum and maximum times over which to plot the light curve. If t_window = None, the entire light curve will be plotted.
 		ax : matplotlib.axes
 			Axis on which to create the figure
+		norm : float
+			An arbitrary factor to multiply the y-axis values by 
 		"""
 
 		if ax is None:
@@ -122,6 +126,41 @@ class PLOTGRB(PLOTS):
 			ax.legend(fontsize=self.fontsize-2)
 
 		self.plot_aesthetics(ax)
+
+	def plot_spectrum(self, grb, e_window, folded=False, rsp = None, ax=None, alpha=0.8, norm=1, **kwargs):
+		"""
+		Method to plot the average duration percentage as a function of the position on the detector plane
+
+		Attributes:
+		----------
+		grbs : GRB
+			A GRB object containing the light curves to be plotted 
+		e_window : tuple 
+			Contains the minimum and maximum energies over which to plot the spectral functions
+		folded : boolean
+			Indicates whether the plotted spectrum should first be folded through the provided instrument response matrix
+		rsp : RSP
+			Response matrix object that holds the instrument response matrix that the spectrum may be folded through (if indicated)
+		ax : matplotlib.axes
+			Axis on which to create the figure
+		norm : float
+			An arbitrary factor to multiply the y-axis values by 
+		"""
+
+		if ax is None:
+			ax = plt.figure().gca()
+
+		if (folded == True) and (rsp == None):
+			print("Must provide a response matrix to fold spectrum through.")
+			return;
+
+		ax.errorbar(x=grb.spectrum['ENERGY'],y=grb.spectrum['RATE']*norm,yerr=grb.spectrum['UNC']*norm,fmt="",drawstyle="steps-mid",alpha=alpha,**kwargs)
+
+		ax.set_xlabel("Time (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_ylabel("Rate (counts/sec)",fontsize=self.fontsize,fontweight=self.fontweight)
+
+		self.plot_aesthetics(ax)
+
 
 class PLOTSIMRES(PLOTS):
 	def __init__(self):
