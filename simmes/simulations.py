@@ -19,7 +19,7 @@ from simmes.util_packages.det_ang_dependence import find_pcode, find_inc_ang, fr
 def simulate_observation(synth_grb, template_grb, resp_mat, 
 	imx, imy, ndets, 
 	z_p=0, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
-	sim_triggers=False):
+	time_resolved=False, sim_triggers=False):
 	"""
 	Method to complete a simulation of a synthetic observation based on the input source frame GRB template and the desired observing conditions
 
@@ -55,14 +55,25 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 	# Calculate the fraction of the detectors currently enabled 
 	det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
 
-	# Fold spectrum through instrument response and calculate the count rate in the observation band
-	folded_spec = resp_mat.fold_spec(synth_grb.specfunc)  # counts / sec / keV
-	rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / sec
+	if time_resolved == False:
+		# Fold spectrum through instrument response and calculate the count rate in the observation band
+		folded_spec = resp_mat.fold_spec(synth_grb.specfunc)  # counts / sec / keV
+		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / sec
 
-	# Using the total count rate from the spectrum and the relative flux level of the light curve, make a new light curve
-	# The synthetic GRB light curve technically has units of counts / sec / cm^2, but we are only using it as a template for relative flux values. 
-	# The actual flux is set by the band rate, which is in units of counts / sec 
-	synth_grb.light_curve['RATE'] = synth_grb.light_curve['RATE'] * rate_in_band # counts / sec
+		# Using the total count rate from the spectrum and the relative flux level of the light curve, make a new light curve
+		# The synthetic GRB light curve technically has units of counts / sec / cm^2, but we are only using it as a template for relative flux values. 
+		# The actual flux is set by the band rate, which is in units of counts / sec 
+		synth_grb.light_curve['RATE'] *= rate_in_band # counts / sec
+	else:
+		# Time-resolved analysis is True
+		for i in range(len(synth_grb.spectrafuncs)):
+			folded_spec = resp_mat.fold_spec(synth_grb.spectrafuncs[i]['SPECFUNC'])  # counts / sec / keV
+			rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / sec
+
+			arg_t_start = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[i]['TSTART'])
+			arg_t_end = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[i]['TEND'])
+			synth_grb.light_curve[arg_t_start:arg_t_end]['RATE'] *= rate_in_band # counts / sec
+
 
 	# If we are testing the trigger algorithm:
 		# Modulate the light curve by the folded spectrum normalization for each energy band 
@@ -205,7 +216,7 @@ def rand_background_variance():
 
 def many_simulations(template_grb, param_list, trials, 
 	dur_per = 90, ndet_max=32768, 
-	sim_triggers=False, out_file_name = None, ret_ave = False, keep_synth_grbs=False, verbose=False):
+	time_resolved=False, sim_triggers=False, out_file_name = None, ret_ave = False, keep_synth_grbs=False, verbose=False):
 	"""
 	Method to perform multiple simulations for each combination of input parameters 
 
@@ -256,7 +267,7 @@ def many_simulations(template_grb, param_list, trials,
 
 			sim_results[["z", "imx", "imy", "ndets"]][sim_result_ind] = (param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3])
 
-			simulate_observation(synth_grb = synth_grb, template_grb=template_grb,resp_mat=resp_mat, z_p=param_list[i][0], imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], ndet_max=ndet_max, sim_triggers=sim_triggers)
+			simulate_observation(synth_grb = synth_grb, template_grb=template_grb,resp_mat=resp_mat, z_p=param_list[i][0], imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], ndet_max=ndet_max, time_resolved = time_resolved, sim_triggers=sim_triggers)
 			sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
 			sim_results[["T100DURATION", "T100START"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=99) # Find the Duration and the fluence 
 			sim_results[["FLUENCE","1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["DURATION"][sim_result_ind], sim_results['TSTART'][sim_result_ind])
