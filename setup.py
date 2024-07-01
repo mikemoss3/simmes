@@ -5,6 +5,7 @@ setup(
     version='0.1.1',
     description='GRB measurement simulation packages',
     packages=find_packages(include=["simmes","simmes.*"]),
+    package_data={"":["util_packages/files-det-ang-dependence/*","util_packages/files-swiftBAT-resp-mats/*"]},
     license="MIT",
     keywords="gamma-ray bursts",
     author='Michael Moss',

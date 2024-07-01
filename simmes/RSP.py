@@ -10,9 +10,11 @@ from astropy.io import fits
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 import copy 
+from pathlib import Path
 
 from simmes.util_packages.det_ang_dependence import find_grid_id
 
+path_here = Path(__file__).parent
 
 class ResponseMatrix(object):
 	"""
@@ -200,7 +202,7 @@ class ResponseMatrix(object):
 			return np.sqrt((x-x0)**2 + (y-y0)**2)
 
 		# Load information about detector plane
-		imx_imy_info = np.genfromtxt("./util_packages/files-det-ang-dependence/gridnum_imx_imy.txt",dtype=[("GRIDID","U3"),("imx",float),("imxmin",float),("imxmax",float),("imy",float),("imymin",float),("imymax",float),("thetacenter",float),("pcode",float)])
+		imx_imy_info = np.genfromtxt(path_here.joinpath("util_packages/files-det-ang-dependence/gridnum_imx_imy.txt"),dtype=[("GRIDID","U3"),("imx",float),("imxmin",float),("imxmax",float),("imy",float),("imymin",float),("imymax",float),("thetacenter",float),("pcode",float)])
 
 		# Find the grids that surround the point at imx, imy 
 		# Grid IMX's
@@ -251,10 +253,10 @@ class ResponseMatrix(object):
 				grid_rsps[i].num_phot_bins=204
 				grid_rsps[i].make_empty_resp()
 			else:
-				grid_rsps[i].load_rsp_from_file(file_name = "./util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(grid_ids[i]))
+				grid_rsps[i].load_rsp_from_file(file_name = path_here.joinpath("util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(grid_ids[i])) )
 
 		# Initialize response matrix for imx, imy
-		self.load_rsp_from_file(file_name = "./util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_17.rsp")
+		self.load_rsp_from_file(file_name = path_here.joinpath("util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_17.rsp"))
 		
 		# Find surrounding imx, imy box
 		imx1 = imx_arr[closest_imx_ind]

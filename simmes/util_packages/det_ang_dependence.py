@@ -1,11 +1,14 @@
 import numpy as np
-from astropy.io import fits
+# from astropy.io import fits
+from pathlib import Path
 
+
+path_here = Path(__file__).parent
 def find_grid_id(imx,imy):
 	"""
 	Method to find the Swift/BAT response matrix GridID based on the position of the source on the detector plane according to Lien et al 2012.
 	"""
-	imx_imy_info = np.genfromtxt("./util_packages/files-det-ang-dependence/gridnum_imx_imy.txt",dtype=[("GRIDID","U3"),("imx",float),("imxmin",float),("imxmax",float),("imy",float),("imymin",float),("imymax",float),("thetacenter",float),("pcode",float)])
+	imx_imy_info = np.genfromtxt(path_here.joinpath("files-det-ang-dependence/gridnum_imx_imy.txt"),dtype=[("GRIDID","U3"),("imx",float),("imxmin",float),("imxmax",float),("imy",float),("imymin",float),("imymax",float),("thetacenter",float),("pcode",float)])
 	# Based on imx and imy, determine which grid number to use
 	try:
 		gridid = imx_imy_info['GRIDID'][(imx>=imx_imy_info['imxmin']) & (imx<=imx_imy_info['imxmax']) & (imy>=imx_imy_info['imymin']) & (imy<=imx_imy_info['imymax'])][0]
@@ -24,7 +27,7 @@ def find_inc_ang(imx,imy):
 	return theta
 	"""
 
-	imx_imy_info = np.genfromtxt("./util_packages/files-det-ang-dependence/gridnum_imx_imy.txt",dtype=[("GRIDID","U3"),("imx",float),("imxmin",float),("imxmax",float),("imy",float),("imymin",float),("imymax",float),("thetacenter",float),("pcode",float)])
+	imx_imy_info = np.genfromtxt(path_here.joinpath("files-det-ang-dependence/gridnum_imx_imy.txt"),dtype=[("GRIDID","U3"),("imx",float),("imxmin",float),("imxmax",float),("imy",float),("imymin",float),("imymax",float),("thetacenter",float),("pcode",float)])
 	# Based on imx and imy, determine which grid number to use
 	try:
 		theta = imx_imy_info['thetacenter'][(imx>=imx_imy_info['imxmin']) & (imx<=imx_imy_info['imxmax']) & (imy>=imx_imy_info['imymin']) & (imy<=imx_imy_info['imymax'])][0]
@@ -61,7 +64,7 @@ def find_pcode(imx,imy):
 	return pcode_img[j,i]
 	"""
 
-	imx_imy_info = np.genfromtxt("./util_packages/files-det-ang-dependence/gridnum_imx_imy.txt",dtype=[("GRIDID","U3"),("imx",float),("imxmin",float),("imxmax",float),("imy",float),("imymin",float),("imymax",float),("thetacenter",float),("pcode",float)])
+	imx_imy_info = np.genfromtxt(path_here.joinpath("files-det-ang-dependence/gridnum_imx_imy.txt"),dtype=[("GRIDID","U3"),("imx",float),("imxmin",float),("imxmax",float),("imy",float),("imymin",float),("imymax",float),("thetacenter",float),("pcode",float)])
 	# Based on imx and imy, determine which grid number to use
 	try:
 		pcode = imx_imy_info['pcode'][(imx>=imx_imy_info['imxmin']) & (imx<=imx_imy_info['imxmax']) & (imy>=imx_imy_info['imymin']) & (imy<=imx_imy_info['imymax'])][0]
