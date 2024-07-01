@@ -127,7 +127,7 @@ class PLOTGRB(PLOTS):
 
 		self.plot_aesthetics(ax)
 
-	def plot_spectrum(self, grb, e_window, folded=False, rsp = None, ax=None, alpha=0.8, norm=1, **kwargs):
+	def plot_spectrum(self, grb, e_window, time_resolved = False, bins = None, folded=False, rsp = None, ax=None, alpha=0.8, norm=1, **kwargs):
 		"""
 		Method to plot the average duration percentage as a function of the position on the detector plane
 
@@ -154,7 +154,18 @@ class PLOTGRB(PLOTS):
 			print("Must provide a response matrix to fold spectrum through.")
 			return;
 
-		ax.errorbar(x=grb.spectrum['ENERGY'],y=grb.spectrum['RATE']*norm,yerr=grb.spectrum['UNC']*norm,fmt="",drawstyle="steps-mid",alpha=alpha,**kwargs)
+		if time_resolved is False:
+			spectrum = grb.make_spectrum(emin = e_window[0], emax = e_window[1], num_bins=bins)
+
+			ax.step(x=spectrum['ENERGY'],y=spectrum['ENERGY']**2 * spectrum['RATE']*norm, where="mid", alpha=alpha,**kwargs)
+			# ax.errorbar(x=spectrum['ENERGY'],y=spectrum['RATE']*norm,yerr=spectrum['UNC']*norm,fmt="",drawstyle="steps-mid",alpha=alpha,**kwargs)
+		else:
+			for i in range(len(grb.spectrafuncs)):
+				spectrum = grb.make_spectrum(emin = e_window[0], emax = e_window[1], num_bins=bins, spec_num=i)
+				ax.step(x=spectrum['ENERGY'],y=spectrum['ENERGY']**2 * spectrum['RATE']*norm, where="mid", alpha=alpha,**kwargs)
+
+		ax.set_xscale('log')
+		ax.set_yscale('log')
 
 		ax.set_xlabel("Time (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylabel("Rate (counts/sec)",fontsize=self.fontsize,fontweight=self.fontweight)
