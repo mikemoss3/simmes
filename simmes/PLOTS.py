@@ -171,6 +171,7 @@ class PLOTGRB(PLOTS):
 		ax.set_ylabel("Rate (counts/sec)",fontsize=self.fontsize,fontweight=self.fontweight)
 
 		self.plot_aesthetics(ax)
+		ax.margins(y=0.1)
 
 
 class PLOTSIMRES(PLOTS):
