@@ -122,46 +122,65 @@ class GRB(object):
 			self.get_duration(dur_per=dur_per)
 			return self.get_photon_fluence(dur_per=dur_per)/self.duration
 
-	def load_specfunc(self, specfunc, tstart=None, tend=None):
+	def load_specfunc(self, specfunc, intervals=None):
 		"""
 		Method to load a spectrum
 
 		Attributes:
 		----------
-		model : string
-			Name of the spectral model to load
-		params : list
-			List of the spectral parameters for this model
-		tstart, tend : float, float
-			Used to indicate the start and stop time of a time-resolved spectrum. If None are given, a time-average spectrum is assumed.
+		specfunc : SPECFUNC
+			Spectrum function object
+		intervals : 2-tuple or 2-tuple list
+			Used to indicate the start and stop time of a time-resolved spectrum. If None is given, a time-average spectrum is assumed.
 		"""
 
 		# Time resolved spectrum
-		if tstart is not None:
-			# Check that both a start and stop time were given 
-			if tend is None:
-				print("Please provide both a start and end time.")
-				return 0;
+		if intervals is not None:
+			# Check if more than one time-resolved spectral function was given
+			if hasattr(specfunc, '__len__'):
+				if (len(specfunc) != len(intervals) ):
+					print("Please provide the same number of spectral functions and time intervals.")
+					return 1;
 
-			# Check if this is the first loaded spectrum 
-			if len(self.spectrafuncs) == 0:
-				self.spectrafuncs = np.insert(self.spectrafuncs, 0, (tstart,tend,specfunc))
-				return 0;
+				for i in range(len(specfunc)):
+					self._load_time_res_sec(specfunc[i], intervals[i])
 			else:
-				# If not, find the index where to insert this spectrum (according to the time)
-				for i in range(len(self.spectrafuncs)):
-					if self.spectrafuncs[i]['TSTART'] > tstart:
-						# Insert the new spectrum 
-						self.spectrafuncs = np.insert(self.spectrafuncs, i, (tstart, tend, specfunc) )
-						return 0;
-					# If the new spectrum is the last to start, append it to the end
-					self.spectrafuncs = np.insert(self.spectrafuncs, len(self.spectrafuncs), (tstart, tend, specfunc))
-					return 0;
-		# Time averaged spectrum
+				# Only a single time-resolved spectrum was loaded 
+				self._load_time_res_sec(specfunc, intervals)
+
 		else:
+			# This is a time averaged spectrum
 			self.specfunc = specfunc
 			
 			return 0;
+
+	def _load_time_res_sec(self, specfunc, intervals):
+		"""
+		Method to load a spectrum for a particular time interval
+
+		Attributes:
+		----------
+		specfunc : SPECFUNC
+			Spectrum function object
+		intervals : 2-tuple
+			Used to indicate the start and stop time of a time-resolved spectrum.
+		"""
+
+		# Check if this is the first loaded spectrum 
+		if len(self.spectrafuncs) == 0:
+			self.spectrafuncs = np.insert(self.spectrafuncs, 0, (intervals[0], intervals[1], specfunc))
+			return 0;
+		else:
+			# If not, find the index where to insert this spectrum (according to the time)
+			for i in range(len(self.spectrafuncs)):
+				if self.spectrafuncs[i]['TSTART'] > intervals[0]:
+					# Insert the new spectrum 
+					self.spectrafuncs = np.insert(self.spectrafuncs, i, (intervals[0], intervals[1], specfunc) )
+					return 0;
+				# If the new spectrum is the last to start, append it to the end
+				self.spectrafuncs = np.insert(self.spectrafuncs, len(self.spectrafuncs), (intervals[0], intervals[1], specfunc))
+				return 0;
+
 
 	def make_spectrum(self, emin, emax, num_bins = None, spec_num=None):
 		"""
