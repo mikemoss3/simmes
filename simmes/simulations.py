@@ -79,11 +79,11 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 		# Modulate the light curve by the folded spectrum normalization for each energy band 
 		# Calculate the fraction of the quadrant exposure 
 
-	# Apply mask-weighting approximation to source signal
+	# Apply mask-weighting approximation to source rate signal 
 	synth_grb.light_curve = apply_mask_weighting(synth_grb.light_curve, imx, imy, ndets) # counts / sec / det
 
-	# Add mask-weighted background to either side of mask-weighted source signal
-	synth_grb.light_curve = add_background(synth_grb.light_curve, t_buffer=template_grb.t_buffer, dt = template_grb.dt)
+	# Add mask-weighted background rate to either side of mask-weighted source signal
+	synth_grb.light_curve = add_background(synth_grb.light_curve, t_buffer=template_grb.t_buffer, dt = template_grb.dt) # counts / sec / det
 
 	return synth_grb
 
