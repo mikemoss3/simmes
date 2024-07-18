@@ -9,7 +9,7 @@ import numpy as np
 from scipy.stats import rv_discrete
 
 from simmes.GRB import GRB
-from simmes.RSP import ResponseMatrix
+from simmes.RSP import RSP
 from simmes.bayesian_block import bayesian_t_blocks
 from simmes.fluence import calc_fluence
 from simmes.util_packages.datatypes import dt_sim_res
@@ -250,7 +250,7 @@ def many_simulations(template_grb, param_list, trials,
 
 	# Simulate an observation for each parameter combination
 	# Make a Response Matrix object
-	resp_mat = ResponseMatrix()
+	resp_mat = RSP()
 
 	for i in range(len(param_list)):
 		if verbose is True:
@@ -269,9 +269,10 @@ def many_simulations(template_grb, param_list, trials,
 
 			simulate_observation(synth_grb = synth_grb, template_grb=template_grb,resp_mat=resp_mat, z_p=param_list[i][0], imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], ndet_max=ndet_max, time_resolved = time_resolved, sim_triggers=sim_triggers)
 			sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
-			sim_results[["T100DURATION", "T100START"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=99) # Find the Duration and the fluence 
-			sim_results[["FLUENCE","1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["DURATION"][sim_result_ind], sim_results['TSTART'][sim_result_ind])
-			sim_results[["T100FLUENCE","1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["T100DURATION"][sim_result_ind], sim_results['T100START'][sim_result_ind])
+			if sim_results['DURATION'] > 0:	
+				sim_results[["T100DURATION", "T100START"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=99) # Find the Duration and the fluence 
+				sim_results[["FLUENCE","1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["DURATION"][sim_result_ind], sim_results['TSTART'][sim_result_ind])
+				sim_results[["T100FLUENCE","1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["T100DURATION"][sim_result_ind], sim_results['T100START'][sim_result_ind])
 
 			# Increase simulation index
 			sim_result_ind +=1

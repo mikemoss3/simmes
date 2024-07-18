@@ -7,7 +7,6 @@ Defines the main class this code uses to store response matrices and the associa
 
 import numpy as np
 from astropy.io import fits
-import matplotlib.pyplot as plt
 from scipy.stats import norm
 import copy 
 from pathlib import Path
@@ -16,7 +15,7 @@ from simmes.util_packages.det_ang_dependence import find_grid_id
 
 path_here = Path(__file__).parent
 
-class ResponseMatrix(object):
+class RSP(object):
 	"""
 	Response matrix class
 	"""
@@ -244,10 +243,10 @@ class ResponseMatrix(object):
 				grid_ids.append(find_grid_id(imx_arr[grid_ids_inds[i,0]], imy_arr[grid_ids_inds[i,1]]))
 
 		# Load the four grids response functions. 
-		grid_rsps = np.empty(shape=4, dtype=ResponseMatrix)
+		grid_rsps = np.empty(shape=4, dtype=RSP)
 
 		for i in range(len(grid_rsps)):
-			grid_rsps[i] = ResponseMatrix()
+			grid_rsps[i] = RSP()
 			if grid_ids[i] == None:
 				grid_rsps[i].num_chans=80
 				grid_rsps[i].num_phot_bins=204
@@ -278,57 +277,7 @@ class ResponseMatrix(object):
 		term4 = grid_rsps[3].MATRIX * (imx - imx1)*(imy - imy1)
 		self.MATRIX = norm * (term1 + term2 + term3 + term4)
 		
-	def plot_heatmap(self,ax=None,E_phot_bounds=None,E_chan_bounds=None):
-		""" Plot heat map of the response matrix """
-
-		if ax is None:
-			ax = plt.figure().gca()
-		fig = plt.gcf()
-
-		im = ax.pcolormesh(self.ECHAN_MID,self.ENERG_MID,self.MATRIX,shading='auto')
-
-		if E_chan_bounds is None:
-			ax.set_xlim(self.ECHAN_HI[0],self.ECHAN_LO[-1])
-		else:
-			ax.set_xlim(E_chan_bounds[0],E_chan_bounds[1])
-		if E_phot_bounds is None:
-			ax.set_ylim(self.ENERG_HI[0],self.ENERG_LO[-5])
-		else:
-			ax.set_xlim(E_phot_bounds[0],E_phot_bounds[1])
-
-		ax.set_xlabel('Instrument Channel Energy (keV)')
-		ax.set_ylabel('Photon Energy (keV)')
-
-		cbar = fig.colorbar(im)
-		cbar.ax.set_ylabel('Probability', rotation=270,labelpad=15)
-
-	def plot_effarea(self,ax=None,det_area=1,E_phot_bounds=None,norm=1):
-		""" Plot heat map of the response matrix """
-		
-		if ax is None:
-			ax = plt.figure().gca()
-
-		# eff_area = np.sum(self.MATRIX,axis=1)/(self.ENERG_HI-self.ENERG_LO)
-		eff_area = np.zeros(shape=len(self.MATRIX))
-		for i in range(len(self.MATRIX)):
-			for j in range(len(self.MATRIX[0])):
-				eff_area[i] += self.MATRIX[i][j]
-		
-		eff_area*=det_area
-
-		ax.step(self.ENERG_MID,eff_area*norm)
-
-		if E_phot_bounds is None:
-			ax.set_xlim(self.ENERG_MID[0],self.ENERG_MID[-1])
-		else:
-			ax.set_xlim(E_phot_bounds[0],E_phot_bounds[1])
-
-		ax.set_xscale('log')
-		# ax.set_yscale('log')
-
-		ax.set_xlabel('Incident Photon Energy (keV)')
-		ax.set_ylabel(r'Effective Area (cm$^2$)')
-
+	
 	def fold_spec(self,specfunc):
 		"""
 		Method to fold a spectrum through this response matrix
@@ -339,7 +288,7 @@ class ResponseMatrix(object):
 		return folded_spec
 
 
-# class ResponseMatrixArray(ResponseMatrix):
+# class RSPARRAY(RSP):
 # 	"""
 # 	Class to store response matrices for more than one time interval
 # 	"""
