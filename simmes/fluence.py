@@ -13,12 +13,13 @@ def calc_fluence(light_curve, duration, tstart):
 	tstart : float
 		What time the event begins
 	"""
+	# Light curve time step
+	dt = light_curve['TIME'][1] - light_curve['TIME'][0]
 
 	# Calculate photon fluence of the light curve within the specified time interval
-	fluence = np.sum(light_curve['RATE'][(light_curve['TIME'] > tstart ) & (light_curve['TIME'] < tstart+duration)])
+	fluence = np.sum(light_curve['RATE'][(light_curve['TIME'] > tstart ) & (light_curve['TIME'] < tstart+duration)]) * dt
 
 	# Calculate the average 1 second peak flux 
-	dt = light_curve['TIME'][1] - light_curve['TIME'][0]
 	if dt < 1:
 		num_bins = int(np.ceil(1 / dt)) # number of time bins that make up one second 
 
