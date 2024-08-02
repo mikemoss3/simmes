@@ -315,7 +315,7 @@ class PLOTSIMRES(PLOTS):
 		fig.tight_layout()
 		self.plot_aesthetics(ax)
 
-	def redshift_evo(self, sim_results, ax=None, t_true=None, t_max=None, dur_frac=False, log=False, **kwargs):
+	def redshift_evo(self, sim_results, ax=None, t_true=None, t_max=None, bins=50, dur_frac=False, log=False, **kwargs):
 		"""
 		Method to plot the measured duration of each synthetic light curve as a function redshift
 
@@ -355,7 +355,7 @@ class PLOTSIMRES(PLOTS):
 			t_max = np.log10(t_max)
 			t_min = -1
 
-		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [t_min, t_max]], bins=50, cmin=cmin, cmap=cmap, **kwargs)
+		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [t_min, t_max]], bins=bins, cmin=cmin, cmap=cmap, **kwargs)
 
 		# if (t_true is not None):
 		# 	if (dur_frac is False):
@@ -386,7 +386,7 @@ class PLOTSIMRES(PLOTS):
 		fig.tight_layout()
 		self.plot_aesthetics(ax)
 
-	def redshift_fluence_evo(self, sim_results, ax=None, F_true=None, F_max=None, fluence_frac=False, **kwargs):
+	def redshift_fluence_evo(self, sim_results, ax=None, F_true=None, F_max=None, bins=50, fluence_frac=False, **kwargs):
 		"""
 		Method to plot the measured duration of each synthetic light curve as a function redshift
 
@@ -441,7 +441,7 @@ class PLOTSIMRES(PLOTS):
 		F_max = np.log10(F_max)
 		F_min = np.min([-1,np.log10(np.min(results['FLUENCE']))])
 
-		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [F_min, F_max]], bins=50, cmin=cmin, cmap=cmap, **kwargs)
+		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [F_min, F_max]], bins=bins, cmin=cmin, cmap=cmap, **kwargs)
 
 		ax.axvline(x=z_min,color="r",linestyle="dashed",alpha=0.5,label="Measured Redshift")
 		ax.axvline(x=z_max,color="r",linestyle="dashed",alpha=0.5,label="Max. Simulated Redshift")
