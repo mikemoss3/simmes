@@ -48,25 +48,12 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 		Whether or not to simulate the Swift/BAT trigger algorithms or not
 	"""
 
-	plot = PLOTGRB()
-	ax = plt.gca()
-	plot.plot_light_curves(template_grb, ax=ax, alpha=1, color="k", labels='Template')
-	ax.axhline(y=0, xmin=0, xmax=1, linestyle="dashed")
-	ax.set_xlim(-20,80)
-
 	# Initialize synthetic GRB
 	synth_grb.imx, synth_grb.imy = imx, imy
 	synth_grb.z = z_p
 
 	# Apply distance corrections to GRB light curve and spectrum
 	synth_grb.move_to_new_frame(z_o=template_grb.z, z_p=z_p)
-
-	print("After moving frame")
-	print(template_grb.light_curve['TIME'][np.argwhere(template_grb.light_curve['RATE'] == np.max(template_grb.light_curve['RATE']))])
-	print(synth_grb.light_curve['TIME'][np.argwhere(synth_grb.light_curve['RATE'] == np.max(synth_grb.light_curve['RATE']))])
-	print()
-
-	plot.plot_light_curves(synth_grb, ax=ax, alpha=0.4, labels="After moving frame")
 
 	# Calculate the fraction of the detectors currently enabled 
 	det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
@@ -87,9 +74,12 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / sec
 		
 		arg_t_start = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[0]['TSTART'])
-		synth_grb.light_curve[:arg_t_start]['RATE'] *= rate_in_band # counts / sec
+		if arg_t_start > 0: 
+			synth_grb.light_curve[:arg_t_start]['RATE'] *= rate_in_band # counts / sec
+		
 		arg_t_end = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[-1]['TEND'])
-		synth_grb.light_curve[arg_t_end:]['RATE'] *= rate_in_band # counts / sec
+		if arg_t_end > 0:
+			synth_grb.light_curve[arg_t_end:]['RATE'] *= rate_in_band # counts / sec
 
 		# Fold time-resolved spectrum
 		for i in range(len(synth_grb.spectrafuncs)):
@@ -100,40 +90,16 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 			arg_t_end = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[i]['TEND'])
 			synth_grb.light_curve[arg_t_start:arg_t_end]['RATE'] *= rate_in_band # counts / sec
 
-			print("{:.2f}, {:.2f}".format(synth_grb.spectrafuncs[i]['TSTART'], synth_grb.spectrafuncs[i]['TEND']))
-			print(rate_in_band)
-			print()
-
-
 	# If we are testing the trigger algorithm:
 		# Modulate the light curve by the folded spectrum normalization for each energy band 
 		# Calculate the fraction of the quadrant exposure 
 
 
-	print("After spec fold")
-	print(template_grb.light_curve['TIME'][np.argwhere(template_grb.light_curve['RATE'] == np.max(template_grb.light_curve['RATE']))])
-	print(synth_grb.light_curve['TIME'][np.argwhere(synth_grb.light_curve['RATE'] == np.max(synth_grb.light_curve['RATE']))])
-	print()
-
-
 	# Apply mask-weighting approximation to source rate signal 
 	synth_grb.light_curve = apply_mask_weighting(synth_grb.light_curve, imx, imy, ndets) # counts / sec / det
 
-	print("After mask weighting")
-	print(template_grb.light_curve['TIME'][np.argwhere(template_grb.light_curve['RATE'] == np.max(template_grb.light_curve['RATE']))])
-	print(synth_grb.light_curve['TIME'][np.argwhere(synth_grb.light_curve['RATE'] == np.max(synth_grb.light_curve['RATE']))])
-	print()
-
-	plot.plot_light_curves(synth_grb, ax=ax, alpha=0.4, labels="After mask weighting")
-
 	# Add mask-weighted background rate to either side of mask-weighted source signal
 	synth_grb.light_curve = add_background(synth_grb.light_curve, t_buffer=template_grb.t_buffer, dt = template_grb.dt) # counts / sec / det
-
-	print("After background adding")
-	print(template_grb.light_curve['TIME'][np.argwhere(template_grb.light_curve['RATE'] == np.max(template_grb.light_curve['RATE']))])
-	print(synth_grb.light_curve['TIME'][np.argwhere(synth_grb.light_curve['RATE'] == np.max(synth_grb.light_curve['RATE']))])
-	print()
-
 
 
 	return synth_grb
