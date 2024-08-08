@@ -461,7 +461,7 @@ class PLOTSIMRES(PLOTS):
 		fig.tight_layout()
 		self.plot_aesthetics(ax)
 
-	def det_frac(self, sim_results, ax=None, alpha=0.4, **kwargs):
+	def det_frac(self, sim_results, ax=None, alpha=0.4, step="mid", **kwargs):
 		"""
 		Method to plot the detection fraction of a GRB as a function of the redshift it was simulated at. 
 		The detection fraction is defined as ratio between the number of simulations (at a specific redshift) that 
@@ -487,9 +487,8 @@ class PLOTSIMRES(PLOTS):
 			num_det.append(len(tmp[tmp['DURATION']>0]))
 			perc.append( num_det[i] / trials)
 
-		ax = plt.figure().gca()
-		ax.fill_between(x=zs, y1=(num_det+np.sqrt(trials))/trials, y2 = (num_det-np.sqrt(trials))/trials, alpha=alpha, **kwargs)
-		ax.step(zs, perc, **kwargs)
+		ax.fill_between(x=zs, y1=(num_det+np.sqrt(trials))/trials, y2 = (num_det-np.sqrt(trials))/trials, alpha=alpha, step=step, **kwargs)
+		ax.step(zs, perc, step=step, **kwargs)
 
 		fig.tight_layout()
 		self.plot_aesthetics(ax)
