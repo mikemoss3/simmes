@@ -488,7 +488,7 @@ class PLOTSIMRES(PLOTS):
 			perc.append( num_det[i] / trials)
 
 		ax.fill_between(x=zs, y1=(num_det+np.sqrt(trials))/trials, y2 = (num_det-np.sqrt(trials))/trials, alpha=alpha, step=step, **kwargs)
-		ax.step(zs, perc, step=step, **kwargs)
+		ax.step(zs, perc, where=step, **kwargs)
 
 		fig.tight_layout()
 		self.plot_aesthetics(ax)
