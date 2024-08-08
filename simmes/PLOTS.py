@@ -490,6 +490,9 @@ class PLOTSIMRES(PLOTS):
 		ax.fill_between(x=zs, y1=(num_det+np.sqrt(trials))/trials, y2 = (num_det-np.sqrt(trials))/trials, alpha=alpha, step=step, **kwargs)
 		ax.step(zs, perc, where=step, **kwargs)
 
+		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_ylabel("Percentage Detected",fontsize=self.fontsize,fontweight=self.fontweight)
+
 		fig.tight_layout()
 		self.plot_aesthetics(ax)
 
