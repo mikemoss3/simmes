@@ -297,7 +297,7 @@ def many_simulations(template_grb, param_list, trials,
 			synth_grb_arr[i] = synth_grb.copy()
 
 	if out_file_name is not None:
-		np.savetxt(out_file_name,sim_results)
+		np.save(out_file_name, sim_results)
 
 	if ret_ave is True:
 		sim_results = make_ave_sim_res(sim_results)
