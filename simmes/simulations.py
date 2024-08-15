@@ -200,7 +200,7 @@ def fit_function(t,fm,tm,r,d):
 
 	return flux
 
-def rand_background_variance():
+def rand_background_variance(size=1):
 	"""
 	Method that return a randomly selected from a distribution created from the measured background variances observed by Swift/BAT.
 
@@ -227,7 +227,7 @@ def rand_background_variance():
 	# Create distribution
 	distrib = rv_discrete(a=cut_min, b=cut_max, values=(x_range, fit_function(x_range, *parameters)) ) 
 	# Select random value
-	variance = distrib.rvs(size=1)
+	variance = distrib.rvs(size=size)
 
 	return variance
 
