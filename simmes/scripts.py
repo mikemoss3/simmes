@@ -7,17 +7,16 @@ This package defines useful scripts which perform calculations based on the simm
 
 import numpy as np
 from simmes.simulations import many_simulations
-from scipy.stats import norm, uniform
+from scipy.stats import halfnorm
 
-def find_z_max(grb, z_guess, threshold, num_samples,
+def find_z_max(grb, z_guess, threshold, 
 	imx, imy, ndets, 
-	ndet_max=32768, trials = 20, num_burn_in=50, band_rate_min=14, band_rate_max=350, 
+	ndet_max=32768, trials = 20, tolerance=1, band_rate_min=14, band_rate_max=350, 
 	time_resolved=False, sim_triggers=False):
 	"""
 	Method used to estimate the highest redshift a given GRB could be observed
-	with a detection rate equal to `threshold`. A Monte-Carlo method is used to sample 
-	the redshift to simulate the GRB at. The GRB is simulated at the sampled redshift 
-	a number of `trials` times. 
+	with a detection rate equal to `threshold` (within a given tolerance).
+	The GRB is simulated at the sampled redshift a number of `trials` times. 
 
 	Attributes:
 	------------------------
@@ -38,6 +37,9 @@ def find_z_max(grb, z_guess, threshold, num_samples,
 		Maximum number of detectors on the detector plane (for Swift/BAT ndet_max = 32,768)
 	trials : int 
 		Number of trials to perform at each sampled redshift 
+	tolerance : float
+		Determines the accuracy range of the method. Accuracy = tolerance * (1/trials), 
+		since 1/trials determines the minimum accuracy.
 	band_rate_min, band_rate_max : float, float
 		Minimum and maximum of the energy band over which to calculate source photon flux
 	sim_triggers : boolean
@@ -52,49 +54,37 @@ def find_z_max(grb, z_guess, threshold, num_samples,
 		Array of redshifts found by the algorithm
 	"""
 
-	z_samples = []
+	tolerance_factor = (1/trials) * tolerance
 
-	z_curr = z_guess
-	# Calculate likelihood for initial redshift 
-	lh_curr = _calc_likelihood(grb, z_curr, imx, imy, ndets, trials, threshold)
+	z_samples = []  # Keep track of redshift selections 
+	z_samples.append(z_guess)
+	# Calculate the distance from the threshold value for this redshift 
+	det_rat_curr = _calc_dist(grb, z_guess, imx, imy, ndets, trials, threshold)
+	# Initialize the difference between the current and previous distance calculations.
+	diff_curr = det_rat_curr - threshold  # Should be between -1 and 1
 
-	for i in range(num_burn_in):
-		# Sample new redshift value from distribution
-		z_new = norm(loc=z_curr, scale=1).rvs(size=1)[0]
-		# Calculate likelihood for new redshift
-		lh_new = _calc_likelihood(grb, z_new, imx, imy, ndets, trials, threshold)
-		
-		# Determine if the new redshift should be accepted or not
-		lh_acc = uniform.rvs(size=1)[0]  # Randomly determined acceptance criterion
-		if (lh_new / lh_curr) < lh_acc:
-			# Accepted: update current redshift and likelihood
-			z_curr = z_new
-			lh_curr = lh_new
+	while np.abs(diff_curr) > tolerance_factor:
+		# Update variables
+		det_rat_prev = det_rat_curr
+		diff_prev = diff_curr
 
-	for i in range(num_burn_in, num_samples):
-		# Sample new redshift value from distribution
-		z_new = norm(loc=z_curr, scale=1).rvs(size=1)[0]
-		# Calculate likelihood for new redshift
-		lh_new = _calc_likelihood(grb, z_new, imx, imy, ndets, trials, threshold)
-		
-		# Determine if the new redshift should be accepted or not
-		lh_acc = uniform.rvs(size=1)[0]  # Randomly determined acceptance criterion
-		if (lh_new / lh_curr) < lh_acc:
-			# Accepted: add new redshift to samples and update current redshift and likelihood
-			z_samples.append(z_new)
-			z_curr = z_new
-			lh_curr = lh_new
+		# Select new redshift using a half-normal distribution in the direction required to match the threshold
+		z_curr = z_samples[-1] + (diff_prev/np.abs(diff_prev))*halfnorm(loc=0, scale=np.abs(diff_prev)).rvs(size=1)[0]
+		z_samples.append(z_curr)
+
+		# Calculate distance from threshold for this redshift 
+		det_rat_curr = _calc_dist(grb, z_curr, imx, imy, ndets, trials, threshold)
+		diff_curr = det_rat_curr - threshold
 
 	z_max = z_curr
 
-	# Perform simulation `trials` times
 	return z_max, z_samples
 
-def _calc_likelihood(grb, z, imx, imy, ndets, trials, threshold):
+def _calc_dist(grb, z, imx, imy, ndets, trials, threshold):
 	param_list = np.array([[z, imx, imy, ndets]])  # Make param list
 	sim_results = many_simulations(grb, param_list, trials)  # Perform simulations of burst at this redshift
 	det_ratio = len( sim_results[ sim_results['DURATION']>0 ] ) / trials  # Calculate number of successful detections
-	lh = np.abs(det_ratio - threshold)  # Calculate difference from threshold
 
-	return lh
+	return det_ratio
+
 
