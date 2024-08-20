@@ -54,6 +54,10 @@ def find_z_max(grb, z_guess, threshold,
 		Array of redshifts found by the algorithm
 	"""
 
+	if (threshold > 1) or (threshold < 0):
+		print("Threshold must be between [0,1].")
+		return 0, None
+
 	tolerance_factor = (1/trials) * tolerance
 
 	z_samples = []  # Keep track of redshift selections 
@@ -63,7 +67,8 @@ def find_z_max(grb, z_guess, threshold,
 	# Initialize the difference between the current and previous distance calculations.
 	diff_curr = det_rat_curr - threshold  # Should be between -1 and 1
 
-	while np.abs(diff_curr) > tolerance_factor:
+	flag = True
+	while flag:
 		# Update variables
 		det_rat_prev = det_rat_curr
 		diff_prev = diff_curr
@@ -75,6 +80,9 @@ def find_z_max(grb, z_guess, threshold,
 		# Calculate distance from threshold for this redshift 
 		det_rat_curr = _calc_dist(grb, z_curr, imx, imy, ndets, trials, threshold)
 		diff_curr = det_rat_curr - threshold
+
+		if (np.abs(diff_curr) <= tolerance_factor) and (det_rat_curr>0):
+			flag = False
 
 	z_max = z_curr
 
