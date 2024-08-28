@@ -75,6 +75,10 @@ def find_z_max(grb, z_guess, threshold,
 
 		# Select new redshift using a half-normal distribution in the direction required to match the threshold
 		z_curr = z_samples[-1] + (diff_prev/np.abs(diff_prev))*halfnorm(loc=0, scale=np.abs(diff_prev)).rvs(size=1)[0]
+		# Make sure z > 0
+		if z_curr <= 0:
+			z_curr = 1e-3
+
 		z_samples.append(z_curr)
 
 		# Calculate distance from threshold for this redshift 
