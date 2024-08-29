@@ -9,7 +9,7 @@ import numpy as np
 from simmes.simulations import many_simulations
 from scipy.stats import halfnorm
 
-def find_z_max(grb, z_guess, threshold, 
+def find_z_threshold(grb, z_guess, threshold, 
 	imx, imy, ndets, 
 	ndet_max=32768, trials = 20, tolerance=1, band_rate_min=14, band_rate_max=350, 
 	time_resolved=False, sim_triggers=False):
