@@ -26,8 +26,10 @@ def bayesian_t_blocks(light_curve, dur_per=90, ncp_prior=6):
 	# Astropy bayesian block algorithm -- it is much safer to use since it handles exceptions better, however its an order of magnitude
 	try:
 		bin_edges = bayesian_blocks(t=light_curve['TIME'], x=light_curve['RATE'], sigma=light_curve['UNC'], fitness="measures", ncp_prior=ncp_prior) # Find the T90 and the fluence 
+		# bin_edges = custom_bb(light_curve=light_curve, ncp_prior=ncp_prior)
 	except:
 		bin_edges = bayesian_blocks(t=light_curve['TIME'], x=light_curve['RATE'], sigma=light_curve['ERROR'], fitness="measures", ncp_prior=ncp_prior) # Find the T90 and the fluence 
+		# bin_edges = custom_bb(light_curve=light_curve, ncp_prior=ncp_prior)
 	# condensed bayesian block algorithm taken from astropy (faster but more unsafe)
 	# bin_edges = custom_bb(light_curve, ncp_prior)
 
