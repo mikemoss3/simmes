@@ -315,7 +315,7 @@ class PLOTSIMRES(PLOTS):
 		cbar.ax.axhline(2, c='w')
 			
 
-		self.tight_layout()
+		PLOTS().tight_layout()
 		self.plot_aesthetics(ax)
 
 	def redshift_evo(self, sim_results, ax=None, t_true=None, t_max=None, bins=50, dur_frac=False, log=False, **kwargs):
@@ -386,7 +386,7 @@ class PLOTSIMRES(PLOTS):
 
 		# cbar.set_label("Frequency",fontsize=self.fontsize,fontweight=self.fontweight)
 
-		self.tight_layout()
+		PLOTS().tight_layout()
 		self.plot_aesthetics(ax)
 
 	def redshift_fluence_evo(self, sim_results, ax=None, F_true=None, F_max=None, bins=50, fluence_frac=False, **kwargs):
@@ -461,7 +461,7 @@ class PLOTSIMRES(PLOTS):
 
 		# cbar.set_label("Frequency",fontsize=self.fontsize,fontweight=self.fontweight)
 
-		self.tight_layout()
+		PLOTS().tight_layout()
 		self.plot_aesthetics(ax)
 
 	def det_frac(self, sim_results, ax=None, alpha=0.4, step="mid", **kwargs):
@@ -496,7 +496,7 @@ class PLOTSIMRES(PLOTS):
 		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylabel("Percentage Detected",fontsize=self.fontsize,fontweight=self.fontweight)
 
-		self.tight_layout()
+		PLOTS().tight_layout()
 		self.plot_aesthetics(ax)
 
 class PLOTSAMPLE(PLOTS):
