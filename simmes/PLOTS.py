@@ -318,7 +318,7 @@ class PLOTSIMRES(PLOTS):
 		self.tight_layout()
 		self.plot_aesthetics(ax)
 
-	def redshift_evo(self, sim_results, ax=None, t_true=None, t_max=None, bins=50, dur_frac=False, log=False, **kwargs):
+	def redshift_duration_evo(self, sim_results, ax=None, t_true=None, t_max=None, bins=50, dur_frac=False, log=False, inc_cbar=False, **kwargs):
 		"""
 		Method to plot the measured duration of each synthetic light curve as a function redshift
 
@@ -330,7 +330,7 @@ class PLOTSIMRES(PLOTS):
 
 		if ax is None:
 			ax = plt.figure().gca()
-		fig = plt.gcf()
+		# fig = plt.gcf()
 
 		results = sim_results[sim_results['DURATION'] > 0]
 
@@ -345,7 +345,6 @@ class PLOTSIMRES(PLOTS):
 
 		cmap = plt.cm.get_cmap("viridis").copy()
 		cmap.set_bad(color="w")
-		cmin=1e-20
 		cmin=0
 		ax.set_facecolor(cmap(0))
 		
@@ -359,6 +358,9 @@ class PLOTSIMRES(PLOTS):
 			t_min = -1
 
 		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [t_min, t_max]], bins=bins, cmin=cmin, cmap=cmap, **kwargs)
+
+		if inc_cbar == True:
+			ax.colorbar(im, ax)
 
 		# if (t_true is not None):
 		# 	if (dur_frac is False):
@@ -401,7 +403,7 @@ class PLOTSIMRES(PLOTS):
 
 		if ax is None:
 			ax = plt.figure().gca()
-		fig = plt.gcf()
+		# fig = plt.gcf()
 
 		results = sim_results[sim_results['FLUENCE'] > 0]
 
@@ -432,7 +434,6 @@ class PLOTSIMRES(PLOTS):
 
 		cmap = plt.cm.get_cmap("viridis").copy()
 		cmap.set_bad(color="w")
-		cmin=1e-20
 		cmin=0
 		ax.set_facecolor(cmap(0))
 
@@ -478,7 +479,7 @@ class PLOTSIMRES(PLOTS):
 
 		if ax is None:
 			ax = plt.figure().gca()
-		fig = plt.gcf()
+		# fig = plt.gcf()
 
 		zs = np.unique(sim_results['z'])
 		trials = len(sim_results[sim_results['z']==zs[0]])
@@ -507,7 +508,7 @@ class PLOTSAMPLE(PLOTS):
 
 		if ax is None:
 			ax = plt.figure().gca()
-		fig = plt.gcf()
+		# fig = plt.gcf()
 
 		norm = 1
 		if normed == True:
@@ -540,7 +541,7 @@ class PLOTSAMPLE(PLOTS):
 
 		if ax is None:
 			ax = plt.figure().gca()
-		fig = plt.gcf()
+		# fig = plt.gcf()
 
 		if bins is None:
 			if bin_min is None:
@@ -569,7 +570,7 @@ class PLOTSAMPLE(PLOTS):
 
 		if ax is None:
 			ax = plt.figure().gca()
-		fig = plt.gcf()
+		# fig = plt.gcf()
 
 		if bins is None:
 			if bin_min is None:
