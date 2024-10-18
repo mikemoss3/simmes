@@ -9,6 +9,7 @@ Defines the class and methods used for plotting simulation results.
 
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 # import matplotlib.cm as cm
 from simmes.util_packages.cosmology import lum_dis
 from simmes.RSP import RSP
@@ -57,6 +58,10 @@ class PLOTS(object):
 				tick.label1.set_fontweight(fontweight)
 
 				tick.label2.set_fontweight(fontweight)
+		else:
+			ax.set_xticklabels([])
+			# ax.set_xlabel()
+			ax.xaxis.set_visible(False)
 
 		if yax is True:
 			for tick in ax.yaxis.get_major_ticks():
@@ -70,6 +75,10 @@ class PLOTS(object):
 				tick.label1.set_fontweight(fontweight)
 
 				tick.label2.set_fontweight(fontweight)
+		else:
+			ax.set_yticklabels([])
+			# ax.set_ylabel()
+			ax.yaxis.set_visible(False)
 			
 		ax.tick_params(direction="in",which="both")
 		ax.margins(x=0,y=0)
@@ -77,7 +86,7 @@ class PLOTS(object):
 	def show(self):
 		plt.show()
 
-	def tight_layout():
+	def tight_layout(self):
 		plt.tight_layout()
 
 	def close(self):
@@ -330,7 +339,7 @@ class PLOTSIMRES(PLOTS):
 
 		if ax is None:
 			ax = plt.figure().gca()
-		# fig = plt.gcf()
+		fig = plt.gcf()
 
 		results = sim_results[sim_results['DURATION'] > 0]
 
@@ -360,7 +369,9 @@ class PLOTSIMRES(PLOTS):
 		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [t_min, t_max]], bins=bins, cmin=cmin, cmap=cmap, **kwargs)
 
 		if inc_cbar == True:
-			ax.colorbar(im, ax)
+			divider = make_axes_locatable(ax)
+			cax = divider.append_axes('right', size='5%', pad=0.05)
+			fig.colorbar(im[3], cax=cax, orientation='vertical')
 
 		# if (t_true is not None):
 		# 	if (dur_frac is False):
@@ -368,8 +379,8 @@ class PLOTSIMRES(PLOTS):
 		# 	else:
 		# 		ax.axhline(y=1,color="C1",linestyle="dashed",alpha=0.5,label="True Duration")
 
-		ax.axvline(x=z_min,color="r",linestyle="dashed",alpha=0.5,label="Measured Redshift")
-		ax.axvline(x=z_max,color="r",linestyle="dashed",alpha=0.5,label="Max. Simulated Redshift")
+		# ax.axvline(x=z_min,color="r",linestyle="dashed",alpha=0.5,label="Measured Redshift")
+		ax.axvline(x=z_max, color="C1", linewidth=3,label="Max. Simulated Redshift")
 		# ax.axhline(y=2,color="w",linestyle="dashed",alpha=0.5)
 
 		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
@@ -385,13 +396,10 @@ class PLOTSIMRES(PLOTS):
 
 		ax.set_xlim(0, z_max*1.1)
 
-
-		# cbar.set_label("Frequency",fontsize=self.fontsize,fontweight=self.fontweight)
-
 		self.tight_layout()
 		self.plot_aesthetics(ax)
 
-	def redshift_fluence_evo(self, sim_results, ax=None, F_true=None, F_max=None, bins=50, fluence_frac=False, **kwargs):
+	def redshift_fluence_evo(self, sim_results, ax=None, F_true=None, F_max=None, bins=50, fluence_frac=False, inc_cbar=False, **kwargs):
 		"""
 		Method to plot the measured duration of each synthetic light curve as a function redshift
 
@@ -403,7 +411,7 @@ class PLOTSIMRES(PLOTS):
 
 		if ax is None:
 			ax = plt.figure().gca()
-		# fig = plt.gcf()
+		fig = plt.gcf()
 
 		results = sim_results[sim_results['FLUENCE'] > 0]
 
@@ -446,6 +454,11 @@ class PLOTSIMRES(PLOTS):
 		F_min = np.min([-1,np.log10(np.min(results['FLUENCE']))])
 
 		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [F_min, F_max]], bins=bins, cmin=cmin, cmap=cmap, **kwargs)
+
+		if inc_cbar == True:
+			divider = make_axes_locatable(ax)
+			cax = divider.append_axes('right', size='5%', pad=0.05)
+			fig.colorbar(im, cax=cax, orientation='vertical')
 
 		ax.axvline(x=z_min,color="r",linestyle="dashed",alpha=0.5,label="Measured Redshift")
 		ax.axvline(x=z_max,color="r",linestyle="dashed",alpha=0.5,label="Max. Simulated Redshift")
