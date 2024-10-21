@@ -379,13 +379,13 @@ class PLOTSIMRES(PLOTS):
 		# 	else:
 		# 		ax.axhline(y=1,color="C1",linestyle="dashed",alpha=0.5,label="True Duration")
 
-		# ax.axvline(x=z_min,color="r",linestyle="dashed",alpha=0.5,label="Measured Redshift")
-		ax.axvline(x=z_max, color="C1", linewidth=3,label="Max. Simulated Redshift")
+		ax.axvline(x=z_min,color="C1", linewidth=2, label="Measured Redshift")
+		ax.axvline(x=z_max, color="C1", linewidth=2, label="Max. Simulated Redshift")
 		# ax.axhline(y=2,color="w",linestyle="dashed",alpha=0.5)
 
 		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
 		if log is False:
-			ax.plot(z_arr, dilation_line(z_arr), color="w", linestyle="dashed", alpha=0.5)
+			ax.plot(z_arr, dilation_line(z_arr), color="w", linestyle="dashed", alpha=1, linewidth=2)
 			ax.set_ylabel("Duration (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
 			ax.set_ylim(0)
 
@@ -458,14 +458,14 @@ class PLOTSIMRES(PLOTS):
 		if inc_cbar == True:
 			divider = make_axes_locatable(ax)
 			cax = divider.append_axes('right', size='5%', pad=0.05)
-			fig.colorbar(im, cax=cax, orientation='vertical')
+			fig.colorbar(im[3], cax=cax, orientation='vertical')
 
-		ax.axvline(x=z_min,color="r",linestyle="dashed",alpha=0.5,label="Measured Redshift")
-		ax.axvline(x=z_max,color="r",linestyle="dashed",alpha=0.5,label="Max. Simulated Redshift")
+		ax.axvline(x=z_min,color="C1",linewidth=2, label="Measured Redshift")
+		ax.axvline(x=z_max,color="C1",linewidth=2, label="Max. Simulated Redshift")
 
 		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
 
-		ax.plot(z_arr, np.log10(luminosity_distance(z_arr)), color="w", linestyle="dashed", alpha=0.5) # 1/distance^2 line 
+		ax.plot(z_arr, np.log10(luminosity_distance(z_arr)), color="w", linestyle="dashed", alpha=1, linewidth=2) # 1/distance^2 line 
 		ax.plot(z_vals, np.log10(fluence_sens(t_vals)), color="g", linestyle="dashed") # 5-sigma fluence limit 
 		ax.set_ylabel(r"log(Photon Fluence) log(cnts cm$^{-2}$)",fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylim(F_min)
