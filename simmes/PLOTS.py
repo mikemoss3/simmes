@@ -354,8 +354,9 @@ class PLOTSIMRES(PLOTS):
 
 		cmap = plt.cm.get_cmap("viridis").copy()
 		cmap.set_bad(color="w")
-		cmin=0
-		ax.set_facecolor(cmap(0))
+		cmap.set_under(color="w")
+		cmin=0.5
+		# ax.set_facecolor(cmap(0))
 		
 		dur_arr = results["DURATION"]
 		if dur_frac is True:
@@ -366,8 +367,8 @@ class PLOTSIMRES(PLOTS):
 			t_max = np.log10(t_max)
 			t_min = -1
 
-		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [t_min, t_max]], bins=bins, cmin=cmin, cmap=cmap, **kwargs)
-
+		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [t_min, t_max]], bins=bins, cmin=cmin, cmap=cmap, **kwargs) # output = counts, xbins, ybins, image
+		
 		if inc_cbar == True:
 			divider = make_axes_locatable(ax)
 			cax = divider.append_axes('right', size='5%', pad=0.05)
