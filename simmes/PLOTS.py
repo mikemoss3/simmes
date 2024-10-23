@@ -380,22 +380,22 @@ class PLOTSIMRES(PLOTS):
 		# 	else:
 		# 		ax.axhline(y=1,color="C1",linestyle="dashed",alpha=0.5,label="True Duration")
 
-		ax.axvline(x=z_min,color="C1", linewidth=2, label="Measured Redshift")
-		ax.axvline(x=z_max, color="C1", linewidth=2, label="Max. Simulated Redshift")
+		ax.axvline(x=z_min,color="k", linewidth=2, linestyle="dotted", label="Measured Redshift")
+		# ax.axvline(x=z_max, color="C1", linewidth=2, label="Max. Simulated Redshift")
 		# ax.axhline(y=2,color="w",linestyle="dashed",alpha=0.5)
 
 		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
 		if log is False:
-			ax.plot(z_arr, dilation_line(z_arr), color="w", linestyle="dashed", alpha=1, linewidth=2)
+			ax.plot(z_arr, dilation_line(z_arr), color="C1", alpha=1, linewidth=3)
 			ax.set_ylabel("Duration (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
 			ax.set_ylim(0)
 
 		else:
-			ax.plot(z_arr, np.log10(dilation_line(z_arr)), color="w", linestyle="dashed", alpha=0.5)
+			ax.plot(z_arr, np.log10(dilation_line(z_arr)), color="C1", alpha=1, linewidth=3)
 			ax.set_ylabel("log(Duration)",fontsize=self.fontsize,fontweight=self.fontweight)
 			ax.set_ylim(-1)
 
-		ax.set_xlim(0, z_max*1.1)
+		ax.set_xlim(0, z_max)
 
 		self.tight_layout()
 		self.plot_aesthetics(ax)
@@ -443,8 +443,9 @@ class PLOTSIMRES(PLOTS):
 
 		cmap = plt.cm.get_cmap("viridis").copy()
 		cmap.set_bad(color="w")
-		cmin=0
-		ax.set_facecolor(cmap(0))
+		cmap.set_under(color="w")
+		cmin=0.1
+		# ax.set_facecolor(cmap(0))
 
 		dur_arr = results["FLUENCE"]
 		dur_arr = np.log10(dur_arr)
@@ -461,17 +462,17 @@ class PLOTSIMRES(PLOTS):
 			cax = divider.append_axes('right', size='5%', pad=0.05)
 			fig.colorbar(im[3], cax=cax, orientation='vertical')
 
-		ax.axvline(x=z_min,color="C1",linewidth=2, label="Measured Redshift")
-		ax.axvline(x=z_max,color="C1",linewidth=2, label="Max. Simulated Redshift")
+		ax.axvline(x=z_min,color="k",linewidth=2, linestyle="dotted", label="Measured Redshift")
+		# ax.axvline(x=z_max,color="C1",linewidth=2, label="Max. Simulated Redshift")
 
 		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
 
-		ax.plot(z_arr, np.log10(luminosity_distance(z_arr)), color="w", linestyle="dashed", alpha=1, linewidth=2) # 1/distance^2 line 
-		ax.plot(z_vals, np.log10(fluence_sens(t_vals)), color="g", linestyle="dashed") # 5-sigma fluence limit 
+		ax.plot(z_arr, np.log10(luminosity_distance(z_arr)), color="C1", alpha=1, linewidth=3) # 1/distance^2 line 
+		ax.plot(z_vals, np.log10(fluence_sens(t_vals)), color="magenta", linewidth=2) # 5-sigma fluence limit 
 		ax.set_ylabel(r"log(Photon Fluence) log(cnts cm$^{-2}$)",fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylim(F_min)
 
-		ax.set_xlim(0, z_max*1.1)
+		ax.set_xlim(0, z_max)
 
 
 		# cbar.set_label("Frequency",fontsize=self.fontsize,fontweight=self.fontweight)
