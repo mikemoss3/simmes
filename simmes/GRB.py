@@ -24,16 +24,24 @@ class GRB(object):
 	----------
 	grbname : string
 		Name of the GRB
-
+	z : float
+		Redshift of the burst
+	T100_dur : float
+		Total duration of the emission
+	T100_start : float
+		When the emission begins
+	spectrum : SPECFUNC
+		Spectral function of the emissin, either time integrated or resolved
+	light_curve_fn : str
+		Path to the file that contains the light curve of the burst (either .txt or .fits)
 	"""
-	def __init__(self,grbname=None,z=0,imx=0,imy=0,
+	def __init__(self,grbname=None,z=0,
 		T100_dur=None,T100_start=None,
 		spectrum=None,light_curve_fn=None):
 
 		# Assign this instance's parameters
 		self.grbname = grbname
 		self.z = z
-		self.imx, self.imy = imx, imy
 		self.T100_dur, self.T100_start = T100_dur, T100_start
 
 		self.light_curve = None # Currently loaded light curve
@@ -74,7 +82,20 @@ class GRB(object):
 
 	def set_duration(self, duration, t_start, phot_fluence=None, dur_per=None, ncp_prior=None):
 		"""
-		Method to set the 
+		Method to set the duration information of the burst manually
+
+		Attributes:
+		----------
+		duration : float
+			Duration of the GRB
+		t_start : float
+			Start time of the duration 
+		phot_fluence : float
+			Photon fluence enclosed within the specified duration
+		dur_per : float
+			What percentage the specified duration is of the total duration
+		ncp_prior : float
+			Number of change points. Used when calculating the duration using Bayesian blocks.
 		"""
 
 		self.duration = duration
@@ -89,6 +110,13 @@ class GRB(object):
 	def get_duration(self, dur_per=90, ncp_prior=20):
 		"""
 		Method to get the duration of the lightcurve using a Bayesian block algorithm
+
+		Attributes:
+		----------
+		dur_per : float
+			What percentage the specified duration is of the total duration
+		ncp_prior : float
+			Number of change points. Used when calculating the duration using Bayesian blocks.
 		"""
 
 		# If the same duration percentage and ncp_prior are called for, return the current duration information
@@ -104,7 +132,14 @@ class GRB(object):
 
 	def get_photon_fluence(self,dur_per=90,tmin=None,tmax=None):
 		"""
-		Method to get the photon fluence in the time interval defined by the duration percentage
+		Method to get the photon fluence in the specified time interval or duration percentage
+
+		Attributes:
+		----------
+		dur_per : float
+			Defines the percentage of the total duration to calculate the photon fluence over
+		tmin, tmax : float, float
+			Defines the time range to calculate the photon fluence over
 		"""
 		if (tmin is not None) and (tmax is not None):
 			return np.sum(self.light_curve['RATE'][np.argmax(tmin <= self.light_curve['TIME']):np.argmax(self.light_curve['TIME'] >= tmax)]) * self.dt			
@@ -115,6 +150,13 @@ class GRB(object):
 	def get_ave_photon_flux(self,dur_per=90,tmin=None,tmax=None):
 		"""
 		Method to get the average photon flux in the T100 interval
+
+		Attributes:
+		----------
+		dur_per : float
+			Defines the percentage of the total duration to calculate the photon flux over
+		tmin, tmax : float, float
+			Defines the time range to calculate the photon flux over
 		"""
 		if (tmin is not None) and (tmax is not None):
 			return self.get_photon_fluence(tmin=tmin,tmax=tmax)/(tmax-tmin)
@@ -209,6 +251,21 @@ class GRB(object):
 	def load_light_curve(self, file_name, t_offset=0,rm_trigtime=False,T100_dur=None,T100_start=None,det_area=None):
 		"""
 		Method to load a light curve from either a .fits or .txt file
+
+		Attributes:
+		----------
+		file_name : str
+			Path to the file containing the light curve
+		t_offset : float
+			Include a time offset to the light curve
+		rm_trigtime : bool
+			Will remove the machine time value given by the FITS keyword "TRIGTIME" (requires FITS file to be loaded)
+		T100_dur : float
+			Total duration of the emission
+		T100_start : float
+			When the emission begins
+		det_area : float
+			Correct for detector area size 
 		"""
 
 		# Check if this is a fits file or a text file 
@@ -246,10 +303,8 @@ class GRB(object):
 
 		Attributes:
 		-----------
-		tmin : float
-			The minimum time of the interval to be removed. 
-		tmax : float
-			The maximum time of the interval to be removed. 
+		tmin, tmax : float, float
+			The minimum and maximum time of the interval to be removed. 
 		"""
 
 		if tmin is None:
@@ -268,10 +323,8 @@ class GRB(object):
 
 		Attributes:
 		-----------
-		tmin : float
-			The minimum time of the interval to be removed. 
-		tmax : float
-			The maximum time of the interval to be removed. 
+		tmin, tmax : float, float
+			The minimum and maximum time of the interval to be removed. 
 		"""
 
 		if tmin is None:
@@ -296,7 +349,7 @@ class GRB(object):
 			Current redshift of the GRB
 		z_p : float
 			Redshift to shift the GRB to
-		emin, max : float, float
+		emin, emax : float, float
 			Spectrum energy band minimum and maximum
 		rm_bgd_sig : bool
 			Indicates whether or not to remove the background signal outside the T100 range should be removed. 
