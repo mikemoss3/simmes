@@ -16,12 +16,14 @@ from simmes.RSP import RSP
 
 class PLOTS(object):
 	"""
-	Class that defines all methods used for plotting simulation results
+	Base class that defines methods used by other plot super classes  
 
 	Attributes:
 	----------
-	sim_results : np.ndarray
-		Array of simulation results
+	fontsize : int
+		Size of plot axis label
+	fontweight : str
+		Boldness level of the text [ 'normal' | 'bold' | 'heavy' | 'light' | 'ultrabold' | 'ultralight']
 	"""
 
 	def __init__(self, fontsize = 13, fontweight = "normal"):
@@ -29,7 +31,7 @@ class PLOTS(object):
 		self.fontsize = fontsize
 		self.fontweight = fontweight
 
-	def plot_aesthetics(self,ax,xax=True,yax=True):
+	def plot_aesthetics(self, ax,xax=True, yax=True):
 		"""
 		This function is used to make bold and increase the font size of all plot tick markers
 
@@ -96,7 +98,7 @@ class PLOTS(object):
 		plt.savefig(fname, dpi = dpi)
 
 class PLOTGRB(PLOTS):
-	def __init__(self, grb=None):
+	def __init__(self):
 		PLOTS.__init__(self)
 
 	def plot_light_curves(self, grbs, t_window=None, labels=None, ax=None, alpha=0.7, norm=1, **kwargs):
@@ -113,6 +115,8 @@ class PLOTGRB(PLOTS):
 			Axis on which to create the figure
 		norm : float
 			An arbitrary factor to multiply the y-axis values by 
+		labels : str, list
+			Label for the grb(s) to be plotted
 		"""
 
 		if ax is None:
@@ -122,15 +126,23 @@ class PLOTGRB(PLOTS):
 		if hasattr(grbs,'__len__'):
 			for i in range(len(grbs)):
 				if labels is None:
-					ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE']*norm,yerr=grbs[i].light_curve['UNC']*norm,fmt="",drawstyle="steps-mid",alpha=alpha,**kwargs)
+					ax.errorbar(x=grbs[i].light_curve['TIME'],
+						y=grbs[i].light_curve['RATE']*norm, yerr=grbs[i].light_curve['UNC']*norm,
+						fmt="",drawstyle="steps-mid", alpha=alpha, **kwargs)
 				else:
-					ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE']*norm,yerr=grbs[i].light_curve['UNC']*norm,fmt="",drawstyle="steps-mid",alpha=alpha,label="{}".format(labels[i]),**kwargs)
+					ax.errorbar(x=grbs[i].light_curve['TIME'], 
+						y=grbs[i].light_curve['RATE']*norm, yerr=grbs[i].light_curve['UNC']*norm,
+						fmt="", drawstyle="steps-mid", alpha=alpha, 
+						label="{}".format(labels[i]), **kwargs)
 		# For a single GRB
 		else:
-			ax.errorbar(x=grbs.light_curve['TIME'],y=grbs.light_curve['RATE']*norm,yerr=grbs.light_curve['UNC']*norm,fmt="",drawstyle="steps-mid",alpha=alpha,label=labels,**kwargs)
+			ax.errorbar(x=grbs.light_curve['TIME'], 
+				y=grbs.light_curve['RATE']*norm, yerr=grbs.light_curve['UNC']*norm, 
+				fmt="", drawstyle="steps-mid", alpha=alpha, 
+				label=labels, **kwargs)
 
-		ax.set_xlabel("Time (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
-		ax.set_ylabel("Rate (counts/sec)",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_xlabel("Time (sec)", fontsize=self.fontsize, fontweight=self.fontweight)
+		ax.set_ylabel("Rate (counts/sec)", fontsize=self.fontsize, fontweight=self.fontweight)
 
 		if t_window is not None:
 			ax.set_xlim(t_window)
@@ -180,8 +192,8 @@ class PLOTGRB(PLOTS):
 		ax.set_xscale('log')
 		ax.set_yscale('log')
 
-		ax.set_xlabel("Time (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
-		ax.set_ylabel("Rate (counts/sec)",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_xlabel("Time (sec)", fontsize=self.fontsize, fontweight=self.fontweight)
+		ax.set_ylabel("Rate (counts/sec)", fontsize=self.fontsize, fontweight=self.fontweight)
 
 		self.plot_aesthetics(ax)
 		ax.margins(y=0.1)
@@ -197,17 +209,21 @@ class PLOTSIMRES(PLOTS):
 
 		Attributes:
 		----------
+		sim_results : dt_sim_res
+			Simulation results to be plotted
 		light_curve : np.ndarray
 			Light curve to plot under the simulated duration measurements
 		ax : matplotlib.axes
 			Axis on which to create the figure
+		order_type : float
+			Order of the sim_results lines. [ 0 = No order | 1 = Time Start | 2 = Time Duration ]
 		"""
 
 		if ax is None:
 			ax = plt.figure().gca()
 
 		# Plot light curve
-		ax.step(light_curve['TIME'],light_curve['RATE'],color="k",alpha=0.5,**kwargs)
+		ax.step(light_curve['TIME'], light_curve['RATE'], color="k", alpha=0.5, **kwargs)
 
 		# Order sim_results
 		# Take lines and order them
@@ -217,17 +233,19 @@ class PLOTSIMRES(PLOTS):
 		if order_type == 0:
 			sorted_sim_results = sim_results
 		elif order_type == 1:
-			sorted_sim_results = np.sort(sim_results,order='TSTART')
+			sorted_sim_results = np.sort(sim_results, order='TSTART')
 		elif order_type == 2:
-			sorted_sim_results = np.flip(np.sort(sim_results,order="DURATION"))
+			sorted_sim_results = np.flip(np.sort(sim_results, order="DURATION"))
 
 		# Plot simulated duration measurements
-		y_pos = np.linspace(np.max(light_curve['RATE'])*0.05,np.max(light_curve['RATE'])*0.95,len(sorted_sim_results))
+		y_pos = np.linspace(np.max(light_curve['RATE'])*0.05, np.max(light_curve['RATE'])*0.95, len(sorted_sim_results))
 		for i in range(len(sorted_sim_results)):
-			ax.hlines(y=y_pos[i],xmin=sorted_sim_results[i]['TSTART'],xmax=(sorted_sim_results[i]['TSTART']+sorted_sim_results[i]['DURATION']),color="C1",alpha=0.7)
+			ax.hlines(y=y_pos[i], 
+				xmin=sorted_sim_results[i]['TSTART'], xmax=(sorted_sim_results[i]['TSTART']+sorted_sim_results[i]['DURATION']), 
+				color="C1", alpha=0.7)
 
-		ax.set_xlabel("Time (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
-		ax.set_ylabel("Rate (counts/sec)",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_xlabel("Time (sec)", fontsize=self.fontsize, fontweight=self.fontweight)
+		ax.set_ylabel("Rate (counts/sec)", fontsize=self.fontsize, fontweight=self.fontweight)
 
 		self.plot_aesthetics(ax)
 
@@ -237,6 +255,8 @@ class PLOTSIMRES(PLOTS):
 
 		Attributes:
 		----------
+		sim_results : dt_sim_res
+			Simulation results to be plotted
 		obs_param : str
 			The sim_result column field name of the parameter to be plotted against the duration (e.g., "z", "imx", or "ndets")
 		t_true : float
@@ -257,12 +277,12 @@ class PLOTSIMRES(PLOTS):
 			ax = plt.figure().gca()
 
 		if joined is True:
-			line, = ax.step(sim_results[obs_param],sim_results['DURATION'], where="mid", **kwargs)
+			line, = ax.step(sim_results[obs_param], sim_results['DURATION'], where="mid", **kwargs)
 		else:
-			line, = ax.scatter(sim_results[obs_param],sim_results['DURATION'],marker=marker,**kwargs)
+			line, = ax.scatter(sim_results[obs_param], sim_results['DURATION'],marker=marker, **kwargs)
 
-		ax.set_xlabel("{}".format(obs_param),fontsize=self.fontsize,fontweight=self.fontweight)
-		ax.set_ylabel("Duration (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_xlabel("{}".format(obs_param), fontsize=self.fontsize, fontweight=self.fontweight)
+		ax.set_ylabel("Duration (sec)", fontsize=self.fontsize, fontweight=self.fontweight)
 
 		if "label" in kwargs:
 			ax.legend()
@@ -278,10 +298,14 @@ class PLOTSIMRES(PLOTS):
 
 		Attributes:
 		----------
+		sim_results : dt_sim_res
+			Simulation results to be plotted
 		ax : matplotlib.axes
 			Axis on which to create the figure
 		imx_max, imy_max : float, float
 			Defines the maximum (and minimum) values of the x and y plane on the detector
+		inc_grids : bool
+			Whether to include where the grid separations lie
 		"""
 
 		if ax is None:
@@ -333,8 +357,22 @@ class PLOTSIMRES(PLOTS):
 
 		Attributes:
 		----------
+		sim_results : dt_sim_res
+			Simulation results to be plotted
 		ax : matplotlib.axes
 			Axis on which to create the figure
+		t_true : float
+			True duration of the emission
+		t_max : float
+			y-axis maximum
+		bins : None or int or [int, int] or array-like or [array, array]
+			The bin specification:
+				If `int`, the number of bins for the two dimensions `(nx = ny = bins)`.
+				If `[int, int]`, the number of bins in each dimension `(nx, ny = bins)`.
+				If array-like, the bin edges for the two dimensions `(x_edges = y_edges = bins)`.
+				If `[array, array]`, the bin edges in each dimension `(x_edges, y_edges = bins)`.
+		inc_cbar : bool
+			Indicates whether to include a colorbar or not
 		"""
 
 		if ax is None:
@@ -350,7 +388,6 @@ class PLOTSIMRES(PLOTS):
 		z_arr = np.linspace(0, z_max*1.1)
 		def dilation_line(z):
 			return t_true*(1+z)/(1+z_min)
-
 
 		cmap = plt.cm.get_cmap("viridis").copy()
 		cmap.set_bad(color="w")
@@ -406,8 +443,24 @@ class PLOTSIMRES(PLOTS):
 
 		Attributes:
 		----------
+		sim_results : dt_sim_res
+			Simulation results to be plotted
 		ax : matplotlib.axes
 			Axis on which to create the figure
+		F_true : float
+			True fluence of the emission
+		F_max : float
+			y-axis maximum
+		fluence_frac : bool
+			Indicates whether the y-axis should be a fraction of the true fluence
+		bins : None or int or [int, int] or array-like or [array, array]
+			The bin specification:
+				If `int`, the number of bins for the two dimensions `(nx = ny = bins)`.
+				If `[int, int]`, the number of bins in each dimension `(nx, ny = bins)`.
+				If array-like, the bin edges for the two dimensions `(x_edges = y_edges = bins)`.
+				If `[array, array]`, the bin edges in each dimension `(x_edges, y_edges = bins)`.
+			inc_cbar : bool
+			Indicates whether to include a colorbar or not
 		"""
 
 		if ax is None:
@@ -488,6 +541,8 @@ class PLOTSIMRES(PLOTS):
 
 		Attributes:
 		----------
+		sim_results : dt_sim_res
+			Simulation results to be plotted
 		ax : matplotlib.axes
 			Axis on which to create the figure
 		"""
@@ -520,6 +575,22 @@ class PLOTSAMPLE(PLOTS):
 		PLOTS.__init__(self)
 
 	def cumulative_durations(self, data, ax = None, bins=None, bin_min=None, bin_max=None, normed=False, **kwargs):
+		"""
+		Method to plot the cumulative distribution of durations for a sample of simulation results  
+
+		Attributes:
+		----------
+		data : dt_sim_res, np.ndarray of with dtype [("DURATION", float)]
+			Simulation results to be plotted
+		ax : matplotlib.axes
+			Axis on which to create the figure
+		bins : array
+			Array of bin edges
+		bin_min, bin_max : float, float
+			If `bins` is not provided, then bins will be created between bin_min and bin_max
+		normed : bool
+			Indicates if the data should be normalized by the maximum of the duration
+		"""
 
 		if ax is None:
 			ax = plt.figure().gca()
@@ -553,6 +624,22 @@ class PLOTSAMPLE(PLOTS):
 		self.plot_aesthetics(ax)
 
 	def cumulative_fluence(self, data, ax = None, bins = None, bin_min=None, bin_max=None, **kwargs):
+		"""
+		Method to plot the cumulative distribution of durations for a sample of simulation results  
+
+		Attributes:
+		----------
+		data : dt_sim_res, np.ndarray of with dtype [("FLUENCE", float)]
+			Simulation results to be plotted
+		ax : matplotlib.axes
+			Axis on which to create the figure
+		bins : array
+			Array of bin edges
+		bin_min, bin_max : float, float
+			If `bins` is not provided, then bins will be created between bin_min and bin_max
+		normed : bool
+			Indicates if the data should be normalized by the maximum of the fluence
+		"""
 
 		if ax is None:
 			ax = plt.figure().gca()
@@ -582,6 +669,22 @@ class PLOTSAMPLE(PLOTS):
 		self.plot_aesthetics(ax)
 
 	def cumulative_peak_flux(self, data, ax = None, bins = None, bin_min=None, bin_max=None, **kwargs):
+		"""
+		Method to plot the cumulative distribution of durations for a sample of simulation results  
+
+		Attributes:
+		----------
+		data : dt_sim_res, np.ndarray of with dtype [("1sPeakFlux", float)]
+			Simulation results to be plotted
+		ax : matplotlib.axes
+			Axis on which to create the figure
+		bins : array
+			Array of bin edges
+		bin_min, bin_max : float, float
+			If `bins` is not provided, then bins will be created between bin_min and bin_max
+		normed : bool
+			Indicates if the data should be normalized by the maximum of the peak flux
+		"""
 
 		if ax is None:
 			ax = plt.figure().gca()
@@ -621,6 +724,14 @@ class PLOTSAMPLE(PLOTS):
 
 
 class PLOTRSP(PLOTS):
+	"""
+	Class to plot response matrice from a RSP class object
+
+	Attributes:
+	----------
+	RSP : RSP
+		Response function object 
+	"""
 	def __init__(self, RSP=None):
 		PLOTS.__init__(self)
 		if RSP is None:
@@ -631,6 +742,17 @@ class PLOTRSP(PLOTS):
 	def plot_heatmap( self, RSP, ax=None, E_phot_bounds=None, E_chan_bounds=None):
 		""" 
 		Plot heat map of the response matrix 
+
+		Attributes:
+		----------
+		RSP : RSP
+			Response function object 
+		ax : matplotlib.axes
+			Axis on which to create the figure
+		E_phot_bounds : np.ndarray
+			Photon energy bin edges
+		E_chan_bounds : np.ndarray
+			Channel energy bin edges
 		"""
 
 		if RSP is None:
@@ -663,6 +785,21 @@ class PLOTRSP(PLOTS):
 	def plot_effarea( self, RSP=None, ax=None, det_area=1, E_phot_bounds=None, norm=1):
 		"""
 		Plot heat map of the response matrix 
+
+		Attributes:
+		----------
+		RSP : RSP
+			Response function object 
+		ax : matplotlib.axes
+			Axis on which to create the figure
+		det_area : float
+			Surface area of individual detector element
+		E_phot_bounds : np.ndarray
+			Photon energy bin edges
+		E_chan_bounds : np.ndarray
+			Channel energy bin edges
+		norm : float
+			Optional normalization factor
 		"""
 
 		if RSP is None:
