@@ -17,10 +17,9 @@ class SPECFUNC():
 
 	Attributes
 	----------
-	model : string
-		Name of the spectral model to use. Current available models are Band (Band), Power Law (PL), or Cut-off Power Law (CPL)
-	params : list
-		List of model parameters
+	"parameter name" : float 
+		Defines the parameter value for the specific parameter argument. 
+		The parameter names available depends on the spectral function currently being used (e.g., PL or CPL). 
 	"""
 	def __init__(self, **kwargs):
 		
@@ -36,6 +35,11 @@ class SPECFUNC():
 	def __call__(self, energy):
 		"""
 		Method to evaluate the spectral function at a given energy.
+
+		Attributes
+		----------
+		energy : float 
+			Energy to evaluate the spetrum at
 		"""
 		return self.evaluate(energy)
 
@@ -61,32 +65,37 @@ class SPECFUNC():
 
 	def print_params(self):
 		"""
-		Print current parameters
+		Print current parameters names and values
 		"""
 
 		for param in self.param_names:
-			print("Name: {}\n\tdescription: {}\n\tvalue = {}\n".format(param,getattr(type(self), param)._description,getattr(type(self), param).value))
+			print("Name: {}\n\tdescription: {}\n\tvalue = {}\n".format(param,getattr(type(self), param)._description, getattr(type(self), param).value))
 
 		return 0;
 
 	def get_param_names(self):
 		"""
-		Method to get the current parameters for this spectral function
+		Method to get the current parameter names for this spectral function
 		"""
 
 		return list(self.params.keys())
 
 	def get_param_vals(self):
 		"""
-		Method to get the current parameters for this spectral function
+		Method to get the current parameter values for this spectral function
 		"""
 
 		return list(self.params.values())
 
-	def set_params(self,**kwargs):
+	def set_params(self, **kwargs):
 		"""
-		Method to set the current parameters for this spectral function.
-		The kwargs keys must be the names of the parameters
+		Method to set the current parameters for the spectral function being used.
+		
+		Attributes
+		----------
+		"parameter name" : float 
+			Defines the parameter value for the specific parameter argument. 
+			The parameter names available depends on the spectral function currently being used (e.g., PL or CPL). 
 		"""
 
 		# If specific keyword parameters are defined
@@ -96,7 +105,7 @@ class SPECFUNC():
 		self.param_vals = list(self.params.values())
 
 
-	def make_spectrum(self,emin,emax,num_bins = None):
+	def make_spectrum(self, emin, emax, num_bins = None):
 			"""
 			Method to evaluate the spectrum over the defined energy interval using the GRB object's spectral model and parameters
 
@@ -111,16 +120,16 @@ class SPECFUNC():
 				num_bins = int(np.log10(emax/emin)*20)
 
 			# Initialize array
-			spectrum = np.zeros(shape=num_bins,dtype=[("ENERGY",float),("RATE",float)])
+			spectrum = np.zeros(shape=num_bins, dtype=[("ENERGY", float), ("RATE", float)])
 			# Evaluate energy array
-			spectrum['ENERGY'] = np.logspace(np.log10(emin),np.log10(emax),num=num_bins)
+			spectrum['ENERGY'] = np.logspace(np.log10(emin),np.log10(emax), num=num_bins)
 
 			# Evaluate spectrum rate
 			spectrum['RATE'] = self.evaluate(spectrum['ENERGY'])
 
 			return spectrum
 
-	def _calc_energy_flux(self,emin,emax):
+	def _calc_energy_flux(self, emin, emax):
 		"""
 		Method to find the total energy flux of the spectral model within the given energy range
 
@@ -129,7 +138,7 @@ class SPECFUNC():
 		emin, emax : float, float
 			Defines the lower and upper bounds of the energy interval over which to evaluate the energy flux. Unit of keV)
 		"""
-		energy_flux_kev = romberg(function=lambda x: x*self.evaluate(x),a=emin,b=emax)  ## [keV/s/cm2]
+		energy_flux_kev = romberg(function=lambda x: x*self.evaluate(x), a=emin, b=emax)  ## [keV/s/cm2]
 
 		kev2erg = 1000*1.60217657e-12
 
@@ -137,14 +146,21 @@ class SPECFUNC():
 
 		return energy_flux
 
-	def _find_norm(self,flux,emin,emax):
+	def _find_norm(self, flux, emin, emax):
 		"""
 		Method to find the spectrum normalization based on observed flux
+
+		Attributes:
+		----------
+		flux : float
+			Observed flux to normalize to
+		emin, emax : float, float
+			Defines the lower and upper bounds of the energy interval over which to evaluate the energy flux. Unit of keV)
 		"""
 
-		return flux/self._energy_flux(emin,emax)
+		return flux/self._energy_flux(emin, emax)
 
-	def _calc_phot_flux(self,emin,emax):
+	def _calc_phot_flux(self, emin, emax):
 		"""
 		Method to find the total photon flux of the spectral model within the given energy range
 
@@ -153,7 +169,7 @@ class SPECFUNC():
 		emin, emax : float, float
 			Defines the lower and upper bounds of the energy interval over which to evaluate the energy flux. Unit of keV)
 		"""
-		return romberg(function=self.evaluate,a=emin,b=emax)  ## [count/s/cm2]
+		return romberg(function=self.evaluate, a=emin, b=emax)  ## [count/s/cm2]
 
 
 class PL(SPECFUNC):
@@ -178,13 +194,18 @@ class PL(SPECFUNC):
 		def_norm = 1.
 		def_enorm = 1.
 		
-		self.params = {"alpha" : def_alpha ,"norm" : def_norm ,"enorm" : def_enorm}
+		self.params = {"alpha" : def_alpha , "norm" : def_norm , "enorm" : def_enorm}
 		
 		super().__init__(**kwargs)
 
-	def evaluate(self,energy):
+	def evaluate(self, energy):
 		"""
 		Compute the power law spectrum at a particular energy given the current spectral parameters
+
+		Attributes
+		----------
+		energy : float 
+			Energy to evaluate the spetrum at
 		"""
 
 		flux_value = self.params['norm'] * np.power(energy/self.params['enorm'], self.params['alpha'])
@@ -207,7 +228,7 @@ class CPL(SPECFUNC):
 		Normalization energy
 	"""
 
-	def __init__(self,**kwargs):
+	def __init__(self, **kwargs):
 		self.name = "Cut-off Power Law"
 
 		# Default values
@@ -216,13 +237,18 @@ class CPL(SPECFUNC):
 		def_norm = 1.
 		def_enorm = 1.
 
-		self.params = {"ep" : def_ep,"alpha" : def_alpha, "norm" : def_norm,"enorm" : def_enorm}
+		self.params = {"ep" : def_ep, "alpha" : def_alpha, "norm" : def_norm, "enorm" : def_enorm}
 
 		super().__init__(**kwargs)
 
-	def evaluate(self,energy):
+	def evaluate(self, energy):
 		"""
 		Compute the cut-off power law spectrum at a particular energy given the current spectral parameters
+
+		Attributes
+		----------
+		energy : float 
+			Energy to evaluate the spetrum at
 		"""
 		flux_value = self.params['norm'] * np.power(energy/self.params['enorm'], self.params['alpha']) * np.exp(- energy / self.params['ep'])
 
@@ -241,7 +267,7 @@ class Blackbody(SPECFUNC):
 	norm : float
 		Model normalization
 	"""
-	def __init__(self,**kwargs):
+	def __init__(self, **kwargs):
 		self.name = "Blackbody"
 
 		# Default values
@@ -253,13 +279,18 @@ class Blackbody(SPECFUNC):
 
 		super().__init__(**kwargs)
 
-	def evaluate(self,energy):
+	def evaluate(self, energy):
 		"""
 		Compute the blackbody spectrum at a particular energy
+
+		Attributes
+		----------
+		energy : float 
+			Energy to evaluate the spetrum at
 		"""
 
 		# Initialize the return value
-		flux_value = np.zeros_like(energy,subok=False)
+		flux_value = np.zeros_like(energy, subok=False)
 
 		if hasattr(energy, '__len__'):
 			i = energy < 2e3
@@ -294,7 +325,7 @@ class Band(SPECFUNC):
 	norm : float
 		Model normalization
 	"""
-	def __init__(self,**kwargs):
+	def __init__(self, **kwargs):
 		self.name = "Band"
 
 		# Default values
@@ -308,12 +339,17 @@ class Band(SPECFUNC):
 
 		super().__init__(**kwargs)
 
-	def evaluate(self,energy):
+	def evaluate(self, energy):
 		"""
 		Compute the Band spectrum at a particular energy given the current spectral parameters
+
+		Attributes
+		----------
+		energy : float 
+			Energy to evaluate the spetrum at
 		"""
 		# Initialize the return value
-		flux_value = np.zeros_like(energy,subok=False)
+		flux_value = np.zeros_like(energy, subok=False)
 
 		# Calculate break energy
 		e0 = self.params['ep'] / (self.params['alpha'] - self.params['beta'])
