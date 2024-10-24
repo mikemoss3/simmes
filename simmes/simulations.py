@@ -27,7 +27,7 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 	Method to complete a simulation of a synthetic observation based on the input source frame GRB template and the desired observing conditions
 
 	Attributes:
-	------------------------
+	--------------
 	template_grb : GRB 
 		GRB class object that holds the source frame information of the template GRB
 	synth_grb : GRB 
@@ -104,9 +104,16 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 
 	return synth_grb
 
-def band_rate(spectrum,emin,emax):
+def band_rate(spectrum, emin, emax):
 	"""
 	Method to calculate the rate by taking the sum of the spectrum across a specified energy band
+
+	Attributes:
+	--------------
+	spectrum : np.ndarray with [("RATE",float), ("ENERGY", float)]
+		Array storing the spectrum 
+	emin, emax : float, float
+		Minimum and maximum energy to sum the spectrum over
 	"""
 
 	return np.sum(spectrum['RATE'][np.argmax(spectrum['ENERGY']>=emin):np.argmax(spectrum['ENERGY']>=emax)])
@@ -121,6 +128,13 @@ def apply_mask_weighting(light_curve, imx, imy, ndets):
 		3. Per illuminated detector (partial coding fraction)
 		4. Fraction of detector illuminated (mask correction)
 		5. On axis equivalent (effective area correction for off-axis bursts)
+
+	Attributes:
+	--------------
+	light_curve : np.ndarray with [("RATE", float), ("UNC", float)]
+		light curve array
+	imx, imy : float, float
+		
 	"""
 
 	# From imx and imy, find pcode and the angle of incidence
