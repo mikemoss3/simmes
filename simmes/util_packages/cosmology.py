@@ -16,6 +16,11 @@ import simmes.util_packages.globalconstants as gc
 def lum_dis(z: float):
 	""" 
 	Caclulate luminosity distance for redshift z
+
+	Attributes:
+	----------
+	z : float
+		Redshift to calculate the luminosity distance for
 	"""
 	lum_dis_Mpc = ((1+z)*gc.c/(gc.H0) ) * integrate.quad(lambda zi: 1/np.sqrt( ((gc.omega_m*np.power(1+zi,3) )+gc.omega_lam) ),0,z)[0]
 	lum_dis_cm = lum_dis_Mpc * 3.086e24 # Mpc -> cm
@@ -26,10 +31,13 @@ def k_corr(specfunc, z, emin, emax):
 	Calculates the bolumetric k-correction using a specified function form at a particular redshft. See Bloom, Frail, and Sari 2001.
 	
 	Attributes:
-	func = spectral function
-	params = function parameters
-	z = redshift
-
+	----------
+	func : SPECFUNC
+		The spectrum function to be shifted 
+	z : float
+		The redshift to calculate the k-correction for
+	emin, emax : float, float
+		Defines the observed energy range to calculate the k-correction between
 	""" 
 
 	# Create restframe spectrum by correcting E_peak or temperature by the redshift (if spectral function has a peak energy or temperature)
