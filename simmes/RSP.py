@@ -18,8 +18,19 @@ path_here = Path(__file__).parent
 class RSP(object):
 	"""
 	Response matrix class
+
+	Attributes:
+	----------
+	E_phot_min, E_phot_max : float, float
+		Minimum and maximum photon energy bins, keV
+	num_phot_bins : int
+		Number of photon bins
+	E_chan_min, E_chan_max : float, float
+		Minimum and maximum channel energies, keV
+	num_chans : int
+		Number of instrument channels
 	"""
-	def __init__(self,E_phot_min=1, E_phot_max=10, num_phot_bins=10, E_chan_min=1, E_chan_max=10,num_chans=10):
+	def __init__(self, E_phot_min=1, E_phot_max=10, num_phot_bins=10, E_chan_min=1, E_chan_max=10,num_chans=10):
 		"""
 		RSP class initialization 
 		
@@ -74,8 +85,17 @@ class RSP(object):
 	def deepcopy(self):
 		return copy.deepcopy(self)
 
-	def set_E_phot(self,E_phot_min=0,E_phot_max=500,num_phot_bins=200,verbose=True):
-		""" Class method to set the photon energy axis""" 
+	def set_E_phot(self, E_phot_min=0, E_phot_max=500, num_phot_bins=200, verbose=True):
+		"""
+		Class method to set the photon energy axis
+
+		Attributes:
+		----------
+		E_phot_min, E_phot_max : float, float
+			Minimum and maximum photon energy bins, keV
+		num_phot_bins : int
+			Number of photon bins
+		""" 
 		ENERG_AX = make_en_axis(E_phot_min, E_phot_max, num_phot_bins)
 		self.num_phot_bins = num_phot_bins
 		self.ENERG_LO = ENERG_AX['Elo'] # Incoming photon energy, lower bound
@@ -85,8 +105,19 @@ class RSP(object):
 			print("Response matrix has been reset to zeros.")
 		self.make_empty_resp()
 
-	def set_E_chans(self,E_chan_min=0,E_chan_max=200,num_chans=80,verbose=True):
-		""" Class method to set the photon energy axis""" 
+	def set_E_chans(self, E_chan_min=0, E_chan_max=200, num_chans=80, verbose=True):
+		"""
+		Class method to set the photon energy axis
+
+		Attributes:
+		-----------
+		E_chan_min : float 
+			Minimum channel energy, keV
+		E_chan_max : float
+			Maximum channel energy, keV
+		num_chans : int
+			Number of instrument channels 
+		""" 
 		ECHAN_AX = make_en_axis(E_chan_min, E_chan_max, num_chans)
 		self.num_chans = num_chans
 		self.ECHAN_LO = ECHAN_AX['Elo'] # Instrument energy channel lower bound
@@ -100,6 +131,13 @@ class RSP(object):
 		""" 
 		Create an empty response matrix. 
 		Note: If the shape of the response matrix is changed, the response matrix is reset to zeros.
+
+		Attributes:
+		-----------
+		num_phot_bins : int
+			Number of photon bins
+		num_chans : int
+			Number of instrument channels 
 		"""
 		if num_phot_bins is not None:
 			self.num_phot_bins = num_phot_bins
@@ -127,8 +165,15 @@ class RSP(object):
 				if i==j:
 					self.MATRIX[i,j] = 1
 
-	def overDeltaE(self,alpha=2):
-		""" Decrease as 1/DeltaE^alpha from E_true """
+	def overDeltaE(self, alpha=2):
+		"""
+		Decrease as 1/DeltaE^alpha from E_true 
+
+		Attributes:
+		-----------
+		alpha : float
+			Power law index
+		"""
 		for i in range(self.num_phot_bins):
 			for j in range(self.num_chans):
 				self.MATRIX[i,j] = 1/(1+np.abs(self.ECHAN_MID[j] - self.ENERG_MID[i])**alpha)
@@ -143,8 +188,15 @@ class RSP(object):
 			for j in range(self.num_chans):
 				self.MATRIX[i,j] = dist.pdf(self.ECHAN_MID[j])
 
-	def load_rsp_from_file(self,file_name):
-		""" Load response matrix from file""" 
+	def load_rsp_from_file(self, file_name):
+		"""
+		Load response matrix from file
+
+		Attributes:
+		-----------
+		file_name : str
+			Path to file containing the response file to be loaded 
+		""" 
 		resp_data = fits.getdata(filename=file_name,extname="SPECRESP MATRIX")
 		ebounds_data = fits.getdata(file_name,extname="EBOUNDS")
 		
@@ -181,6 +233,11 @@ class RSP(object):
 	def load_SwiftBAT_resp(self, imx, imy):
 		"""
 		Method to load an (interpolated) Swift/BAT response matrix given the position of the source on the detector plane.
+
+		Attributes:
+		-----------
+		imx, imy : float, float
+			Source position on the detector plane in x and y coordinates
 		"""
 		# Error prevention.
 		inft = 1e-10
@@ -278,9 +335,14 @@ class RSP(object):
 		self.MATRIX = norm * (term1 + term2 + term3 + term4)
 		
 	
-	def fold_spec(self,specfunc):
+	def fold_spec(self, specfunc):
 		"""
 		Method to fold a spectrum through this response matrix
+
+		Attributes:
+		-----------
+		specfunc : SPECFUNC
+			Spectral function to fold with the loaded response matrix
 		"""
 
 		folded_spec = make_folded_spec(specfunc,self)
@@ -294,8 +356,17 @@ class RSP(object):
 # 	"""
 # 	def __init__(self):
 
-def make_en_axis(Emin,Emax,num_en_bins):
-	""" Make energy axis """
+def make_en_axis(Emin, Emax, num_en_bins):
+	""" 
+	Make energy axis 
+
+	Attributes:
+	-----------
+	Emin, Emax : float, float
+		Minimum and maximum energies to make the energy array across
+	num_en_bins : int 
+		Number of bins in the array 
+	"""
 
 	en_axis = np.zeros(shape=num_en_bins,dtype=[("Elo",float),("Emid",float),("Ehi",float)])
 	en_axis['Elo'] = np.logspace(np.log10(Emin),np.log10(Emax),num_en_bins,endpoint=False)
@@ -312,7 +383,7 @@ def make_folded_spec(source_spec_func, rsp):
 	source_spec_func : SPECFUNC
 		Unfolded source spectral function
 	rsp : RSP
-		Response matrix 
+		Response matrix to convolve with
 	"""
 
 	# Initialize folded spectrum 
