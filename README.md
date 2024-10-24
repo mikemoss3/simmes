@@ -21,8 +21,17 @@ simmes/					# Holds the core packages and classes needed to run the code
 ├── bayesian_block.py 	# Defines the Bayesian block method to calculate the duration of a GRB from a supplied light curve
 ├── simulations.py		# Defines all the functions necessary to simulate a GRB prompt emission observation
 ├── unit_tests/ 		# Holds all unit tests
-└── util_packages/		# Holds the support packages and libraries for the main code 
+├── util_packages/		# Holds the support packages and libraries for the main code 
+├──── files-det-ang-dependence/		# Holds files relating incident angle, PCODE, and detector plane positions
+├──── files-swiftBAT-resp-mats/		# Holds response files for Swift/BAT detector, broken into 31 grid positions (see Lien et al 2014)
+├──── cosmology.py 					# Defines functions used for cosmology calculations 
+├──── datatypes.py 					# Defines data structures
+├──── det_ang_dependence.py 		# Defines functions relating incident angle, PCODE, and detector plane positions
+└──── globalconstants.py 			# Defines global constants 
 ```
+
+### Basic Outline:
+To run these simulations, a template GRB will be created using information such as an observed/theoretical light curve and specrtum. The next step is to define the conditions to simulate this burst under, i.e., which redshifts and observing conditions, and the response matrix to be used. Then perform the simulations! Finally, there are various functions available to analyze and visualize the data (e.g., measuring durations with Bayesian blocks or plotting redshift evolution trends).
 
 ### Loading a Template GRB
 First, create a GRB object that will act as a template for our simulations.
@@ -57,7 +66,7 @@ This can be shortened to a single line, like so,
 template_grb.load_specfunc( PL(alpha=-1.,norm=4) )
 ```
 
-Currently, the power law (PL), cut-off power law (CPL), and Band (Band) spectral functions are implemented.
+Currently, the power law (PL), cut-off power law (CPL), and Band (Band) spectral functions are implemented. If you plan to simulate a burst out to higher redshifts, it is recommended to assume a CPL with an observed/typical peak energy so that the peak energy realistically passes through an instrument's energy band as the spectrum is redshifted to lower energies with increasing distance.
 
 [^1]: Light curves and spectral parameters for all Swift/BAT GRBs can be found on the online [Swift/BAT Catalog](https://swift.gsfc.nasa.gov/results/batgrbcat/)
 [^2]: However, the spectral parameters found on the Swift/BAT catalog assume that the normalization energy is 50 keV (see the page 11 of the Third Swift/BAT GRB Catalog, [Lien et al. 2014](https://swift.gsfc.nasa.gov/results/batgrbcat/3rdBATcatalog.pdf))
@@ -116,5 +125,3 @@ Three important keywords should be considered when running `many_simulations()` 
 ```
 sim_results = many_simulations(template_grb, param_list, trials, ret_ave=True, keep_synth_grbs=True)
 ```
-
-### Plotting Simulation Results
