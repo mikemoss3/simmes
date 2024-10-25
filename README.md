@@ -13,21 +13,21 @@ This project allows a user to measure the duration and gamma-ray fluence of simu
 Here are short descriptions of each file and directory in the project:
 ```
 simmes/					# Holds the core packages and classes needed to run the code
-├── GRB.py				# Defines a GRB object to store observed and simulated light curve and spectral information
+├── GRB.py					# Defines a GRB object to store observed and simulated light curve and spectral information
 ├── PLOTS.py			# Defines the class and methods used for plotting simulation results
 ├── RSP.py				# Defines the main class this code uses to store response matrices and the associated methods
-├── SPECFUNC.py			# Defines the all classes related to spectral functions used in this library to represent GRB spectra
-├── analysis.py			# Defines functions to obtain the duration and fluence measurements for many synthetic GRBs
-├── bayesian_block.py 	# Defines the Bayesian block method to calculate the duration of a GRB from a supplied light curve
-├── simulations.py		# Defines all the functions necessary to simulate a GRB prompt emission observation
-├── unit_tests/ 		# Holds all unit tests
-├── util_packages/		# Holds the support packages and libraries for the main code 
-├──── files-det-ang-dependence/		# Holds files relating incident angle, PCODE, and detector plane positions
-├──── files-swiftBAT-resp-mats/		# Holds response files for Swift/BAT detector, broken into 31 grid positions (see Lien et al 2014)
-├──── cosmology.py 					# Defines functions used for cosmology calculations 
-├──── datatypes.py 					# Defines data structures
-├──── det_ang_dependence.py 		# Defines functions relating incident angle, PCODE, and detector plane positions
-└──── globalconstants.py 			# Defines global constants 
+├── SPECFUNC.py				# Defines the all classes related to spectral functions used in this library to represent GRB spectra
+├── analysis.py				# Defines functions to obtain the duration and fluence measurements for many synthetic GRBs
+├── bayesian_block.py 			# Defines the Bayesian block method to calculate the duration of a GRB from a supplied light curve
+├── simulations.py			# Defines all the functions necessary to simulate a GRB prompt emission observation
+├── unit_tests/ 			# Holds all unit tests
+├── util_packages/			# Holds the support packages and libraries for the main code 
+├────── files-det-ang-dependence/		# Holds files relating incident angle, PCODE, and detector plane positions
+├────── files-swiftBAT-resp-mats/		# Holds response files for Swift/BAT detector, broken into 31 grid positions (see Lien et al 2014)
+├────── cosmology.py 			# Defines functions used for cosmology calculations 
+├────── datatypes.py 			# Defines data structures
+├────── det_ang_dependence.py 		# Defines functions relating incident angle, PCODE, and detector plane positions
+└────── globalconstants.py 		# Defines global constants 
 ```
 
 ### Basic Outline:
