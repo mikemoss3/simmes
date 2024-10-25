@@ -8,7 +8,7 @@ except FileNotFoundError:
 
 setup(
     name='simmes',
-    version='0.1.11',
+    version='0.1.12',
     description='GRB measurement simulation packages',
     long_description=long_description,
     long_description_content_type="text/markdown",
