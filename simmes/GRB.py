@@ -126,11 +126,11 @@ class GRB(object):
 			# Otherwise calculate new duration information
 			self.dur_per = dur_per
 			self.ncp_prior = ncp_prior
-			self.duration, self.t_start, self.phot_fluence = bayesian_t_blocks(self,dur_per=dur_per,ncp_prior=ncp_prior)
+			self.duration, self.t_start, self.phot_fluence = bayesian_t_blocks(self, dur_per=dur_per, ncp_prior=ncp_prior)
 
 			return self.duration, self.t_start, self.phot_fluence
 
-	def get_photon_fluence(self,dur_per=90,tmin=None,tmax=None):
+	def get_photon_fluence(self, dur_per=90, tmin=None, tmax=None):
 		"""
 		Method to get the photon fluence in the specified time interval or duration percentage
 
@@ -142,12 +142,18 @@ class GRB(object):
 			Defines the time range to calculate the photon fluence over
 		"""
 		if (tmin is not None) and (tmax is not None):
-			return np.sum(self.light_curve['RATE'][np.argmax(tmin <= self.light_curve['TIME']):np.argmax(self.light_curve['TIME'] >= tmax)]) * self.dt			
+			return np.sum(self.light_curve['RATE'][
+				np.argmax(tmin <= self.light_curve['TIME']):
+				np.argmax(self.light_curve['TIME'] >= tmax)
+				]) * self.dt			
 		else:
 			self.get_duration(dur_per=dur_per)
-			return np.sum(self.light_curve['RATE'][np.argmax(self.t_start <= self.light_curve['TIME']):np.argmax(self.light_curve['TIME'] >= (self.t_start + self.duration))]) * self.dt
+			return np.sum(self.light_curve['RATE'][
+				np.argmax(self.t_start <= self.light_curve['TIME']):
+				np.argmax(self.light_curve['TIME'] >= (self.t_start + self.duration))
+				]) * self.dt
 
-	def get_ave_photon_flux(self,dur_per=90,tmin=None,tmax=None):
+	def get_ave_photon_flux(self, dur_per=90, tmin=None, tmax=None):
 		"""
 		Method to get the average photon flux in the T100 interval
 
@@ -173,7 +179,8 @@ class GRB(object):
 		specfunc : SPECFUNC
 			Spectrum function object
 		intervals : 2-tuple or 2-tuple list
-			Used to indicate the start and stop time of a time-resolved spectrum. If None is given, a time-average spectrum is assumed.
+			Used to indicate the start and stop time of a time-resolved spectrum. 
+			If None is given, a time-average spectrum is assumed.
 		"""
 
 		# Time resolved spectrum
@@ -248,7 +255,7 @@ class GRB(object):
 
 		return spectrum
 
-	def load_light_curve(self, file_name, t_offset=0,rm_trigtime=False,T100_dur=None,T100_start=None,det_area=None):
+	def load_light_curve(self, file_name, t_offset=0, rm_trigtime=False, T100_dur=None, T100_start=None, det_area=None):
 		"""
 		Method to load a light curve from either a .fits or .txt file
 
@@ -271,14 +278,14 @@ class GRB(object):
 		# Check if this is a fits file or a text file 
 		if file_name.endswith(".lc") or file_name.endswith(".fits"):
 			tmp_light_curve = fits.getdata(file_name,ext=1)
-			self.light_curve = np.zeros(shape=len(tmp_light_curve),dtype=[('TIME',float),('RATE',float),('UNC',float)])
+			self.light_curve = np.zeros(shape=len(tmp_light_curve), dtype=[('TIME',float), ('RATE',float), ('UNC',float)])
 			self.light_curve['TIME'] = tmp_light_curve['TIME']
 			if rm_trigtime is True:
 					self.light_curve['TIME']-=fits.getheader(file_name,ext=0)['TRIGTIME']
 			self.light_curve['RATE'] = tmp_light_curve['RATE']
 			self.light_curve['UNC'] = tmp_light_curve['ERROR']
 		elif file_name.endswith(".txt"):
-			self.light_curve = np.genfromtxt(file_name,dtype=[('TIME',float),('RATE',float),('UNC',float)])
+			self.light_curve = np.genfromtxt(file_name, dtype=[('TIME',float), ('RATE',float), ('UNC',float)])
 
 		# Time bin size
 		self.dt = (self.light_curve['TIME'][1] - self.light_curve['TIME'][0])
@@ -336,7 +343,7 @@ class GRB(object):
 		self.light_curve['UNC'][np.argmax(tmin <= self.light_curve['TIME']):np.argmax(self.light_curve['TIME'] >= tmax)] *= 0
 
 
-	def move_to_new_frame(self, z_o, z_p, emin=gc.bol_lum[0],emax=gc.bol_lum[1],rm_bgd_sig=False):
+	def move_to_new_frame(self, z_o, z_p, emin=gc.bol_lum[0], emax=gc.bol_lum[1], rm_bgd_sig=False):
 		"""
 		Method to shift the GRB light curve and spectra from a frame at z_o to a frame at z_p
 
@@ -369,7 +376,7 @@ class GRB(object):
 			new_light_curve[inds] = self.light_curve[inds]
 
 		# Calculate k_correction factor
-		kcorr = k_corr(self.specfunc, z_o, emin, emax)/k_corr(self.specfunc, z_p, emin, emax)
+		kcorr = k_corr(self.specfunc, z_o, emin, emax) / k_corr(self.specfunc, z_p, emin, emax)
 		# Move spectral function to z_p frame by correcting E_peak or temperature by the redshift (if spectral function has a peak energy or temperature)
 		for i, (key, val) in enumerate(self.specfunc.params.items()):
 			if key == "ep":
@@ -404,11 +411,11 @@ class GRB(object):
 		tmp_time_arr = np.arange(tpstart, tpend+bin_size, bin_size)
 
 		# Create an array to store the flux light curve in the z_p frame
-		flux_lc_at_z_p = np.zeros(shape=len(tmp_time_arr),dtype=([("TIME",float),("RATE",float)]))
+		flux_lc_at_z_p = np.zeros(shape=len(tmp_time_arr), dtype=([("TIME",float), ("RATE",float)]))
 		flux_lc_at_z_p['TIME'] = tmp_time_arr
 
 		# Temporary light curve to store z_p frame light curve
-		tmp_light_curve = np.zeros(shape=len(tmp_time_arr),dtype = [("TIME",float),("RATE",float),("UNC",float)])
+		tmp_light_curve = np.zeros(shape=len(tmp_time_arr), dtype=[("TIME",float), ("RATE",float), ("UNC",float)])
 		tmp_light_curve['TIME'] = tmp_time_arr
 
 		# We must correct for time dilation by binning the flux into z_p frame time bins
@@ -426,7 +433,7 @@ class GRB(object):
 
 				# Grab the total sum of the distance corrected flux within these time bins.
 				tmp_light_curve['RATE'][i] = np.sum(self.light_curve['RATE'][argstart:argend])
-				tmp_light_curve['UNC'][i] = np.sum(np.power(self.light_curve['UNC'][argstart:argend],2)) # Add uncertainties in quadrature 
+				tmp_light_curve['UNC'][i] = np.sum(np.power(self.light_curve['UNC'][argstart:argend], 2)) # Add uncertainties in quadrature 
 		else:
 			# z_p > z_o, the light curve must be stretched
 
@@ -452,7 +459,7 @@ class GRB(object):
 					num_new_time_bins = 1
 
 				# For the bins between (argstart:argend) assign the flux value of curr_flux_to_distribute/num_new_time_bins
-				tmp_light_curve['RATE'][argstart:argend] = tmp_light_curve['RATE'][argstart:argend] + np.ones(shape=num_new_time_bins)*(curr_flux_to_distribute/num_new_time_bins)
+				tmp_light_curve['RATE'][argstart:argend] = tmp_light_curve['RATE'][argstart:argend] + np.ones(shape=num_new_time_bins) * (curr_flux_to_distribute/num_new_time_bins)
 				tmp_light_curve['UNC'][argstart:argend] = np.sqrt(tmp_light_curve['UNC'][argstart:argend]**2 + curr_flux_unc_to_distribute**2)
 
 		# Set the light curve to the distance corrected light curve
