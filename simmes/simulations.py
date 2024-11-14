@@ -22,7 +22,7 @@ from simmes.PLOTS import PLOTGRB
 def simulate_observation(synth_grb, template_grb, resp_mat, 
 	imx, imy, ndets, 
 	z_p=0, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
-	time_resolved=False, sim_triggers=False):
+	time_resolved=False, sim_triggers=False, sim_bgd=True):
 	"""
 	Method to complete a simulation of a synthetic observation based on the input source frame GRB template and the desired observing conditions
 
@@ -98,8 +98,9 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 	# Apply mask-weighting approximation to source rate signal 
 	synth_grb.light_curve = apply_mask_weighting(synth_grb.light_curve, imx, imy, ndets) # counts / sec / det
 
-	# Add mask-weighted background rate to either side of mask-weighted source signal
-	synth_grb.light_curve = add_background(synth_grb.light_curve, t_buffer=template_grb.t_buffer, dt = template_grb.dt) # counts / sec / det
+	if sim_bgd == True:
+		# Add mask-weighted background rate to either side of mask-weighted source signal
+		synth_grb.light_curve = add_background(synth_grb.light_curve, t_buffer=template_grb.t_buffer, dt = template_grb.dt) # counts / sec / det
 
 
 	return synth_grb
