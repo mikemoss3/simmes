@@ -30,6 +30,7 @@ class RSP(object):
 	num_chans : int
 		Number of instrument channels
 	"""
+
 	def __init__(self, E_phot_min=1, E_phot_max=10, num_phot_bins=10, E_chan_min=1, E_chan_max=10,num_chans=10):
 		"""
 		RSP class initialization 
@@ -85,6 +86,37 @@ class RSP(object):
 	def deepcopy(self):
 		return copy.deepcopy(self)
 
+	def copy_structure(self, templ_rsp):
+		"""
+		Attributes:
+		----------
+		templ_rsp : RSP
+			RSP object to use copy matrix structure from 
+
+		Returns:
+		--------------
+		None
+
+		"""
+
+		self.num_phot_bins = templ_rsp.num_phot_bins
+		self.num_chans = templ_rsp.num_chans
+
+		self.ENERG_LO = templ_rsp.ENERG_LO
+		self.ENERG_MID = templ_rsp.ENERG_MID
+		self.ENERG_HI = templ_rsp.ENERG_HI
+		
+		self.ECHAN_LO = templ_rsp.ECHAN_LO
+		self.ECHAN_HI = templ_rsp.ECHAN_HI
+		self.ECHAN_MID = templ_rsp.ECHAN_MID
+		
+		self.N_GRP = templ_rsp.N_GRP
+		self.F_CHAN = templ_rsp.F_CHAN
+		self.N_CHAN = templ_rsp.N_CHAN
+
+		self.MATRIX = templ_rsp.MATRIX
+
+
 	def set_E_phot(self, E_phot_min=0, E_phot_max=500, num_phot_bins=200, verbose=True):
 		"""
 		Class method to set the photon energy axis
@@ -95,6 +127,12 @@ class RSP(object):
 			Minimum and maximum photon energy bins, keV
 		num_phot_bins : int
 			Number of photon bins
+		verbose : bool
+			Print completion message 
+
+		Returns:
+		--------------
+		None
 		""" 
 		ENERG_AX = make_en_axis(E_phot_min, E_phot_max, num_phot_bins)
 		self.num_phot_bins = num_phot_bins
@@ -117,6 +155,12 @@ class RSP(object):
 			Maximum channel energy, keV
 		num_chans : int
 			Number of instrument channels 
+		verbose : bool
+			Print completion message 
+
+		Returns:
+		--------------
+		None
 		""" 
 		ECHAN_AX = make_en_axis(E_chan_min, E_chan_max, num_chans)
 		self.num_chans = num_chans
@@ -138,6 +182,10 @@ class RSP(object):
 			Number of photon bins
 		num_chans : int
 			Number of instrument channels 
+
+		Returns:
+		--------------
+		None
 		"""
 		if num_phot_bins is not None:
 			self.num_phot_bins = num_phot_bins
@@ -150,7 +198,6 @@ class RSP(object):
 		self.N_GRP = np.zeros(shape=self.num_phot_bins)
 		self.F_CHAN = np.zeros(shape=self.num_phot_bins)
 		self.N_CHAN = np.zeros(shape=self.num_phot_bins)
-		self.MATRIX = np.zeros(shape=(self.num_phot_bins,self.num_chans) )
 
 		self.ECHAN_LO = np.zeros(shape=self.num_chans)
 		self.ECHAN_HI = np.zeros(shape=self.num_chans)
@@ -196,6 +243,10 @@ class RSP(object):
 		-----------
 		file_name : str
 			Path to file containing the response file to be loaded 
+
+		Returns:
+		--------------
+		None
 		""" 
 		resp_data = fits.getdata(filename=file_name,extname="SPECRESP MATRIX")
 		ebounds_data = fits.getdata(file_name,extname="EBOUNDS")
@@ -238,6 +289,10 @@ class RSP(object):
 		-----------
 		imx, imy : float, float
 			Source position on the detector plane in x and y coordinates
+
+		Returns:
+		--------------
+		None
 		"""
 		# Error prevention.
 		inft = 1e-10
@@ -258,81 +313,93 @@ class RSP(object):
 			return np.sqrt((x-x0)**2 + (y-y0)**2)
 
 		# Load information about detector plane
-		imx_imy_info = np.genfromtxt(path_here.joinpath("util_packages/files-det-ang-dependence/gridnum_imx_imy.txt"),dtype=[("GRIDID","U3"),("imx",float),("imxmin",float),("imxmax",float),("imy",float),("imymin",float),("imymax",float),("thetacenter",float),("pcode",float)])
+		imx_imy_info = np.genfromtxt(path_here.joinpath("util_packages/files-det-ang-dependence/gridnum_imx_imy.txt"),
+														dtype=[("GRIDID","U3"),
+														("imx",float),("imxmin",float),("imxmax",float),
+														("imy",float),("imymin",float),("imymax",float),
+														("thetacenter",float),("pcode",float)])
 
-		# Find the grids that surround the point at imx, imy 
-		# Grid IMX's
-		imx_arr = np.unique(imx_imy_info['imx'])
-		# Grid IMY's
-		imy_arr = np.unique(imx_imy_info['imy'])
+		# If this imx, imy combination is exactly at a grid center, we don't need to interpolate
+		if np.any(imx == imx_imy_info['imx']) and np.any(imy == imx_imy_info['imy']):
+			grid_id = imx_imy_info[ (imx_imy_info['imx']==imx) & (imx_imy_info['imy']==imy) ]['GRIDID']
+			self.load_rsp_from_file(file_name = path_here.joinpath("util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(grid_id)) )
 
-		closest_imx_ind = None
-		closest_imy_ind = None
-		min_dist = 1e10
-		for i in range(len(imx_arr)):
-			for j in range(len(imy_arr)):
-				curr_dist = min_dif(imx, imy, imx_arr[i], imy_arr[j])
-				if curr_dist < min_dist:
-					min_dist = curr_dist
-					closest_imx_ind, closest_imy_ind = i, j
+			# Else, we need to interpolate
+		else:
+			# Find the grids that surround the point at imx, imy 
+			# Grid IMX's
+			imx_arr = np.unique(imx_imy_info['imx'])
+			# Grid IMY's
+			imy_arr = np.unique(imx_imy_info['imy'])
 
-		# Sign for imx
-		xsign = int((imx - imx_arr[closest_imx_ind])/np.abs(imx - imx_arr[closest_imx_ind]))
-		ysign = int((imy - imy_arr[closest_imy_ind])/np.abs(imy - imy_arr[closest_imy_ind]))
+			closest_imx_ind = None
+			closest_imy_ind = None
+			min_dist = 1e10
+			for i in range(len(imx_arr)):
+				for j in range(len(imy_arr)):
+					curr_dist = min_dif(imx, imy, imx_arr[i], imy_arr[j])
+					if curr_dist < min_dist:
+						min_dist = curr_dist
+						closest_imx_ind, closest_imy_ind = i, j
 
-		grid_ids_inds = np.array([
-			(closest_imx_ind, closest_imy_ind),
-			(closest_imx_ind, closest_imy_ind+ysign),
-			(closest_imx_ind+xsign, closest_imy_ind),
-			(closest_imx_ind+xsign, closest_imy_ind+ysign),
-			])
+			# Sign for imx
+			xsign = int((imx - imx_arr[closest_imx_ind])/np.abs(imx - imx_arr[closest_imx_ind]))
+			ysign = int((imy - imy_arr[closest_imy_ind])/np.abs(imy - imy_arr[closest_imy_ind]))
 
-		# Record the GridIDs
-		# If the imx, imy point is beyond the final grid in either the x- or y- direction, 
-		# then an empty response matrix will be used in that direction
-		grid_ids = []
-		for i in range(len(grid_ids_inds)):
-			if (grid_ids_inds[i,0] < 0) or (grid_ids_inds[i,0] >= len(imx_arr)):
-				grid_ids.append(None)
-			elif (grid_ids_inds[i,1] < 0) or (grid_ids_inds[i,1] >= len(imy_arr)):
-				grid_ids.append(None)
-			else:
-				grid_ids.append(find_grid_id(imx_arr[grid_ids_inds[i,0]], imy_arr[grid_ids_inds[i,1]]))
+			grid_ids_inds = np.array([
+				(closest_imx_ind, closest_imy_ind),
+				(closest_imx_ind, closest_imy_ind+ysign),
+				(closest_imx_ind+xsign, closest_imy_ind),
+				(closest_imx_ind+xsign, closest_imy_ind+ysign),
+				])
 
-		# Load the four grids response functions. 
-		grid_rsps = np.empty(shape=4, dtype=RSP)
+			# Record the GridIDs
+			# If the imx, imy point is beyond the final grid in either the x- or y- direction, 
+			# then an empty response matrix will be used in that direction
+			grid_ids = []
+			for i in range(len(grid_ids_inds)):
+				if (grid_ids_inds[i,0] < 0) or (grid_ids_inds[i,0] >= len(imx_arr)):
+					grid_ids.append(None)
+				elif (grid_ids_inds[i,1] < 0) or (grid_ids_inds[i,1] >= len(imy_arr)):
+					grid_ids.append(None)
+				else:
+					grid_ids.append(find_grid_id(imx_arr[grid_ids_inds[i,0]], imy_arr[grid_ids_inds[i,1]]))
 
-		for i in range(len(grid_rsps)):
-			grid_rsps[i] = RSP()
-			if grid_ids[i] == None:
-				grid_rsps[i].num_chans=80
-				grid_rsps[i].num_phot_bins=204
-				grid_rsps[i].make_empty_resp()
-			else:
-				grid_rsps[i].load_rsp_from_file(file_name = path_here.joinpath("util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(grid_ids[i])) )
+			# Load the four grids response functions. 
+			grid_rsps = np.empty(shape=4, dtype=RSP)
 
-		# Initialize response matrix for imx, imy
-		self.load_rsp_from_file(file_name = path_here.joinpath("util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_17.rsp"))
-		
-		# Find surrounding imx, imy box
-		imx1 = imx_arr[closest_imx_ind]
-		try:
-			imx2 = imx_arr[closest_imx_ind+xsign]
-		except:
-			imx2 = imx1+(0.5*xsign)
-		imy1= imy_arr[closest_imy_ind]
-		try:
-			imy2 = imy_arr[closest_imy_ind+ysign]
-		except:
-			imy2 = imy1+(0.35*ysign)
+			use_ind = None # Keeps track of which response to use as a template for the final interpolated matrix
+			for i in range(len(grid_rsps)):
+				if grid_ids[i] == None:
+					grid_rsps[i] = RSP(num_phot_bins=204, num_chans=80)
+					# The actual min and max values of the response matrix axes doesn't matter because they aren't considered later when interpolating
+				else:
+					use_ind = i
+					grid_rsps[i] = RSP()
+					grid_rsps[i].load_rsp_from_file(file_name = path_here.joinpath("util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(grid_ids[i])) )
 
-		# Interpolate four grid response functions to create response at imx, imy
-		norm = (1/(imx2-imx1)/(imy2-imy1))
-		term1 = grid_rsps[0].MATRIX * (imx2 - imx)*(imy2 - imy)
-		term2 = grid_rsps[1].MATRIX * (imx2 - imx)*(imy -  imy1)
-		term3 = grid_rsps[2].MATRIX * (imx - imx1)*(imy2 - imy)
-		term4 = grid_rsps[3].MATRIX * (imx - imx1)*(imy - imy1)
-		self.MATRIX = norm * (term1 + term2 + term3 + term4)
+			# Initialize response matrix for imx, imy
+			self.copy_structure(grid_rsps[use_ind])
+			
+			# Find surrounding imx, imy box
+			imx1 = imx_arr[closest_imx_ind]
+			try:
+				imx2 = imx_arr[closest_imx_ind+xsign]
+			except:
+				imx2 = imx1+(0.5*xsign)
+			imy1= imy_arr[closest_imy_ind]
+			try:
+				imy2 = imy_arr[closest_imy_ind+ysign]
+			except:
+				imy2 = imy1+(0.35*ysign)
+
+			# Interpolate four grid response functions to create response at imx, imy
+			norm = (1/(imx2-imx1)/(imy2-imy1))
+			term1 = grid_rsps[0].MATRIX * (imx2 - imx)*(imy2 - imy)
+			term2 = grid_rsps[1].MATRIX * (imx2 - imx)*(imy -  imy1)
+			term3 = grid_rsps[2].MATRIX * (imx - imx1)*(imy2 - imy)
+			term4 = grid_rsps[3].MATRIX * (imx - imx1)*(imy - imy1)
+			self.MATRIX = norm * (term1 + term2 + term3 + term4)
 		
 	
 	def fold_spec(self, specfunc):
@@ -343,6 +410,11 @@ class RSP(object):
 		-----------
 		specfunc : SPECFUNC
 			Spectral function to fold with the loaded response matrix
+
+		Returns:
+		--------------
+		folded_spec : np.ndarray with [("ENERGY",float),("RATE",float),("UNC",float)]
+			Array holding a folded spectrum
 		"""
 
 		folded_spec = make_folded_spec(specfunc,self)
@@ -366,6 +438,11 @@ def make_en_axis(Emin, Emax, num_en_bins):
 		Minimum and maximum energies to make the energy array across
 	num_en_bins : int 
 		Number of bins in the array 
+
+	Returns:
+	--------------
+	en_axis : np.ndarray with [("Elo",float),("Emid",float),("Ehi",float)])
+		Array storing the energy axis from Emin to Emax
 	"""
 
 	en_axis = np.zeros(shape=num_en_bins,dtype=[("Elo",float),("Emid",float),("Ehi",float)])
@@ -384,6 +461,10 @@ def make_folded_spec(source_spec_func, rsp):
 		Unfolded source spectral function
 	rsp : RSP
 		Response matrix to convolve with
+	Returns:
+	--------------
+	folded_spec : np.ndarray with [("ENERGY",float),("RATE",float),("UNC",float)]
+		Array holding a folded spectrum
 	"""
 
 	# Initialize folded spectrum 
@@ -392,7 +473,8 @@ def make_folded_spec(source_spec_func, rsp):
 	folded_spec['ENERGY'] = rsp.ECHAN_MID
 
 	# Initialize the binned source spectrum
-	# If the source spectrum covers a smaller interval than the response matrix, any energy bin outside of the source spectrum energy range will have a rate equal to zero.
+	# If the source spectrum covers a smaller interval than the response matrix, any energy bin outside of the 
+	# source spectrum energy range will have a rate equal to zero.
 	binned_source_spec = np.zeros(shape=rsp.num_phot_bins,dtype=[("ENERGY",float),("RATE",float)])
 
 	binned_source_spec['ENERGY'] = rsp.ENERG_MID
