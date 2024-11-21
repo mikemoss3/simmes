@@ -14,24 +14,31 @@ def bayesian_t_blocks(light_curve, dur_per=90, ncp_prior=6):
 	Method to extract the duration and photon fluence of a GRB from a supplied light curve using a Bayesian block method. 
 
 	Attributes:
-	---------
+	--------------
 	light_curve : nd.array(dtype=[("TIME", float), ("RATE", float), ("UNC", float)])
 		Array that stores the light curve 
 	dur_per : float
 		Indicates the percentage of the total fluence to be enclosed within the reported duration (i.e., T90 corresponds to dur_per = 90)
 	ncp_prior : int
 		Initial guess at the number of change points used by the Bayesian block algorithm
+
+	Returns:
+	--------------
+	duration : float
+		Total duration found for the event
+	t_start : float
+		Start time found for the event
 	"""
+
+	# custom_bb is a condensed bayesian block algorithm adapted from the astropy function. It's faster but more unsafe!
 
 	# Astropy bayesian block algorithm -- it is much safer to use since it handles exceptions better, however its an order of magnitude
 	try:
-		bin_edges = bayesian_blocks(t=light_curve['TIME'], x=light_curve['RATE'], sigma=light_curve['UNC'], fitness="measures", ncp_prior=ncp_prior) # Find the T90 and the fluence 
-		# bin_edges = custom_bb(light_curve=light_curve, ncp_prior=ncp_prior)
+		# bin_edges = bayesian_blocks(t=light_curve['TIME'], x=light_curve['RATE'], sigma=light_curve['UNC'], fitness="measures", ncp_prior=ncp_prior) # Find the T90 and the fluence 
+		bin_edges = custom_bb(light_curve=light_curve, ncp_prior=ncp_prior)
 	except:
-		bin_edges = bayesian_blocks(t=light_curve['TIME'], x=light_curve['RATE'], sigma=light_curve['ERROR'], fitness="measures", ncp_prior=ncp_prior) # Find the T90 and the fluence 
-		# bin_edges = custom_bb(light_curve=light_curve, ncp_prior=ncp_prior)
-	# condensed bayesian block algorithm taken from astropy (faster but more unsafe)
-	# bin_edges = custom_bb(light_curve, ncp_prior)
+		# bin_edges = bayesian_blocks(t=light_curve['TIME'], x=light_curve['RATE'], sigma=light_curve['ERROR'], fitness="measures", ncp_prior=ncp_prior) # Find the T90 and the fluence 
+		bin_edges = custom_bb(light_curve=light_curve, ncp_prior=ncp_prior)
 
 	# Check if any GTI (good time intervals) were found
 	if len(bin_edges) <= 3:
@@ -65,6 +72,23 @@ def bayesian_t_blocks(light_curve, dur_per=90, ncp_prior=6):
 	return duration, t_start
 
 def custom_bb(light_curve, ncp_prior):
+	"""
+	A Bayesian block algorithm adapted from the astropy.bayesian_blocks function.
+	This version is faster than the astropy version because it removes some of the error safety and handling as well as only uses
+	the ncp_prior parameter for the algorithm
+
+	Attributes:
+	--------------
+	light_curve : nd.array(dtype=[("TIME", float), ("RATE", float)])
+		Initial guess at the number of change points used by the Bayesian block algorithm
+	ncp_prior : int
+		Initial guess at the number of change points used by the Bayesian block algorithm
+
+	Returns:
+	--------------
+	bin_edges : array of floats 
+		Array of bin edges for bracketing the significant time bins of the event
+	"""
 
 	t=light_curve['TIME']
 	x=light_curve['RATE']
@@ -120,5 +144,16 @@ def custom_bb(light_curve, ncp_prior):
 
 
 def fitness(a_k, b_k):
-	# eq. 41 from Scargle 2013
+	"""
+	The fitness function of the Bayesian block algorithm, i.e., Eq. 41 from Scargle 2013
+
+	Attributes:
+	--------------
+	a_k : float
+	b_k : float
+
+	Returns:
+	--------------
+	value : float
+	"""
 	return (b_k * b_k) / (4 * a_k)
