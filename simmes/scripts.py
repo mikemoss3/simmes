@@ -61,8 +61,7 @@ def find_z_threshold(grb, z_guess, threshold,
 
 	tolerance_factor = (1/trials) * tolerance
 
-	z_samples = []  # Keep track of redshift selections 
-	z_samples.append(z_guess)
+	z_samples = [z_guess]  # Keep track of redshift selections 
 	# Calculate the distance from the threshold value for this redshift 
 	det_rat_curr = _calc_dist(grb, z_guess, imx, imy, ndets, trials, threshold)
 	# Initialize the difference between the current and previous distance calculations.
