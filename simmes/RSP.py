@@ -7,6 +7,7 @@ Defines the main class this code uses to store response matrices and the associa
 
 import numpy as np
 from astropy.io import fits
+import fitsio
 from scipy.stats import norm
 import copy 
 from pathlib import Path
@@ -248,8 +249,8 @@ class RSP(object):
 		--------------
 		None
 		""" 
-		resp_data = fits.getdata(filename=file_name,extname="SPECRESP MATRIX")
-		ebounds_data = fits.getdata(file_name,extname="EBOUNDS")
+		resp_data = fitsio.read(filename=file_name,ext=1)
+		ebounds_data = fitsio.read(file_name,ext=2)
 		
 		self.num_phot_bins = len(resp_data)
 		self.num_chans = len(ebounds_data)
@@ -281,6 +282,50 @@ class RSP(object):
 			self.ECHAN_HI[i] = ebounds_data[i][2] # Instrument energy channel upper bound
 			self.ECHAN_MID[i] = (self.ECHAN_LO[i]+self.ECHAN_HI[i])/2 # Instrument energy channel center
 
+	def _load_swift_bat_rsp_from_file(self, file_name):
+		"""
+		Load a Swift/BAT response matrix from file, this has hard coded key words
+
+		Attributes:
+		--------------
+		file_name : str
+			Path to file containing the response file to be loaded 
+
+		Returns:
+		--------------
+		None
+		""" 
+		resp_data = fitsio.read(filename=file_name,ext=1)
+		ebounds_data = fitsio.read(file_name,ext=2)
+		
+		self.num_phot_bins = len(resp_data)
+		self.num_chans = len(ebounds_data)
+
+		self.ENERG_LO = np.zeros(shape=self.num_phot_bins)
+		self.ENERG_HI = np.zeros(shape=self.num_phot_bins)
+		self.ENERG_MID = np.zeros(shape=self.num_phot_bins)
+		self.N_GRP = np.zeros(shape=self.num_phot_bins)
+		self.F_CHAN = np.zeros(shape=self.num_phot_bins)
+		self.N_CHAN = np.zeros(shape=self.num_phot_bins)
+		self.MATRIX = np.zeros(shape=(self.num_phot_bins,self.num_chans) )
+
+		self.ECHAN_LO = np.zeros(shape=self.num_chans)
+		self.ECHAN_HI = np.zeros(shape=self.num_chans)
+		self.ECHAN_MID = np.zeros(shape=self.num_chans)
+
+		self.ENERG_LO = resp_data["ENERG_LO"] # Incoming photon energy, lower bound
+		self.ENERG_HI =  resp_data["ENERG_HI"] # Incoming photon energy, upper bound
+		self.ENERG_MID =  (self.ENERG_LO+self.ENERG_HI)/2 # Incoming photon energy, bin center
+		self.N_GRP = resp_data["N_GRP"] # The number of 'channel subsets' for for the energy bin
+		self.F_CHAN = resp_data["F_CHAN"] # The channel number of the start of each "channel subset" for the energy bin
+		self.N_CHAN = resp_data["N_CHAN"] # The number of channels within each "channel subset" for the energy bin
+		self.MATRIX = resp_data["MATRIX"] # Contains all the response probability values for each
+		# 										'channel subset' corresponding to the energy bin for a given row
+
+		self.ECHAN_LO = ebounds_data["E_MIN"] # Instrument energy channel lower bound
+		self.ECHAN_HI = ebounds_data["E_MAX"] # Instrument energy channel upper bound
+		self.ECHAN_MID = (self.ECHAN_LO+self.ECHAN_HI)/2 # Instrument energy channel center
+
 	def load_SwiftBAT_resp(self, imx, imy):
 		"""
 		Method to load an (interpolated) Swift/BAT response matrix given the position of the source on the detector plane.
@@ -294,10 +339,10 @@ class RSP(object):
 		--------------
 		None
 		"""
-		# Error prevention.
-		inft = 1e-10
-		imx+=inft
-		imy+=inft
+		# # Error prevention.
+		# inft = 1e-10
+		# imx+=inft
+		# imy+=inft
 
 		# If the imx, imy is off of the detector plane, we can just return an empty response matrix.
 		gridid_test = find_grid_id(imx, imy)
@@ -321,8 +366,8 @@ class RSP(object):
 
 		# If this imx, imy combination is exactly at a grid center, we don't need to interpolate
 		if np.any(imx == imx_imy_info['imx']) and np.any(imy == imx_imy_info['imy']):
-			grid_id = imx_imy_info[ (imx_imy_info['imx']==imx) & (imx_imy_info['imy']==imy) ]['GRIDID']
-			self.load_rsp_from_file(file_name = path_here.joinpath("util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(grid_id)) )
+			grid_id = imx_imy_info[ (imx_imy_info['imx']==imx) & (imx_imy_info['imy']==imy) ]['GRIDID'][0]
+			self._load_swift_bat_rsp_from_file(file_name = path_here.joinpath("util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(grid_id)) )
 
 			# Else, we need to interpolate
 		else:
@@ -376,7 +421,7 @@ class RSP(object):
 				else:
 					use_ind = i
 					grid_rsps[i] = RSP()
-					grid_rsps[i].load_rsp_from_file(file_name = path_here.joinpath("util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(grid_ids[i])) )
+					grid_rsps[i]._load_swift_bat_rsp_from_file(file_name = path_here.joinpath("util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(grid_ids[i])) )
 
 			# Initialize response matrix for imx, imy
 			self.copy_structure(grid_rsps[use_ind])

@@ -284,7 +284,7 @@ def rand_background_variance(size=1):
 	return variance
 
 def many_simulations(template_grb, param_list, trials, 
-	dur_per = 90, ndet_max=32768, 
+	resp_mat = None, dur_per = 90, ndet_max=32768, 
 	time_resolved=False, sim_triggers=False, out_file_name = None, ret_ave = False, keep_synth_grbs=False, verbose=False):
 	"""
 	Method to perform multiple simulations for each combination of input parameters 
@@ -324,18 +324,27 @@ def many_simulations(template_grb, param_list, trials,
 	if verbose is True:
 		print("Tot number of param combinations for GRB {} = {} ".format( template_grb.grbname ,len(param_list)) )
 
-	# Simulate an observation for each parameter combination
-	# Make a Response Matrix object
-	resp_mat = RSP()
+	
+	# Initialize a Response Matrix object if none was given
+	if resp_mat is None:
+		resp_mat = RSP()
 
+	# Simulate an observation for each parameter combination
 	for i in range(len(param_list)):
 		if verbose is True:
 			print("Param combination {}/{}:\n\tz = {}\n\timx, imy = {},{}\n\tndets={}".format(i+1, len(param_list), 
 																							param_list[i][0], param_list[i][1], 
 																							param_list[i][2], param_list[i][3]))
 	
-		# Load Swift BAT response based on the IMX, IMY position on the detector plane 
-		resp_mat.load_SwiftBAT_resp(param_list[i][1], param_list[i][2])
+		# Load Swift/BAT response matrix
+		try:
+			# If the imx, imy values have changed from the previous parameter combination, a new response file should be generated.
+			if (param_list[i][1] == param_list[i-1][1]) & (param_list[i][2] == param_list[i-1][2]):
+				# Load Swift BAT response based on the IMX, IMY position on the detector plane 
+				resp_mat.load_SwiftBAT_resp(param_list[i][1], param_list[i][2])
+		except:
+			# This was the first parameter list entry 
+			resp_mat.load_SwiftBAT_resp(param_list[i][1], param_list[i][2])
 		
 		for j in range(trials):
 			# if verbose is True:

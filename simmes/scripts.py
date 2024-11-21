@@ -6,8 +6,9 @@ This package defines useful scripts which perform calculations based on the simm
 """
 
 import numpy as np
-from simmes.simulations import many_simulations
 from scipy.stats import halfnorm
+from simmes.simulations import many_simulations
+from simmes.RSP import RSP
 
 def find_z_threshold(grb, z_guess, threshold, 
 	imx, imy, ndets, 
@@ -94,7 +95,8 @@ def find_z_threshold(grb, z_guess, threshold,
 
 def _calc_dist(grb, z, imx, imy, ndets, trials, threshold):
 	param_list = np.array([[z, imx, imy, ndets]])  # Make param list
-	sim_results = many_simulations(grb, param_list, trials)  # Perform simulations of burst at this redshift
+	resp_mat = RSP() # Initialize a response matrix object 
+	sim_results = many_simulations(grb, param_list, trials, resp_mat=resp_mat)  # Perform simulations of burst at this redshift
 	det_ratio = len( sim_results[ sim_results['DURATION']>0 ] ) / trials  # Calculate number of successful detections
 
 	return det_ratio
