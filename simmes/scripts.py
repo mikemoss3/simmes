@@ -124,7 +124,10 @@ def find_z_threshold(grb, threshold,
 		if (np.abs(params.difference) <= tolerance_factor) and (det_rat_curr>0):
 			flag = False
 
-	return z_th, z_th_samples
+	if track_z is True:
+		return z_th, z_th_samples
+	else:
+		return z_th
 
 def _bisection(z_th, params):
 	"""
