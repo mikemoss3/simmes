@@ -10,6 +10,13 @@ from scipy.stats import halfnorm
 from simmes.simulations import many_simulations
 from simmes.RSP import RSP
 
+class Params(object):
+	"""
+	Object to hold parameters of the search algorithm
+	"""
+	def __init__():
+		difference = None
+
 def find_z_threshold(grb, threshold, 
 	imx, imy, ndets, 
 	trials = 20, tolerance=1,
@@ -76,7 +83,7 @@ def find_z_threshold(grb, threshold,
 		z_hi = z_max
 		z_th = (z_hi + z_lo)/2
 
-		params = (difference, z_lo, z_hi)
+		params = Params()
 		method = _bisection
 	elif search_method == "Guassian":
 		if z_guess is None:
@@ -84,7 +91,7 @@ def find_z_threshold(grb, threshold,
 		diff_prev = 0
 		z_th = z_guess
 
-		params = (difference)
+		params = Params()
 		method = _half_gaussian
 
 	# Calculate the distance from the threshold value for the initial redshift 
@@ -93,12 +100,12 @@ def find_z_threshold(grb, threshold,
 								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 								time_resolved=time_resolved, sim_triggers=sim_triggers)
 	# Initial difference between the current and desired detection ratio.
-	difference = det_rat_curr - threshold  # Must be between -1 and 1
+	params.difference = det_rat_curr - threshold  # Must be between -1 and 1
 
 	flag = True
 	while flag:
 		# Update redshift guess (and parameter values)
-		z_th = method(z_th, *params)
+		z_th, params = method(z_th, params)
 
 		if z_th <= 0: z_th = 1e-3  # Make sure z > 0
 		if track_z is True: z_th_samples.append(z_th)  # If indicated, track new redshift guess
@@ -109,15 +116,15 @@ def find_z_threshold(grb, threshold,
 									ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 									time_resolved=time_resolved, sim_triggers=sim_triggers)
 		# Calculate difference from threshold for this redshift 
-		difference = det_rat_curr - threshold
+		params.difference = det_rat_curr - threshold
 
 		# If the current difference from the desired detection threshold is within the accepted tolerance (and above zero), then we've found our redshift
-		if (np.abs(difference) <= tolerance_factor) and (det_rat_curr>0):
+		if (np.abs(params.difference) <= tolerance_factor) and (det_rat_curr>0):
 			flag = False
 
 	return z_th, z_th_samples
 
-def _bisection(z_th, difference, z_lo, z_hi):
+def _bisection(z_th, params):
 	"""
 	Use a bisection method to determine a new redshift. The difference between the current and the 
 	desired detection ratios determines which bisection segment to use and how to update the bounds.
@@ -139,16 +146,16 @@ def _bisection(z_th, difference, z_lo, z_hi):
 		Updated lower and upper bounds of redshift range
 	"""
 
-	if difference > 0:
-		z_lo = z_th
-		z_th = (z_hi + z_lo)/2
-	if difference < 0:
-		z_hi = z_th
-		z_th = (z_hi + z_lo)/2
+	if params.difference > 0:
+		params.z_lo = z_th
+		z_th = (params.z_hi + params.z_lo)/2
+	if params.difference < 0:
+		params.z_hi = z_th
+		z_th = (params.z_hi + params.z_lo)/2
 
-	return z_th, z_lo, z_hi
+	return z_th, params
 
-def _half_gaussian(z_th, difference):
+def _half_gaussian(z_th, params):
 	"""
 	Use a half-Gaussian distribution to determine the next redshift. The mean of the distribution 
 	is the current redshift guess. The standard deviation of the distribution 
@@ -168,10 +175,9 @@ def _half_gaussian(z_th, difference):
 	"""
 
 	# Select new redshift using a half-normal distribution in the direction required to match the threshold
-	z_th = (difference/np.abs(difference))*halfnorm(loc=z_th, scale=np.abs(difference)).rvs(size=1)[0]
+	z_th = (params.difference/np.abs(params.difference))*halfnorm(loc=z_th, scale=np.abs(params.difference)).rvs(size=1)[0]
 	
-	return z_th
-
+	return z_th, params
 
 
 def _calc_det_rat(grb, z, threshold, trials,
