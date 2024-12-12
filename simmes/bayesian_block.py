@@ -1,6 +1,6 @@
 """
 Author: Mike Moss
-Contact: mikejmoss3@gmail.com	
+Contact: mikejmoss3@gmail.com   
 
 Defines the Bayesian block method to calculate the duration of a GRB from a supplied light curve
 
@@ -42,7 +42,7 @@ def bayesian_t_blocks(light_curve, dur_per=90, ncp_prior=6):
 
 	# Check if any GTI (good time intervals) were found
 	if len(bin_edges) <= 3:
-		# If true, then no GTI's were found		
+		# If true, then no GTI's were found     
 		return 0., 0.
 	else:
 		# Calculate total duration and start time 
@@ -94,9 +94,11 @@ def custom_bb(light_curve, ncp_prior):
 	x=light_curve['RATE']
 	sigma=light_curve['UNC']
 
+	# compute values needed for computation
 	ak_raw = np.ones_like(x) / sigma**2
 	bk_raw = x / sigma**2
 
+	# create length-(N + 1) array of cell edges
 	edges = np.concatenate([t[:1], 0.5 * (t[1:] + t[:-1]), t[-1:]])
 
 	# arrays to store the best configuration
@@ -107,11 +109,31 @@ def custom_bb(light_curve, ncp_prior):
 	# ----------------------------------------------------------------
 	# Start with first data cell; add one cell at each iteration
 	# ----------------------------------------------------------------
+	### Stripped down astropy implementation
+	# for R in range(N):
+	#	# a_k: eq. 31
+	#	a_k = 0.5 * np.cumsum(ak_raw[: (R + 1)][::-1])[::-1]
+
+	#	# b_k: eq. 32
+	#	b_k = -np.cumsum(bk_raw[: (R + 1)][::-1])[::-1]
+
+	#	# evaluate fitness function
+	#	fit_vec = fitness(a_k, b_k)
+
+	#	A_R = fit_vec - ncp_prior
+	#	A_R[1:] += best[:R]
+
+	#	i_max = np.argmax(A_R)
+	#	last[R] = i_max
+	#	best[R] = A_R[i_max]
+
+	### Even more stripped down astropy implementations
 	a_k = 0.5 * np.cumsum(ak_raw)  # a_k: eq. 31
 	b_k = np.cumsum(bk_raw)  # b_k: eq. 32
 	fit_vec = fitness(a_k, b_k)  # Evaluate fitness function, log(L^k_max) eq. 41
 	for R in range(N):
-		A_R = fit_vec[:R+1]
+		A_R = fit_vec[:R+1] - ncp_prior
+		A_R[1:] += best[:R]
 
 		i_max = np.argmax(A_R)  # Find max likelihood
 		last[R] = i_max  # Record max likelihood index
@@ -124,13 +146,13 @@ def custom_bb(light_curve, ncp_prior):
 	i_cp = N
 	ind = N
 	while i_cp > 0:
-	    i_cp -= 1
-	    change_points[i_cp] = ind
-	    if ind == 0:
-	        break
-	    ind = last[ind - 1]
+		i_cp -= 1
+		change_points[i_cp] = ind
+		if ind == 0:
+			break
+		ind = last[ind - 1]
 	if i_cp == 0:
-	    change_points[i_cp] = 0
+		change_points[i_cp] = 0
 	change_points = change_points[i_cp:]
 
 	return edges[change_points]
