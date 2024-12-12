@@ -35,7 +35,7 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 		GRB class object that will hold the simulated light curve
 	resp_mat : RSP
 		Response matrix to convolve the template spectrum with. If no response matrix is given, a Swift/BAT response matrix is assumed from the given imx, imy
-	imx, imy : 	float, float 
+	imx, imy : float, float 
 		The x and y position of the GRB on the detector plane
 	ndets : int
 		Number of detectors enabled during the synthetic observation 
