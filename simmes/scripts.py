@@ -16,6 +16,8 @@ class Params(object):
 	"""
 	def __init__(self):
 		difference = None
+		z_lo = None
+		z_hi = None
 
 def find_z_threshold(grb, threshold, 
 	imx, imy, ndets, 
