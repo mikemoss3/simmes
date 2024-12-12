@@ -45,8 +45,12 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 		Maximum number of detectors on the detector plane (for Swift/BAT ndet_max = 32,768)
 	band_rate_min, band_rate_max : float, float
 		Minimum and maximum of the energy band over which to calculate source photon flux
+	time_resolved : boolean
+		Whether or not to use time resolved spectra (held by the GRB object)
 	sim_triggers : boolean
 		Whether or not to simulate the Swift/BAT trigger algorithms or not
+	sim_bgd : boolean
+		Whether or not a background variance should be added to light curves during simulations
 
 	Returns:
 	--------------
@@ -284,8 +288,9 @@ def rand_background_variance(size=1):
 	return variance
 
 def many_simulations(template_grb, param_list, trials, 
-	resp_mat = None, dur_per = 90, ndet_max=32768, 
-	time_resolved=False, sim_triggers=False, out_file_name = None, ret_ave = False, keep_synth_grbs=False, verbose=False):
+	resp_mat = None, dur_per = 90, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
+	time_resolved=False, sim_triggers=False, sim_bgd = True,
+	out_file_name = None, ret_ave = False, keep_synth_grbs=False, verbose=False):
 	"""
 	Method to perform multiple simulations for each combination of input parameters 
 
@@ -301,10 +306,22 @@ def many_simulations(template_grb, param_list, trials,
 		Duration percentage to find using Bayesian blocks, i.e., dur_pur = 90 returns the T_90 of the burst
 	ndet_max : int
 		Maximum number of detectors on the detector plane (for Swift/BAT ndet_max = 32,768)
+	band_rate_min, band_rate_max : float, float
+		Minimum and maximum of the energy band over which to calculate source photon flux
+	time_resolved : boolean
+		Whether or not to use time resolved spectra (held by the GRB object)
 	sim_triggers : boolean
 		Whether or not to simulate the Swift/BAT trigger algorithms or not
+	sim_bgd : boolean
+		Whether or not a background variance should be added to light curves during simulations
 	out_file_name : string
-		File name of .txt file to write the simulation result out to. 
+		If given, a file will with a file-path name "out_file_name" be written that will contain the simulation the results. 
+	ret_ave : boolean
+		Whether or not to return average simulation result values, instead of all simulation results
+	keep_synth_grbs : boolean
+		Whether or not to keep an example simulated GRB for each unique parameter combination
+	verbose : boolean
+		Whether or not to print code activity
 
 	Returns:
 	--------------
@@ -355,8 +372,9 @@ def many_simulations(template_grb, param_list, trials,
 			sim_results[["z", "imx", "imy", "ndets"]][sim_result_ind] = (param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3])
 
 			simulate_observation(synth_grb = synth_grb, template_grb=template_grb,resp_mat=resp_mat, z_p=param_list[i][0], 
-								imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], ndet_max=ndet_max, 
-								time_resolved = time_resolved, sim_triggers=sim_triggers)
+								imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], 
+								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
+								time_resolved = time_resolved, sim_triggers=sim_triggers, sim_bgd=sim_bgd)
 
 			sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
 		
