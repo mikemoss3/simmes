@@ -73,10 +73,6 @@ def find_z_threshold(grb, threshold,
 	tolerance_factor = (1/trials) * tolerance  # Calculate tolerance factor
 
 	z_th = z_guess  # Initialize current redshift 
-	difference = 0
-	if track_z is True:
-		z_th_samples = [z_guess]  # Keep track of redshift selections 
-
 	if search_method == "Bisection":
 		if (z_min==None) or (z_max==None):
 			print("If Bisection search algorithm is selected, initial redshift bounds (z_min and z_max) must be given.")
@@ -95,6 +91,8 @@ def find_z_threshold(grb, threshold,
 
 		params.difference = 0
 		z_th = z_guess
+
+	if track_z is True: z_th_samples = [z_th]  # Keep track of redshift selections 
 
 	# Calculate the distance from the threshold value for the initial redshift 
 	det_rat_curr = _calc_det_rat(grb, z_th, threshold, trials, 
