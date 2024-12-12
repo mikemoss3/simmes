@@ -81,20 +81,20 @@ def find_z_threshold(grb, threshold,
 		if (z_min==None) or (z_max==None):
 			print("If Bisection search algorithm is selected, initial redshift bounds (z_min and z_max) must be given.")
 			return None, None 
-		z_lo = z_min
-		z_hi = z_max
-		z_th = (z_hi + z_lo)/2
-
 		params = Params()
 		method = _bisection
+
+		params.z_lo = z_min
+		params.z_hi = z_max
+		z_th = (params.z_hi + params.z_lo)/2
 	elif search_method == "Guassian":
 		if z_guess is None:
 			print("If Gaussian search algorithm is selected, initial redshift guess must be given.")
-		diff_prev = 0
-		z_th = z_guess
-
 		params = Params()
 		method = _half_gaussian
+
+		params.difference = 0
+		z_th = z_guess
 
 	# Calculate the distance from the threshold value for the initial redshift 
 	det_rat_curr = _calc_det_rat(grb, z_th, threshold, trials, 
