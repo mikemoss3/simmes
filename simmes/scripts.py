@@ -14,7 +14,7 @@ class Params(object):
 	"""
 	Object to hold parameters of the search algorithm
 	"""
-	def __init__():
+	def __init__(self):
 		difference = None
 
 def find_z_threshold(grb, threshold, 
