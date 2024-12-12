@@ -14,7 +14,7 @@ def find_z_threshold(grb, z_guess, threshold,
 	imx, imy, ndets, 
 	trials = 20, tolerance=1,
 	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
-	time_resolved=False, sim_triggers=False):
+	time_resolved=False, sim_triggers=False, track_z=False):
 	"""
 	Method used to estimate the highest redshift a given GRB could be observed
 	with a detection rate equal to `threshold` (within a given tolerance).
@@ -59,7 +59,10 @@ def find_z_threshold(grb, z_guess, threshold,
 
 	tolerance_factor = (1/trials) * tolerance
 
-	z_samples = [z_guess]  # Keep track of redshift selections 
+	z_curr = z_guess # Initialize current redshift 
+	if track_z is True:
+		z_samples = [z_guess]  # Keep track of redshift selections 
+
 	# Calculate the distance from the threshold value for this redshift 
 	det_rat_curr = _calc_det_rat(grb, z_guess, threshold, trials, 
 								imx, imy, ndets,  
@@ -75,18 +78,17 @@ def find_z_threshold(grb, z_guess, threshold,
 		diff_prev = diff_curr
 
 		# Select new redshift using a half-normal distribution in the direction required to match the threshold
-		z_curr = z_samples[-1] + (diff_prev/np.abs(diff_prev))*halfnorm(loc=0, scale=np.abs(diff_prev)).rvs(size=1)[0]
-		# Make sure z > 0
-		if z_curr <= 0:
-			z_curr = 1e-3
+		z_curr += (diff_prev/np.abs(diff_prev))*halfnorm(loc=0, scale=np.abs(diff_prev)).rvs(size=1)[0]
+		
+		if z_curr <= 0: z_curr = 1e-3  # Make sure z > 0
+		if track_z is True: z_samples.append(z_curr)  # If indicated, track new redshift guess
 
-		z_samples.append(z_curr)
-
-		# Calculate distance from threshold for this redshift 
+		# Calculate detection ratio for the current redshift guess
 		det_rat_curr = _calc_det_rat(grb, z_curr, threshold, trials, 
 									imx, imy, ndets, 
 									ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 									time_resolved=time_resolved, sim_triggers=sim_triggers)
+		# Calculate distance from threshold for this redshift 
 		diff_curr = det_rat_curr - threshold
 
 		if (np.abs(diff_curr) <= tolerance_factor) and (det_rat_curr>0):
@@ -101,7 +103,7 @@ def _calc_det_rat(grb, z, threshold, trials,
 	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
 	time_resolved=False, sim_triggers=False):
 	"""
-	Calculate ratio of successful detections vs the number of simulations performed, i.e., the detection ratio
+	Calculates the ratio of successful detections vs the number of simulations performed, i.e., the detection ratio
 
 	Attributes:
 	------------------------
@@ -111,7 +113,7 @@ def _calc_det_rat(grb, z, threshold, trials,
 		An initial starting point for the Monte-Carlo algorithm
 	threshold : float
 		The threshold of successful detections to total trials desired by the user
-	imx, imy : 	float, float 
+	imx, imy : float, float 
 		The x and y position of the GRB on the detector plane
 	ndets : int
 		Number of detectors enabled during the synthetic observation 
@@ -128,11 +130,8 @@ def _calc_det_rat(grb, z, threshold, trials,
 
 	Returns:
 	------------------------
-	z_max : float
-		The maximum redshift that the given GRB can be detected above a specified threshold 
-		for the specified observing conditions.
-	z_samples : ndarray (float)
-		Array of redshifts found by the algorithm
+	det_ratio : float
+		The ratio of successful detections to the number of simulations performed
 	"""
 	param_list = np.array([[z, imx, imy, ndets]])  # Make param list
 	resp_mat = RSP()  # Initialize a response matrix object 
