@@ -57,11 +57,11 @@ def find_z_threshold(grb, z_guess, threshold,
 		print("Threshold must be between [0, 1].")
 		return 0, None
 
-	tolerance_factor = (1/trials) * tolerance
+	tolerance_factor = (1/trials) * tolerance  # Calculate tolerance factor
 
-	z_curr = z_guess # Initialize current redshift 
+	z_th = z_guess  # Initialize current redshift 
 	if track_z is True:
-		z_samples = [z_guess]  # Keep track of redshift selections 
+		z_th_samples = [z_guess]  # Keep track of redshift selections 
 
 	# Calculate the distance from the threshold value for this redshift 
 	det_rat_curr = _calc_det_rat(grb, z_guess, threshold, trials, 
@@ -78,25 +78,24 @@ def find_z_threshold(grb, z_guess, threshold,
 		diff_prev = diff_curr
 
 		# Select new redshift using a half-normal distribution in the direction required to match the threshold
-		z_curr += (diff_prev/np.abs(diff_prev))*halfnorm(loc=0, scale=np.abs(diff_prev)).rvs(size=1)[0]
+		z_th += (diff_prev/np.abs(diff_prev))*halfnorm(loc=0, scale=np.abs(diff_prev)).rvs(size=1)[0]
 		
-		if z_curr <= 0: z_curr = 1e-3  # Make sure z > 0
-		if track_z is True: z_samples.append(z_curr)  # If indicated, track new redshift guess
+		if z_th <= 0: z_th = 1e-3  # Make sure z > 0
+		if track_z is True: z_th_samples.append(z_th)  # If indicated, track new redshift guess
 
 		# Calculate detection ratio for the current redshift guess
-		det_rat_curr = _calc_det_rat(grb, z_curr, threshold, trials, 
+		det_rat_curr = _calc_det_rat(grb, z_th, threshold, trials, 
 									imx, imy, ndets, 
 									ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 									time_resolved=time_resolved, sim_triggers=sim_triggers)
-		# Calculate distance from threshold for this redshift 
+		# Calculate difference from threshold for this redshift 
 		diff_curr = det_rat_curr - threshold
 
+		# If the current difference from the desired detection threshold is within the accepted tolerance (and above zero), then we've found our redshift
 		if (np.abs(diff_curr) <= tolerance_factor) and (det_rat_curr>0):
 			flag = False
 
-	z_max = z_curr
-
-	return z_max, z_samples
+	return z_th, z_th_samples
 
 def _calc_det_rat(grb, z, threshold, trials,
 	imx, imy, ndets,  
