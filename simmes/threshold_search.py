@@ -7,7 +7,9 @@ This package defines useful scripts which perform calculations based on the simm
 
 import numpy as np
 from scipy.stats import halfnorm
-import multiprocessing
+import multiprocessing as mp
+from functools import partial
+
 from simmes.simulations import many_simulations
 from simmes.RSP import RSP
 from simmes.GRB import GRB
@@ -21,9 +23,8 @@ class Params(object):
 		self.z_lo = None
 		self.z_hi = None
 
-def find_z_threshold(grb, threshold, 
-	imx, imy, ndets,
-	searches, trials, tolerance=1, multiproc=True,
+def find_z_threshold(grb, threshold, imx, imy, ndets,searches, trials,
+	tolerance=1, multiproc=True, workers= mp.cpu_count(),
 	search_method = "Bisection",
 	z_min = None, z_max = None, z_guess = None,
 	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
@@ -70,17 +71,25 @@ def find_z_threshold(grb, threshold,
 	"""
 
 	if multiproc:
+
 		template_grbs = np.zeros(shape=searches, dtype=GRB)
 		for i in range(searches):
 			template_grbs[i] = grb.copy() # Create template GRB copies
 
-		pool = multiprocessing.Pool()
-		results = pool.map(_find_z_threshold_work, template_grbs)
+		# Set up partial function with positional arguments 
+		parfunc = partial(_find_z_threshold_work, threshold=threshold, imx=imx, imy=imx, ndets=ndets,
+								trials = trials, tolerance=tolerance, search_method = search_method,
+								z_min = z_min, z_max = z_max, z_guess = z_guess,
+								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
+								time_resolved=time_resolved, sim_triggers=sim_triggers, track_z=track_z)
+		# Set up pool a workers
+		pool = mp.Pool(workers)
+
+		results = pool.map(parfunc, template_grbs) 
 	
 	else:
 		results = _find_z_threshold_work(grb, threshold=threshold, imx=imx, imy=imx, ndets=ndets,
-								trials = trials, tolerance=tolerance,
-								search_method = search_method,
+								trials = trials, tolerance=tolerance, search_method = search_method,
 								z_min = z_min, z_max = z_max, z_guess = z_guess,
 								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 								time_resolved=time_resolved, sim_triggers=sim_triggers, track_z=track_z)
@@ -89,10 +98,8 @@ def find_z_threshold(grb, threshold,
 	return results
 
 
-def _find_z_threshold_work(grb, threshold, 
-	imx, imy, ndets, 
-	trials = 20, tolerance=1,
-	search_method = "Bisection",
+def _find_z_threshold_work(grb, threshold, imx, imy, ndets, 
+	trials = 20, tolerance=1, search_method = "Bisection",
 	z_min = None, z_max = None, z_guess = None,
 	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
 	time_resolved=False, sim_triggers=False, track_z=False):
