@@ -228,3 +228,57 @@ def _calc_det_rat(grb, z, threshold, trials,
 	return det_ratio
 
 
+def save_results(fn, results):
+	"""
+	Method to save threshold search results to a text file.
+
+	Attributes:
+	------------------------
+	fn : string
+		File name
+	results : list of (float, list) tuples 
+
+	Returns:
+	------------------------
+	None
+	"""
+
+	file = open(fn, "a")
+	for i in range(len(results)):
+		file.write("{}, {}\n".format(results[i][0], results[i][1]) )
+	file.close()
+
+def load_results(fn):
+	"""
+	Method to load threshold search results from a text file.
+
+	Attributes:
+	------------------------
+	fn : string
+		File name with results
+
+	Returns:
+	------------------------
+	results : np.ndarray with [ (float), (np.ndarray( [float] )) ]
+	"""
+
+	## To return results in the same structure they are given in from multiprocessing.pool.map
+	# file = open(fn, "r")
+	# lines = file.readlines()	
+	# results = []
+	# for line in lines:
+	# 	line = line[:-2]  # Remove end line character
+	# 	split_line = line.split(", [")
+	# 	results.append( (float(split_line[0]), [float(ele) for ele in split_line[1].split(", ")] ) )
+	# return results
+
+	## To return as a numpy structured array
+	file = open(fn, "r")
+	lines = file.readlines()	
+	results = np.zeros(shape=len(lines), dtype=[("zth",float), ("ztrack",object)])
+	for i in range(len(lines)):
+		line = lines[i][:-2]  # Remove end line character
+		split_line = line.split(", [")
+		results["zth"][i] = float(split_line[0])
+		results["ztrack"][i] = np.array([float(ele) for ele in split_line[1].split(", ")])
+	return results
