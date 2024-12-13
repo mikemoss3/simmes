@@ -6,6 +6,7 @@ This package defines useful scripts which perform calculations based on the simm
 """
 
 import numpy as np
+from numpy.random import seed
 from scipy.stats import halfnorm
 import multiprocessing as mp
 from functools import partial
@@ -74,7 +75,7 @@ def find_z_threshold(grb, threshold, imx, imy, ndets,searches, trials,
 
 		template_grbs = np.zeros(shape=searches, dtype=GRB)
 		for i in range(searches):
-			template_grbs[i] = grb.copy() # Create template GRB copies
+			template_grbs[i] = grb.deepcopy() # Create template GRB copies
 
 		# Set up partial function with positional arguments 
 		parfunc = partial(_find_z_threshold_work, threshold=threshold, imx=imx, imy=imx, ndets=ndets,
@@ -82,11 +83,14 @@ def find_z_threshold(grb, threshold, imx, imy, ndets,searches, trials,
 								z_min = z_min, z_max = z_max, z_guess = z_guess,
 								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 								time_resolved=time_resolved, sim_triggers=sim_triggers, track_z=track_z)
-		# Set up pool a workers
-		pool = mp.Pool(workers)
+		# Set up a pool of workers
+		pool = mp.Pool(processes=workers, initializer=_init_process_seed)
+		# Run threshold searches
+		results = pool.map(parfunc, template_grbs)
 
-		results = pool.map(parfunc, template_grbs) 
-	
+		# Place all result arrays into single structured array with format [("zth", float), ("ztrack", float)]
+		results = np.hstack(results)
+
 	else:
 		results = _find_z_threshold_work(grb, threshold=threshold, imx=imx, imy=imx, ndets=ndets,
 								trials = trials, tolerance=tolerance, search_method = search_method,
@@ -97,6 +101,9 @@ def find_z_threshold(grb, threshold, imx, imy, ndets,searches, trials,
 
 	return results
 
+def _init_process_seed():
+	# Instance a random seed
+	seed()
 
 def _find_z_threshold_work(grb, threshold, imx, imy, ndets, 
 	trials = 20, tolerance=1, search_method = "Bisection",
@@ -143,6 +150,7 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 	z_samples : ndarray (float)
 		Array of redshifts found by the algorithm
 	"""
+
 	if (threshold > 1) or (threshold < 0):
 		print("Threshold must be between [0, 1].")
 		return 0, None
@@ -160,7 +168,7 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 		params.z_lo = z_min
 		params.z_hi = z_max
 		z_th = (params.z_hi + params.z_lo)/2
-	elif search_method == "Guassian":
+	elif search_method == "Gaussian":
 		if z_guess is None:
 			print("If Gaussian search algorithm is selected, initial redshift guess must be given.")
 		params = Params()
@@ -168,6 +176,8 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 
 		params.difference = 0
 		z_th = z_guess
+	else:
+		print("Please search methods: Bisection or Gaussian.")
 
 	if track_z is True: z_th_samples = [z_th]  # Keep track of redshift selections 
 
@@ -183,6 +193,7 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 	while flag:
 		# Update redshift guess (and parameter values)
 		z_th, params = method(z_th, params)
+		print(z_th)
 
 		if z_th <= 0: z_th = 1e-3  # Make sure z > 0
 		if track_z is True: z_th_samples.append(z_th)  # If indicated, track new redshift guess
@@ -200,9 +211,9 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 			flag = False
 
 	if track_z is True:
-		return z_th, z_th_samples
+		return np.array( (z_th, np.array(z_th_samples)), dtype=[("zth",float), ("ztrack",object)] )
 	else:
-		return z_th
+		return np.array( z_th, dtype=[("zth",float)] )
 
 def _bisection(z_th, params):
 	"""
@@ -303,59 +314,3 @@ def _calc_det_rat(grb, z, threshold, trials,
 	det_ratio = len( sim_results[ sim_results['DURATION']>0 ] ) / trials  # Calculate ratio of successful detections
 
 	return det_ratio
-
-
-def save_results(fn, results):
-	"""
-	Method to save threshold search results to a text file.
-
-	Attributes:
-	------------------------
-	fn : string
-		File name
-	results : list of (float, list) tuples 
-
-	Returns:
-	------------------------
-	None
-	"""
-
-	file = open(fn, "a")
-	for i in range(len(results)):
-		file.write("{}, {}\n".format(results[i][0], results[i][1]) )
-	file.close()
-
-def load_results(fn):
-	"""
-	Method to load threshold search results from a text file.
-
-	Attributes:
-	------------------------
-	fn : string
-		File name with results
-
-	Returns:
-	------------------------
-	results : np.ndarray with [ (float), (np.ndarray( [float] )) ]
-	"""
-
-	## To return results in the same structure they are given in from multiprocessing.pool.map
-	# file = open(fn, "r")
-	# lines = file.readlines()	
-	# results = []
-	# for line in lines:
-	# 	line = line[:-2]  # Remove end line character
-	# 	split_line = line.split(", [")
-	# 	results.append( (float(split_line[0]), [float(ele) for ele in split_line[1].split(", ")] ) )
-	# return results
-
-	## To return as a numpy structured array
-	file = open(fn, "r")
-	lines = file.readlines()	
-	results = np.zeros(shape=len(lines), dtype=[("zth",float), ("ztrack",object)])
-	for i in range(len(lines)):
-		line = lines[i][:-2]  # Remove end line character
-		split_line = line.split(", [")
-		results["zth"][i] = float(split_line[0])
-		results["ztrack"][i] = np.array([float(ele) for ele in split_line[1].split(", ")])
-	return results
