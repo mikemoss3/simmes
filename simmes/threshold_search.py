@@ -7,8 +7,10 @@ This package defines useful scripts which perform calculations based on the simm
 
 import numpy as np
 from scipy.stats import halfnorm
+import multiprocessing
 from simmes.simulations import many_simulations
 from simmes.RSP import RSP
+from simmes.GRB import GRB
 
 class Params(object):
 	"""
@@ -20,6 +22,74 @@ class Params(object):
 		self.z_hi = None
 
 def find_z_threshold(grb, threshold, 
+	imx, imy, ndets,
+	searches, trials, tolerance=1, multiproc=True,
+	search_method = "Bisection",
+	z_min = None, z_max = None, z_guess = None,
+	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
+	time_resolved=False, sim_triggers=False, track_z=False):
+	"""
+	Method used to estimate the highest redshift a given GRB could be observed
+	with a detection rate equal to `threshold` (within a given tolerance).
+	The GRB is simulated at the sampled redshift a number of `trials` times. 
+
+	Attributes:
+	------------------------
+	grb : GRB 
+		GRB class object that holds the template GRB
+	z_guess : float
+		An initial starting point for the Monte-Carlo algorithm
+	threshold : float
+		The threshold of successful detections to total trials desired by the user
+	imx, imy : 	float, float 
+		The x and y position of the GRB on the detector plane
+	ndets : int
+		Number of detectors enabled during the synthetic observation 
+	trials : int 
+		Number of trials to perform at each sampled redshift 
+	tolerance : float
+		Determines the accuracy range of the method. Accuracy = tolerance * (1/trials), 
+		since 1/trials determines the minimum accuracy.
+	search_method : string
+		Options include "Gaussian" and "Bisection".
+		Indicates which search algorithm to use to find the threshold redshift
+	ndet_max : int
+		Maximum number of detectors on the detector plane (for Swift/BAT ndet_max = 32,768)
+	band_rate_min, band_rate_max : float, float
+		Minimum and maximum of the energy band over which to calculate source photon flux
+	sim_triggers : boolean
+		Whether or not to simulate the Swift/BAT trigger algorithms or not
+
+	Returns:
+	------------------------
+	z_max : float
+		The maximum redshift that the given GRB can be detected above a specified threshold 
+		for the specified observing conditions.
+	z_samples : ndarray (float)
+		Array of redshifts found by the algorithm
+	"""
+
+	if multiproc:
+		template_grbs = np.zeros(shape=searches, dtype=GRB)
+		for i in range(searches):
+			template_grbs[i] = grb.copy() # Create template GRB copies
+
+		pool = multiprocessing.Pool()
+		results = pool.map(_find_z_threshold_work, template_grbs)
+	
+	else:
+		results = _find_z_threshold_work(grb, threshold=threshold, imx=imx, imy=imx, ndets=ndets,
+								trials = trials, tolerance=tolerance,
+								search_method = search_method,
+								z_min = z_min, z_max = z_max, z_guess = z_guess,
+								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
+								time_resolved=time_resolved, sim_triggers=sim_triggers, track_z=track_z)
+
+
+	return results
+
+
+def _find_z_threshold_work(grb, threshold, 
 	imx, imy, ndets, 
 	trials = 20, tolerance=1,
 	search_method = "Bisection",
