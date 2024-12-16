@@ -20,6 +20,7 @@ class PARAMS(object):
 	Object to hold parameters of the search algorithm
 	"""
 	def __init__(self):
+		self.z_th = None
 		self.difference = None
 		self.z_lo = None
 		self.z_hi = None
@@ -176,48 +177,48 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 	params.z_hi = z_max
 	if search_method == "Bisection":
 		method = _bisection
-		z_th = (params.z_hi + params.z_lo)/2
+		params.z_th = (params.z_hi + params.z_lo)/2
 	elif search_method == "Gaussian":
 		method = _half_gaussian
 		params.difference = 0
-		z_th = np.random.uniform(low=params.z_lo, high=params.z_hi)
+		params.z_th = np.random.uniform(low=params.z_lo, high=params.z_hi)
 
-	if track_z is True: z_th_samples = [z_th]  # Keep track of redshift selections 
+	if track_z is True: z_th_samples = [params.z_th]  # Keep track of redshift selections 
 
 	# Calculate the distance from the threshold value for the initial redshift 
-	det_rat_curr = _calc_det_rat(grb, z_th, threshold, trials, 
+	det_ratio = _calc_det_rat(grb, params.z_th, threshold, trials, 
 								imx, imy, ndets,  
 								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 								time_resolved=time_resolved, sim_triggers=sim_triggers)
 	# Initial difference between the current and desired detection ratio.
-	params.difference = det_rat_curr - threshold  # Must be between -1 and 1
+	params.difference = det_ratio - threshold  # Must be between -1 and 1
 
 	flag = True
 	while flag:
 		# Update redshift guess (and parameter values)
-		z_th, params = method(z_th, params)
+		method(params)
 
-		if z_th <= 0: z_th = 1e-3  # Make sure z > 0
-		if track_z is True: z_th_samples.append(z_th)  # If indicated, track new redshift guess
+		if params.z_th <= 0: params.z_th = 1e-3  # Make sure z > 0
+		if track_z is True: z_th_samples.append(params.z_th)  # If indicated, track new redshift guess
 
 		# Calculate detection ratio for the current redshift guess
-		det_rat_curr = _calc_det_rat(grb, z_th, threshold, trials, 
+		det_ratio = _calc_det_rat(grb, params.z_th, threshold, trials, 
 									imx, imy, ndets, 
 									ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 									time_resolved=time_resolved, sim_triggers=sim_triggers)
 		# Calculate difference from threshold for this redshift 
-		params.difference = det_rat_curr - threshold
+		params.difference = det_ratio - threshold
 
 		# If the current difference from the desired detection threshold is within the accepted tolerance (and above zero), then we've found our redshift
-		if (np.abs(params.difference) <= tolerance_factor) and (det_rat_curr>0):
+		if (np.abs(params.difference) <= tolerance_factor) and (det_ratio>0):
 			flag = False
 
 	if track_z is True:
-		return np.array( (z_th, np.array(z_th_samples)), dtype=[("zth",float), ("ztrack",object)] )
+		return np.array( (params.z_th, np.array(z_th_samples)), dtype=[("zth",float), ("ztrack",object)] )
 	else:
-		return np.array( z_th, dtype=[("zth",float)] )
+		return np.array( params.z_th, dtype=[("zth",float)] )
 
-def _bisection(z_th, params):
+def _bisection(params):
 	"""
 	Use a bisection method to determine a new redshift. The difference between the current and the 
 	desired detection ratios determines which bisection segment to use and how to update the bounds.
@@ -240,15 +241,13 @@ def _bisection(z_th, params):
 	"""
 
 	if params.difference > 0:
-		params.z_lo = z_th
-		z_th = (params.z_hi + params.z_lo)/2
+		params.z_lo = params.z_th
+		params.z_th = (params.z_hi + params.z_lo)/2
 	if params.difference < 0:
-		params.z_hi = z_th
-		z_th = (params.z_hi + params.z_lo)/2
+		params.z_hi = params.z_th
+		params.z_th = (params.z_hi + params.z_lo)/2
 
-	return z_th, params
-
-def _half_gaussian(z_th, params):
+def _half_gaussian(params):
 	"""
 	Use a half-Gaussian distribution to determine the next redshift. The mean of the distribution 
 	is the current redshift guess. The standard deviation of the distribution 
@@ -268,10 +267,7 @@ def _half_gaussian(z_th, params):
 	"""
 
 	# Select new redshift using a half-normal distribution in the direction required to match the threshold
-	z_th = z_th + (params.difference/np.abs(params.difference))*halfnorm(loc=0, scale=np.abs(params.difference)).rvs(size=1)[0]
-	
-	return z_th, params
-
+	z_th = params.z_th + np.sign(params.difference)*halfnorm(loc=0, scale=np.abs(params.difference)/2).rvs(size=1)[0]
 
 def _calc_det_rat(grb, z, threshold, trials,
 	imx, imy, ndets,  
