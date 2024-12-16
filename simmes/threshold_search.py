@@ -15,7 +15,7 @@ from simmes.simulations import many_simulations
 from simmes.RSP import RSP
 from simmes.GRB import GRB
 
-class Params(object):
+class PARAMS(object):
 	"""
 	Object to hold parameters of the search algorithm
 	"""
@@ -24,8 +24,8 @@ class Params(object):
 		self.z_lo = None
 		self.z_hi = None
 
-def find_z_threshold(grb, threshold, imx, imy, ndets,searches, trials,
-	tolerance=1, multiproc=True, workers= mp.cpu_count(),
+def find_z_threshold(grb, threshold, imx, imy, ndets, trials, searches=1,
+	tolerance=1, multiproc=True, workers = mp.cpu_count(),
 	search_method = "Bisection",
 	z_min = None, z_max = None, z_guess = None,
 	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
@@ -162,7 +162,7 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 		if (z_min==None) or (z_max==None):
 			print("If Bisection search algorithm is selected, initial redshift bounds (z_min and z_max) must be given.")
 			return None, None 
-		params = Params()
+		params = PARAMS()
 		method = _bisection
 
 		params.z_lo = z_min
@@ -171,7 +171,7 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 	elif search_method == "Gaussian":
 		if z_guess is None:
 			print("If Gaussian search algorithm is selected, initial redshift guess must be given.")
-		params = Params()
+		params = PARAMS()
 		method = _half_gaussian
 
 		params.difference = 0
@@ -265,7 +265,7 @@ def _half_gaussian(z_th, params):
 	"""
 
 	# Select new redshift using a half-normal distribution in the direction required to match the threshold
-	z_th = (params.difference/np.abs(params.difference))*halfnorm(loc=z_th, scale=np.abs(params.difference)).rvs(size=1)[0]
+	z_th = z_th + (params.difference/np.abs(params.difference))*halfnorm(loc=0, scale=np.abs(params.difference)).rvs(size=1)[0]
 	
 	return z_th, params
 
