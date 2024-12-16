@@ -71,6 +71,20 @@ def find_z_threshold(grb, threshold, imx, imy, ndets, trials, searches=1,
 		Array of redshifts found by the algorithm
 	"""
 
+	if (threshold > 1) or (threshold < 0):
+		print("Threshold must be between [0, 1].")
+		return 0, None
+
+	if search_method == "Bisection":
+		if (z_min==None) or (z_max==None):
+			print("If Bisection search algorithm is selected, initial redshift bounds (z_min and z_max) must be given.")
+			return None, None 
+	elif search_method == "Gaussian":
+		if z_guess is None:
+			print("If Gaussian search algorithm is selected, initial redshift guess must be given.")
+	else:
+		print("Please search methods: Bisection or Gaussian.")
+
 	if multiproc:
 
 		template_grbs = np.zeros(shape=searches, dtype=GRB)
@@ -151,17 +165,10 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 		Array of redshifts found by the algorithm
 	"""
 
-	if (threshold > 1) or (threshold < 0):
-		print("Threshold must be between [0, 1].")
-		return 0, None
-
 	tolerance_factor = (1/trials) * tolerance  # Calculate tolerance factor
 
 	z_th = z_guess  # Initialize current redshift 
 	if search_method == "Bisection":
-		if (z_min==None) or (z_max==None):
-			print("If Bisection search algorithm is selected, initial redshift bounds (z_min and z_max) must be given.")
-			return None, None 
 		params = PARAMS()
 		method = _bisection
 
@@ -169,15 +176,11 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 		params.z_hi = z_max
 		z_th = (params.z_hi + params.z_lo)/2
 	elif search_method == "Gaussian":
-		if z_guess is None:
-			print("If Gaussian search algorithm is selected, initial redshift guess must be given.")
 		params = PARAMS()
 		method = _half_gaussian
 
 		params.difference = 0
 		z_th = z_guess
-	else:
-		print("Please search methods: Bisection or Gaussian.")
 
 	if track_z is True: z_th_samples = [z_th]  # Keep track of redshift selections 
 
