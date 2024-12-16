@@ -24,10 +24,10 @@ class PARAMS(object):
 		self.z_lo = None
 		self.z_hi = None
 
-def find_z_threshold(grb, threshold, imx, imy, ndets, trials, searches=1,
+def find_z_threshold(grb, threshold, imx, imy, ndets, trials, 
+	z_min, z_max, searches=1,
 	tolerance=1, multiproc=True, workers = mp.cpu_count(),
 	search_method = "Bisection",
-	z_min = None, z_max = None, z_guess = None,
 	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
 	time_resolved=False, sim_triggers=False, track_z=False):
 	"""
@@ -39,8 +39,6 @@ def find_z_threshold(grb, threshold, imx, imy, ndets, trials, searches=1,
 	------------------------
 	grb : GRB 
 		GRB class object that holds the template GRB
-	z_guess : float
-		An initial starting point for the Monte-Carlo algorithm
 	threshold : float
 		The threshold of successful detections to total trials desired by the user
 	imx, imy : 	float, float 
@@ -49,6 +47,14 @@ def find_z_threshold(grb, threshold, imx, imy, ndets, trials, searches=1,
 		Number of detectors enabled during the synthetic observation 
 	trials : int 
 		Number of trials to perform at each sampled redshift 
+	z_min, z_max : float, float
+		Bounds of the redshift search
+	searches : int
+		Number of searches for the threshold redshift to be performed
+	multiproc : boolean
+		Indicates if multiprocessing should be used
+	workers : int 
+		Number of workers to use to use during a multiprocessing run
 	tolerance : float
 		Determines the accuracy range of the method. Accuracy = tolerance * (1/trials), 
 		since 1/trials determines the minimum accuracy.
@@ -75,15 +81,13 @@ def find_z_threshold(grb, threshold, imx, imy, ndets, trials, searches=1,
 		print("Threshold must be between [0, 1].")
 		return 0, None
 
-	if search_method == "Bisection":
-		if (z_min==None) or (z_max==None):
-			print("If Bisection search algorithm is selected, initial redshift bounds (z_min and z_max) must be given.")
-			return None, None 
-	elif search_method == "Gaussian":
-		if z_guess is None:
-			print("If Gaussian search algorithm is selected, initial redshift guess must be given.")
-	else:
+	if (z_min==None) or (z_max==None):
+		print("Please supply redshift bounds for the search algorithm.")
+		return None, None
+	algorithms = np.array(["Bisection", "Gaussian"])
+	if search_method not in algorithms:
 		print("Please search methods: Bisection or Gaussian.")
+		return None, None
 
 	if multiproc:
 
@@ -93,8 +97,8 @@ def find_z_threshold(grb, threshold, imx, imy, ndets, trials, searches=1,
 
 		# Set up partial function with positional arguments 
 		parfunc = partial(_find_z_threshold_work, threshold=threshold, imx=imx, imy=imx, ndets=ndets,
-								trials = trials, tolerance=tolerance, search_method = search_method,
-								z_min = z_min, z_max = z_max, z_guess = z_guess,
+								trials = trials, z_min = z_min, z_max = z_max,
+								tolerance=tolerance, search_method = search_method,
 								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 								time_resolved=time_resolved, sim_triggers=sim_triggers, track_z=track_z)
 		# Set up a pool of workers
@@ -107,8 +111,8 @@ def find_z_threshold(grb, threshold, imx, imy, ndets, trials, searches=1,
 
 	else:
 		results = _find_z_threshold_work(grb, threshold=threshold, imx=imx, imy=imx, ndets=ndets,
-								trials = trials, tolerance=tolerance, search_method = search_method,
-								z_min = z_min, z_max = z_max, z_guess = z_guess,
+								trials = trials, z_min = z_min, z_max = z_max,
+								tolerance=tolerance, search_method = search_method,
 								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 								time_resolved=time_resolved, sim_triggers=sim_triggers, track_z=track_z)
 
@@ -120,8 +124,7 @@ def _init_process_seed():
 	seed()
 
 def _find_z_threshold_work(grb, threshold, imx, imy, ndets, 
-	trials = 20, tolerance=1, search_method = "Bisection",
-	z_min = None, z_max = None, z_guess = None,
+	trials, z_min, z_max, tolerance=1, search_method = "Bisection",
 	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
 	time_resolved=False, sim_triggers=False, track_z=False):
 	"""
@@ -133,8 +136,6 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 	------------------------
 	grb : GRB 
 		GRB class object that holds the template GRB
-	z_guess : float
-		An initial starting point for the Monte-Carlo algorithm
 	threshold : float
 		The threshold of successful detections to total trials desired by the user
 	imx, imy : 	float, float 
@@ -143,6 +144,8 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 		Number of detectors enabled during the synthetic observation 
 	trials : int 
 		Number of trials to perform at each sampled redshift 
+	z_min, z_max : float, float
+		Bounds of the redshift search
 	tolerance : float
 		Determines the accuracy range of the method. Accuracy = tolerance * (1/trials), 
 		since 1/trials determines the minimum accuracy.
@@ -167,20 +170,17 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 
 	tolerance_factor = (1/trials) * tolerance  # Calculate tolerance factor
 
-	z_th = z_guess  # Initialize current redshift 
+	# Set up parameter storage and search method 
+	params = PARAMS()
+	params.z_lo = z_min
+	params.z_hi = z_max
 	if search_method == "Bisection":
-		params = PARAMS()
 		method = _bisection
-
-		params.z_lo = z_min
-		params.z_hi = z_max
 		z_th = (params.z_hi + params.z_lo)/2
 	elif search_method == "Gaussian":
-		params = PARAMS()
 		method = _half_gaussian
-
 		params.difference = 0
-		z_th = z_guess
+		z_th = np.random.uniform(low=params.z_lo, high=params.z_hi)
 
 	if track_z is True: z_th_samples = [z_th]  # Keep track of redshift selections 
 
