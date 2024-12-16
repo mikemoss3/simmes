@@ -193,7 +193,6 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 	while flag:
 		# Update redshift guess (and parameter values)
 		z_th, params = method(z_th, params)
-		print(z_th)
 
 		if z_th <= 0: z_th = 1e-3  # Make sure z > 0
 		if track_z is True: z_th_samples.append(z_th)  # If indicated, track new redshift guess
