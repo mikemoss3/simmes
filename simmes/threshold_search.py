@@ -209,6 +209,11 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 		# Calculate difference from threshold for this redshift 
 		params.difference = det_ratio - threshold
 
+		# The below check is used to make sure the search doesn't get stuck searching in a region of no detections (i.e., too-high redshifts)
+		if det_ratio < threshold:
+			params.z_th /= 2
+			z_th_samples.append(params.z_th)
+
 		# If the current difference from the desired detection threshold is within the accepted tolerance (and above zero), then we've found our redshift
 		if (np.abs(params.difference) <= tolerance_factor) and (det_ratio>0):
 			flag = False
