@@ -30,7 +30,7 @@ class PARAMS(object):
 	def check_sign(self):
 		if(np.sign(self.difference) == -1):
 			self.iter +=1
-			if (self.iter == 5):
+			if (self.iter == 10):
 				self.z_th/=2
 				self.iter = 0
 		else:
@@ -221,12 +221,6 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 		# Calculate difference from threshold for this redshift 
 		params.difference = det_ratio - threshold
 
-		# The below check is used to make sure the search doesn't get stuck searching in a region of no detections (i.e., too-high redshifts)
-		# if det_ratio < threshold:
-		# 	params.z_th /= 2
-		# 	z_th_samples.append(params.z_th)
-		params.check_sign()
-
 		# If the current difference from the desired detection threshold is within the accepted tolerance (and above zero), then we've found our redshift
 		if (np.abs(params.difference) <= tolerance_factor) and (det_ratio>0):
 			flag = False
@@ -286,6 +280,9 @@ def _half_gaussian(params):
 
 	# Select new redshift using a half-normal distribution in the direction required to match the threshold
 	params.z_th = params.z_th + np.sign(params.difference)*halfnorm(loc=0, scale=np.abs(params.difference)/2).rvs(size=1)[0]
+
+	# The below check is used to make sure the search doesn't get stuck searching in a region of no detections (i.e., too-high redshifts)
+	params.check_sign()
 
 def _calc_det_rat(grb, z, threshold, trials,
 	imx, imy, ndets,  
