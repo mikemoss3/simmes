@@ -24,6 +24,18 @@ class PARAMS(object):
 		self.difference = None
 		self.z_lo = None
 		self.z_hi = None
+		self.iter = 0
+		self.sign = 1
+
+	def check_sign(self):
+		if(np.sign(self.difference) == -1):
+			self.iter +=1
+			if (self.iter == 5):
+				self.z_th/=2
+				self.iter = 0
+		else:
+			self.iter = 0
+
 
 def find_z_threshold(grb, threshold, imx, imy, ndets, trials, 
 	z_min, z_max, searches=1,
@@ -80,15 +92,15 @@ def find_z_threshold(grb, threshold, imx, imy, ndets, trials,
 
 	if (threshold > 1) or (threshold < 0):
 		print("Threshold must be between [0, 1].")
-		return 0, None
+		return None
 
 	if (z_min==None) or (z_max==None):
 		print("Please supply redshift bounds for the search algorithm.")
-		return None, None
+		return None
 	algorithms = np.array(["Bisection", "Gaussian"])
 	if search_method not in algorithms:
 		print("Please search methods: Bisection or Gaussian.")
-		return None, None
+		return None
 
 	if multiproc:
 
@@ -210,9 +222,10 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 		params.difference = det_ratio - threshold
 
 		# The below check is used to make sure the search doesn't get stuck searching in a region of no detections (i.e., too-high redshifts)
-		if det_ratio < threshold:
-			params.z_th /= 2
-			z_th_samples.append(params.z_th)
+		# if det_ratio < threshold:
+		# 	params.z_th /= 2
+		# 	z_th_samples.append(params.z_th)
+		params.check_sign()
 
 		# If the current difference from the desired detection threshold is within the accepted tolerance (and above zero), then we've found our redshift
 		if (np.abs(params.difference) <= tolerance_factor) and (det_ratio>0):
@@ -272,7 +285,7 @@ def _half_gaussian(params):
 	"""
 
 	# Select new redshift using a half-normal distribution in the direction required to match the threshold
-	z_th = params.z_th + np.sign(params.difference)*halfnorm(loc=0, scale=np.abs(params.difference)/2).rvs(size=1)[0]
+	params.z_th = params.z_th + np.sign(params.difference)*halfnorm(loc=0, scale=np.abs(params.difference)/2).rvs(size=1)[0]
 
 def _calc_det_rat(grb, z, threshold, trials,
 	imx, imy, ndets,  
