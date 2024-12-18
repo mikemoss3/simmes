@@ -88,7 +88,7 @@ class PARAMS(object):
 			self.flag = False
 
 def find_z_threshold(grb, threshold, imx, imy, ndets, trials, 
-	z_min, z_max, searches=1, num_sigma=3, z_tolerance=0.05,
+	z_min, z_max, searches=1, num_sigma=1, z_tolerance=0.05,
 	multiproc=True, workers = mp.cpu_count(),
 	search_method = "Bisection",
 	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
@@ -186,7 +186,7 @@ def _init_process_seed():
 	seed()
 
 def _find_z_threshold_work(grb, threshold, imx, imy, ndets, 
-	trials, z_min, z_max, num_sigma=3, z_tolerance=0.05, 
+	trials, z_min, z_max, num_sigma=1, z_tolerance=0.05, 
 	search_method = "Bisection",
 	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
 	time_resolved=False, sim_triggers=False, track_z=False):
