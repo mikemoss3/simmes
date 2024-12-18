@@ -19,15 +19,45 @@ class PARAMS(object):
 	"""
 	Object to hold parameters of the search algorithm
 	"""
-	def __init__(self):
-		self.z_th = None
-		self.difference = None
-		self.z_lo = None
-		self.z_hi = None
-		self.iter = 0
-		self.sign = 1
+	def __init__(self, threshold, trials):
+		"""
+		Method used to estimate the highest redshift a given GRB could be observed
+		with a detection rate equal to `threshold` (within a given tolerance).
+		The GRB is simulated at the sampled redshift a number of `trials` times. 
+
+		Attributes:
+		------------------------
+		threshold : float
+			Desired detection threshold 
+		trials : 
+			Number of trial simulated to be performed at each threshold redshift
+		
+		Returns:
+		------------------------
+		None
+		"""
+
+		self.threshold = threshold
+		self.trials = trials
+
+		self.z_lo = None  # Initial redshift range lower bound
+		self.z_hi = None  # Initial redshift range upper bound
+
+		self.z_th = None  # Threshold redshift to perform simulation
+		self.z_track = [self.z_th]  # Use to store z_th values
+		self. det_ratio = None  # Current detection ratio found for z_th
+		self.difference = None  # Difference between detection rate and threshold 
+		self.sign = 1  # Sign of `difference` variable
+
+		self.iter = 0  # Iterator
+
+		self.flag = True  # Flag indicating whether the search should continue
 
 	def check_sign(self):
+		"""
+		Method to check the sign of the difference variable. This is use to determine if the 
+		Gaussian search algorithm is stuck (e.g., in a high-z region) and needs a kick.
+		"""
 		if(np.sign(self.difference) == -1):
 			self.iter +=1
 			if (self.iter == 10):
@@ -184,51 +214,50 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 	tolerance_factor = (1/trials) * tolerance  # Calculate tolerance factor
 
 	# Set up parameter storage and search method 
-	params = PARAMS()
-	params.z_lo = z_min
-	params.z_hi = z_max
+	p = PARAMS(threshold=threshold, trials=trials)
+	p.z_lo = z_min
+	p.z_hi = z_max
 	if search_method == "Bisection":
 		method = _bisection
-		params.z_th = (params.z_hi + params.z_lo)/2
+		p.z_th = (p.z_hi + p.z_lo)/2
 	elif search_method == "Gaussian":
 		method = _half_gaussian
-		params.difference = 0
-		params.z_th = np.random.uniform(low=params.z_lo, high=params.z_hi)
+		p.difference = 0
+		p.z_th = np.random.uniform(low=p.z_lo, high=p.z_hi)
 
-	if track_z is True: z_th_samples = [params.z_th]  # Keep track of redshift selections 
+	if track_z is True: p.z_th_samples = [p.z_th]  # Keep track of redshift selections 
 
 	# Calculate the distance from the threshold value for the initial redshift 
-	det_ratio = _calc_det_rat(grb, params.z_th, threshold, trials, 
+	p.det_ratio = _calc_det_rat(grb, p.z_th, p.threshold, p.trials, 
 								imx, imy, ndets,  
 								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 								time_resolved=time_resolved, sim_triggers=sim_triggers)
 	# Initial difference between the current and desired detection ratio.
-	params.difference = det_ratio - threshold  # Must be between -1 and 1
+	p.difference = p.det_ratio - p.threshold  # Must be between -1 and 1
 
-	flag = True
-	while flag:
+	while p.flag:
 		# Update redshift guess (and parameter values)
-		method(params)
+		method(p)
 
-		if params.z_th <= 0: params.z_th = 1e-3  # Make sure z > 0
-		if track_z is True: z_th_samples.append(params.z_th)  # If indicated, track new redshift guess
+		if p.z_th <= 0: p.z_th = 1e-3  # Make sure z > 0
+		if track_z is True: p.z_th_samples.append(p.z_th)  # If indicated, track new redshift guess
 
 		# Calculate detection ratio for the current redshift guess
-		det_ratio = _calc_det_rat(grb, params.z_th, threshold, trials, 
+		p.det_ratio = _calc_det_rat(grb, p.params.z_th, p.threshold, p.trials, 
 									imx, imy, ndets, 
 									ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 									time_resolved=time_resolved, sim_triggers=sim_triggers)
 		# Calculate difference from threshold for this redshift 
-		params.difference = det_ratio - threshold
+		p.difference = p.det_ratio - p.threshold
 
 		# If the current difference from the desired detection threshold is within the accepted tolerance (and above zero), then we've found our redshift
-		if (np.abs(params.difference) <= tolerance_factor) and (det_ratio>0):
-			flag = False
+		if (np.abs(p.difference) <= tolerance_factor) and (p.det_ratio>0):
+			p.flag = False
 
 	if track_z is True:
-		return np.array( (params.z_th, np.array(z_th_samples)), dtype=[("zth",float), ("ztrack",object)] )
+		return np.array( (p.z_th, np.array(p.z_th_samples)), dtype=[("zth",float), ("ztrack",object)] )
 	else:
-		return np.array( params.z_th, dtype=[("zth",float)] )
+		return np.array( p.z_th, dtype=[("zth",float)] )
 
 def _bisection(params):
 	"""
