@@ -84,7 +84,7 @@ class PARAMS(object):
 		If the current difference from the desired detection threshold is within the accepted tolerance 
 		(and above zero), then we've found our redshift.
 		"""
-		if (np.abs(self.difference) <= self.tolerance) and (self.det_ratio>0):
+		if (np.abs(self.difference) <= self.tolerance) and (self.det_ratio>self.tolerance):
 			self.flag = False
 
 def find_z_threshold(grb, threshold, imx, imy, ndets, trials, 
