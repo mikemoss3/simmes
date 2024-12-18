@@ -19,7 +19,7 @@ class PARAMS(object):
 	"""
 	Object to hold parameters of the search algorithm
 	"""
-	def __init__(self, threshold, trials):
+	def __init__(self, threshold, trials, tolerance, z_tolerance):
 		"""
 		Method used to estimate the highest redshift a given GRB could be observed
 		with a detection rate equal to `threshold` (within a given tolerance).
@@ -31,6 +31,10 @@ class PARAMS(object):
 			Desired detection threshold 
 		trials : 
 			Number of trial simulated to be performed at each threshold redshift
+		tolerance : float
+			Acceptance range between the calculated detection ratio and the desired detection threshold
+		z_tolerance : float
+			Used to prevent the search algorithm from getting stuck
 		
 		Returns:
 		------------------------
@@ -39,13 +43,15 @@ class PARAMS(object):
 
 		self.threshold = threshold
 		self.trials = trials
+		self.tolerance = tolerance
+		self.z_tolerance = z_tolerance
 
 		self.z_lo = None  # Initial redshift range lower bound
 		self.z_hi = None  # Initial redshift range upper bound
 
 		self.z_th = None  # Threshold redshift to perform simulation
 		self.z_track = [self.z_th]  # Use to store z_th values
-		self. det_ratio = None  # Current detection ratio found for z_th
+		self.det_ratio = None  # Current detection ratio found for z_th
 		self.difference = None  # Difference between detection rate and threshold 
 		self.sign = 1  # Sign of `difference` variable
 
@@ -66,10 +72,24 @@ class PARAMS(object):
 		else:
 			self.iter = 0
 
+	def check_zrange(self):
+		"""
+		Method to check the redshift range. If the range is smaller than the desired z_tolerance, end the search.
+		"""
+		if( (self.z_hi - self.z_lo) < self.z_tolerance ):
+			self.flag = False  # End the search
+
+	def check_result(self):
+		"""
+		If the current difference from the desired detection threshold is within the accepted tolerance 
+		(and above zero), then we've found our redshift.
+		"""
+		if (np.abs(self.difference) <= self.tolerance) and (self.det_ratio>0):
+			self.flag = False
 
 def find_z_threshold(grb, threshold, imx, imy, ndets, trials, 
-	z_min, z_max, searches=1,
-	tolerance=1, multiproc=True, workers = mp.cpu_count(),
+	z_min, z_max, searches=1, num_sigma=3, z_tolerance=0.05,
+	multiproc=True, workers = mp.cpu_count(),
 	search_method = "Bisection",
 	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
 	time_resolved=False, sim_triggers=False, track_z=False):
@@ -98,9 +118,9 @@ def find_z_threshold(grb, threshold, imx, imy, ndets, trials,
 		Indicates if multiprocessing should be used
 	workers : int 
 		Number of workers to use to use during a multiprocessing run
-	tolerance : float
-		Determines the accuracy range of the method. Accuracy = tolerance * (1/trials), 
-		since 1/trials determines the minimum accuracy.
+	num_sigma : float
+		Determines the accuracy range of the search. Assuming the simulated detection fractions 
+		will have Guassian uncertainties, sigma is the square root of the number of trials.
 	search_method : string
 		Options include "Gaussian" and "Bisection".
 		Indicates which search algorithm to use to find the threshold redshift
@@ -141,7 +161,7 @@ def find_z_threshold(grb, threshold, imx, imy, ndets, trials,
 		# Set up partial function with positional arguments 
 		parfunc = partial(_find_z_threshold_work, threshold=threshold, imx=imx, imy=imx, ndets=ndets,
 								trials = trials, z_min = z_min, z_max = z_max,
-								tolerance=tolerance, search_method = search_method,
+								num_sigma=num_sigma, z_tolerance=0.05, search_method = search_method,
 								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 								time_resolved=time_resolved, sim_triggers=sim_triggers, track_z=track_z)
 		# Set up a pool of workers
@@ -155,10 +175,9 @@ def find_z_threshold(grb, threshold, imx, imy, ndets, trials,
 	else:
 		results = _find_z_threshold_work(grb, threshold=threshold, imx=imx, imy=imx, ndets=ndets,
 								trials = trials, z_min = z_min, z_max = z_max,
-								tolerance=tolerance, search_method = search_method,
+								num_sigma=num_sigma, z_tolerance=0.05, search_method = search_method,
 								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 								time_resolved=time_resolved, sim_triggers=sim_triggers, track_z=track_z)
-
 
 	return results
 
@@ -167,7 +186,8 @@ def _init_process_seed():
 	seed()
 
 def _find_z_threshold_work(grb, threshold, imx, imy, ndets, 
-	trials, z_min, z_max, tolerance=1, search_method = "Bisection",
+	trials, z_min, z_max, num_sigma=3, z_tolerance=0.05, 
+	search_method = "Bisection",
 	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
 	time_resolved=False, sim_triggers=False, track_z=False):
 	"""
@@ -189,9 +209,9 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 		Number of trials to perform at each sampled redshift 
 	z_min, z_max : float, float
 		Bounds of the redshift search
-	tolerance : float
-		Determines the accuracy range of the method. Accuracy = tolerance * (1/trials), 
-		since 1/trials determines the minimum accuracy.
+	num_sigma : float
+		Determines the accuracy range of the search. Assuming the simulated detection fractions 
+		will have Guassian uncertainties, sigma is the square root of the number of trials.
 	search_method : string
 		Options include "Gaussian" and "Bisection".
 		Indicates which search algorithm to use to find the threshold redshift
@@ -211,10 +231,10 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 		Array of redshifts found by the algorithm
 	"""
 
-	tolerance_factor = (1/trials) * tolerance  # Calculate tolerance factor
+	tolerance = num_sigma*np.sqrt(trials) / trials  # Calculate tolerance factor for the detection ratio
 
 	# Set up parameter storage and search method 
-	p = PARAMS(threshold=threshold, trials=trials)
+	p = PARAMS(threshold=threshold, trials=trials, tolerance=tolerance, z_tolerance=z_tolerance)
 	p.z_lo = z_min
 	p.z_hi = z_max
 	if search_method == "Bisection":
@@ -250,9 +270,8 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 		# Calculate difference from threshold for this redshift 
 		p.difference = p.det_ratio - p.threshold
 
-		# If the current difference from the desired detection threshold is within the accepted tolerance (and above zero), then we've found our redshift
-		if (np.abs(p.difference) <= tolerance_factor) and (p.det_ratio>0):
-			p.flag = False
+		# Check if we've found a redshift with a detection ratio within the tolerance of the desired detection ratio
+		p.check_result()
 
 	if track_z is True:
 		return np.array( (p.z_th, np.array(p.z_th_samples)), dtype=[("zth",float), ("ztrack",object)] )
@@ -287,6 +306,8 @@ def _bisection(params):
 	if params.difference < 0:
 		params.z_hi = params.z_th
 		params.z_th = (params.z_hi + params.z_lo)/2
+
+	params.check_zrange()
 
 def _half_gaussian(params):
 	"""
