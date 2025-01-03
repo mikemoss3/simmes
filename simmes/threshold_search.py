@@ -334,7 +334,7 @@ def _half_gaussian(params):
 	# The below check is used to make sure the search doesn't get stuck searching in a region of no detections (i.e., too-high redshifts)
 	params.check_sign()
 
-def _calc_det_rat(grb, z, threshold, trials,
+def _calc_det_rat(grb, z, trials,
 	imx, imy, ndets,  
 	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
 	time_resolved=False, sim_triggers=False):
@@ -347,8 +347,6 @@ def _calc_det_rat(grb, z, threshold, trials,
 		GRB class object that holds the template GRB
 	z : float
 		An initial starting point for the Monte-Carlo algorithm
-	threshold : float
-		The threshold of successful detections to total trials desired by the user
 	imx, imy : float, float 
 		The x and y position of the GRB on the detector plane
 	ndets : int
