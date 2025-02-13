@@ -1,10 +1,14 @@
 from setuptools import setup, find_packages
+import os
 
 try:
     with open("README.md", "r") as f:
         long_description = f.read()
 except FileNotFoundError:
     long_description = ""
+
+with open("requirements.txt") as f:
+    required = f.read().splitlines()
 
 setup(
     name='simmes',
@@ -14,6 +18,7 @@ setup(
     long_description_content_type="text/markdown",
     packages=find_packages(include=["simmes","simmes.*"]),
     package_data={"":["util_packages/files-det-ang-dependence/*","util_packages/files-swiftBAT-resp-mats/*"]},
+    include_package_data=True,
     license="MIT",
     keywords="gamma-ray bursts",
     author='Michael Moss',
@@ -25,5 +30,6 @@ setup(
         "Programming Language :: Python :: 3",
         "Topic :: Scientific/Engineering :: Astronomy",
     ],
+    install_requires=required,
     python_requires=">=3.8",
 )
