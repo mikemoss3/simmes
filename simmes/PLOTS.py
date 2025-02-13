@@ -9,6 +9,7 @@ Defines the class and methods used for plotting simulation results.
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 # import matplotlib.cm as cm
 from simmes.util_packages.cosmology import lum_dis
@@ -351,7 +352,7 @@ class PLOTSIMRES(PLOTS):
 		self.tight_layout()
 		self.plot_aesthetics(ax)
 
-	def redshift_duration_evo(self, sim_results, ax=None, t_true=None, t_max=None, bins=50, dur_frac=False, log=False, inc_cbar=False, **kwargs):
+	def redshift_duration_evo(self, sim_results, ax=None, t_true=None, t_max=None, bins=50, dur_frac=False, log=False, norm=mcolors.LogNorm(), inc_cbar=False, **kwargs):
 		"""
 		Method to plot the measured duration of each synthetic light curve as a function redshift
 
@@ -404,12 +405,21 @@ class PLOTSIMRES(PLOTS):
 			t_max = np.log10(t_max)
 			t_min = -1
 
-		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [t_min, t_max]], bins=bins, cmin=cmin, cmap=cmap, **kwargs) # output = counts, xbins, ybins, image
-		
+		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [t_min, t_max]], bins=bins, cmin=cmin, cmap=cmap, norm=mcolors.LogNorm(), **kwargs) # output = counts, xbins, ybins, image
+
+		# h, xedges, yedges = np.histogram2d(results['z'], dur_arr, range= [[z_min, z_max], [t_min, t_max]])
+		# xbins = xedges[:-1] + (xedges[1] - xedges[0]) / 2
+		# ybins = yedges[:-1] + (yedges[1] - yedges[0]) / 2
+		# h = h.T
+		# Note: The +1 is to allow for Log scale without requiring mask
+		# CS = ax.contour(xbins, ybins, h+1, colors="gray", norm=mcolors.LogNorm(), levels=np.logspace(1, 3, 10))
+
 		if inc_cbar == True:
 			divider = make_axes_locatable(ax)
 			cax = divider.append_axes('right', size='5%', pad=0.05)
-			fig.colorbar(im[3], cax=cax, orientation='vertical')
+			num = len(results["DURATION"][results['z']==z_min])
+			cbar = fig.colorbar(im[3], cax=cax, orientation='vertical', ticks=[0.01*num, 0.1*num, num])
+			cbar.ax.set_yticklabels(["1%", "10%", "100%"])
 
 		# if (t_true is not None):
 		# 	if (dur_frac is False):
@@ -513,7 +523,9 @@ class PLOTSIMRES(PLOTS):
 		if inc_cbar == True:
 			divider = make_axes_locatable(ax)
 			cax = divider.append_axes('right', size='5%', pad=0.05)
-			fig.colorbar(im[3], cax=cax, orientation='vertical')
+			num = len(results["DURATION"][results['z']==z_min])
+			cbar = fig.colorbar(im[3], cax=cax, orientation='vertical', ticks=[0.01*num, 0.1*num, num])
+			cbar.ax.set_yticklabels(["1%", "10%", "100%"])
 
 		ax.axvline(x=z_min,color="k",linewidth=2, linestyle="dotted", label="Measured Redshift")
 		# ax.axvline(x=z_max,color="C1",linewidth=2, label="Max. Simulated Redshift")

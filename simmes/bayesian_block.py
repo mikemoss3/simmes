@@ -34,11 +34,11 @@ def bayesian_t_blocks(light_curve, dur_per=90, ncp_prior=6):
 
 	# Astropy bayesian block algorithm -- it is much safer to use since it handles exceptions better, however its an order of magnitude
 	try:
-		# bin_edges = bayesian_blocks(t=light_curve['TIME'], x=light_curve['RATE'], sigma=light_curve['UNC'], fitness="measures", ncp_prior=ncp_prior) # Find the T90 and the fluence 
-		bin_edges = custom_bb(light_curve=light_curve, ncp_prior=ncp_prior)
+		bin_edges = bayesian_blocks(t=light_curve['TIME'], x=light_curve['RATE'], sigma=light_curve['UNC'], fitness="measures", ncp_prior=ncp_prior) # Find the T90 and the fluence 
+		# bin_edges = custom_bb(light_curve=light_curve, ncp_prior=ncp_prior)
 	except:
-		# bin_edges = bayesian_blocks(t=light_curve['TIME'], x=light_curve['RATE'], sigma=light_curve['ERROR'], fitness="measures", ncp_prior=ncp_prior) # Find the T90 and the fluence 
-		bin_edges = custom_bb(light_curve=light_curve, ncp_prior=ncp_prior)
+		bin_edges = bayesian_blocks(t=light_curve['TIME'], x=light_curve['RATE'], sigma=light_curve['ERROR'], fitness="measures", ncp_prior=ncp_prior) # Find the T90 and the fluence 
+		# bin_edges = custom_bb(light_curve=light_curve, ncp_prior=ncp_prior)
 
 	# Check if any GTI (good time intervals) were found
 	if len(bin_edges) <= 3:
@@ -110,34 +110,34 @@ def custom_bb(light_curve, ncp_prior):
 	# Start with first data cell; add one cell at each iteration
 	# ----------------------------------------------------------------
 	### Stripped down astropy implementation
-	# for R in range(N):
-	#	# a_k: eq. 31
-	#	a_k = 0.5 * np.cumsum(ak_raw[: (R + 1)][::-1])[::-1]
-
-	#	# b_k: eq. 32
-	#	b_k = -np.cumsum(bk_raw[: (R + 1)][::-1])[::-1]
-
-	#	# evaluate fitness function
-	#	fit_vec = fitness(a_k, b_k)
-
-	#	A_R = fit_vec - ncp_prior
-	#	A_R[1:] += best[:R]
-
-	#	i_max = np.argmax(A_R)
-	#	last[R] = i_max
-	#	best[R] = A_R[i_max]
-
-	### Even more stripped down astropy implementations
-	a_k = 0.5 * np.cumsum(ak_raw)  # a_k: eq. 31
-	b_k = np.cumsum(bk_raw)  # b_k: eq. 32
-	fit_vec = fitness(a_k, b_k)  # Evaluate fitness function, log(L^k_max) eq. 41
 	for R in range(N):
-		A_R = fit_vec[:R+1] - ncp_prior
+		# a_k: eq. 31
+		a_k = 0.5 * np.cumsum(ak_raw[: (R + 1)][::-1])[::-1]
+
+		# b_k: eq. 32
+		b_k = -np.cumsum(bk_raw[: (R + 1)][::-1])[::-1]
+
+		# evaluate fitness function
+		fit_vec = fitness(a_k, b_k)
+
+		A_R = fit_vec - ncp_prior
 		A_R[1:] += best[:R]
 
-		i_max = np.argmax(A_R)  # Find max likelihood
-		last[R] = i_max  # Record max likelihood index
-		best[R] = A_R[i_max]  # Record max likelihood
+		i_max = np.argmax(A_R)
+		last[R] = i_max
+		best[R] = A_R[i_max]
+
+	### Even more stripped down astropy implementations
+	# a_k = 0.5 * np.cumsum(ak_raw)  # a_k: eq. 31
+	# b_k = np.cumsum(bk_raw)  # b_k: eq. 32
+	# fit_vec = fitness(a_k, b_k)  # Evaluate fitness function, log(L^k_max) eq. 41
+	# for R in range(N):
+	# 	A_R = fit_vec[:R+1] - ncp_prior
+	# 	A_R[1:] += best[:R]
+
+	# 	i_max = np.argmax(A_R)  # Find max likelihood
+	# 	last[R] = i_max  # Record max likelihood index
+	# 	best[R] = A_R[i_max]  # Record max likelihood
 
 	# ----------------------------------------------------------------
 	# Now find changepoints by iteratively peeling off the last block

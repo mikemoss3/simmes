@@ -331,7 +331,7 @@ class Band(SPECFUNC):
 		# Default values
 		def_ep = 400.
 		def_alpha = -1.
-		def_beta = -2.
+		def_beta = -2.5
 		def_norm = 1.
 		def_enorm = 100. # keV
 
