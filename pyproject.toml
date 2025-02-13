@@ -1,11 +1,11 @@
 [build-system]
-requires = ["setuptools>=61.0",
-			"setuptools-scm>=8.0"]
+requires = ["setuptools>=61.0", 
+            "setuptools-scm>=8.0",]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "simmes"
-version = "0.12.1"
+version = "0.1.12"
 authors = [
   { name="Michael Moss", email="mikejmoss3@gmail.com" },
 ]
@@ -18,8 +18,10 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering :: Astronomy",
 ]
-license = "MIT"
-license-files = ["LICEN[CS]E*"]
+
+[metadata]
+license = ["MIT"]
+license-files = "LICENCSE"
 keywords=["gamma-ray bursts"]
 
 [project.urls]
