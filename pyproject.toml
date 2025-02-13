@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0",
+			"setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simmes"
+version = "0.12.1"
+authors = [
+  { name="Michael Moss", email="mikejmoss3@gmail.com" },
+]
+description = "GRB measurement simulation packages"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Astronomy",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+keywords=["gamma-ray bursts"]
+
+[project.urls]
+Repository = "https://github.com/mikemoss3/simmes"
