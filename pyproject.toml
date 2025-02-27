@@ -8,7 +8,7 @@ name = "simmes"
 version = "0.1.12"
 requires-python = ">=3.8"
 dependencies = [
-	'Numpy >= 1.26.4',
+	'Numpy >= 1.26.4 < 2',
 	'Scipy  >= 1.14.0',
 	'Astropy >= 6.1.2',
 	'Fitsio >= 1.2.4',]
