@@ -22,7 +22,7 @@ from simmes.PLOTS import PLOTGRB
 def simulate_observation(synth_grb, template_grb, resp_mat, 
 	imx, imy, ndets, 
 	z_p=0, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
-	time_resolved=False, sim_triggers=False, sim_bgd=True):
+	time_resolved=False, sim_triggers=False, sim_bgd=True, bgd_size = 20):
 	
 	"""
 	Method to complete a simulation of a synthetic observation based on the input source frame GRB template and the desired observing conditions
@@ -51,6 +51,8 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 		Whether or not to simulate the Swift/BAT trigger algorithms or not
 	sim_bgd : boolean
 		Whether or not a background variance should be added to light curves during simulations
+	bgd_size : float
+		Background amount to add when adding in a background (in seconds)
 
 	Returns:
 	--------------
@@ -110,7 +112,7 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 
 	if sim_bgd == True:
 		# Add mask-weighted background rate to either side of mask-weighted source signal
-		synth_grb.light_curve = add_background(synth_grb.light_curve, t_buffer=template_grb.t_buffer, dt = template_grb.dt) # counts / sec / det
+		synth_grb.light_curve = add_background(synth_grb.light_curve, bgd_size=bgd_size, dt = template_grb.dt) # counts / sec / det
 
 
 	return synth_grb
@@ -177,7 +179,7 @@ def apply_mask_weighting(light_curve, imx, imy, ndets):
 
 	return light_curve
 
-def add_background(light_curve, t_buffer, dt):
+def add_background(light_curve, bgd_size, dt):
 	"""
 	Method that adds a background interval before and after the source signal 
 
@@ -185,7 +187,7 @@ def add_background(light_curve, t_buffer, dt):
 	--------------
 	light_curve : np.ndarray([("TIME",float), ("RATE",float), ("UNC",float)])
 		Light curve array
-	buffer : float
+	bgd_size : float
 		Duration (sec) of the background interval to be added to either side of the existing light curve
 	dt : float
 		time bin size
@@ -196,15 +198,15 @@ def add_background(light_curve, t_buffer, dt):
 		new light curve with background intervals added before and after the given light curve and added random background variance
 	"""
 
-	sim_lc_length = int( (2*t_buffer/dt) + len(light_curve) ) # Length of the new light curve
+	sim_lc_length = int( (2*bgd_size/dt) + len(light_curve) ) # Length of the new light curve
 
 	# Initialize an empty background light curve 
 	bgd_lc = np.zeros(shape=sim_lc_length, dtype=[('TIME', float), ('RATE',float), ('UNC',float)])
 
-	# Fill the time axis from synth_grb-buffer to synth_grb+buffer with correct time bin sizes 
+	# Fill the time axis from synth_grb-bgd_size to synth_grb+bgd_size with correct time bin sizes 
 	bgd_lc['TIME'] = np.arange(
-		start=light_curve['TIME'][0]- t_buffer, 
-		stop= light_curve['TIME'][-1]+t_buffer+dt, 
+		start=light_curve['TIME'][0]- bgd_size, 
+		stop= light_curve['TIME'][-1]+bgd_size+dt, 
 		step= dt
 		)[:len(bgd_lc)]
 
@@ -289,7 +291,7 @@ def rand_background_variance(size=1):
 
 def many_simulations(template_grb, param_list, trials, 
 	resp_mat = None, dur_per = 90, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
-	time_resolved=False, sim_triggers=False, sim_bgd = True,
+	time_resolved=False, sim_triggers=False, sim_bgd = True, bgd_size = 20,
 	out_file_name = None, ret_ave = False, keep_synth_grbs=False, verbose=False):
 	"""
 	Method to perform multiple simulations for each combination of input parameters 
@@ -374,7 +376,7 @@ def many_simulations(template_grb, param_list, trials,
 			simulate_observation(synth_grb = synth_grb, template_grb=template_grb,resp_mat=resp_mat, z_p=param_list[i][0], 
 								imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], 
 								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
-								time_resolved = time_resolved, sim_triggers=sim_triggers, sim_bgd=sim_bgd)
+								time_resolved = time_resolved, sim_triggers=sim_triggers, sim_bgd=sim_bgd, bgd_size=bgd_size)
 
 			sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
 		
