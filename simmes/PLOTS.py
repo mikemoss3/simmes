@@ -578,7 +578,7 @@ class PLOTSIMRES(PLOTS):
 		ax.step(zs, perc, where=step, **kwargs)
 
 		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
-		ax.set_ylabel("Percentage Detected",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_ylabel("Detection Fraction",fontsize=self.fontsize,fontweight=self.fontweight)
 
 		self.tight_layout()
 		self.plot_aesthetics(ax)
