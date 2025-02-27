@@ -375,14 +375,18 @@ class GRB(object):
 			new_light_curve = np.zeros(shape=len(self.light_curve))
 			new_light_curve[inds] = self.light_curve[inds]
 
-		# Calculate k_correction factor
-		kcorr = k_corr(self.specfunc, z_o, emin, emax) / k_corr(self.specfunc, z_p, emin, emax)
+		# Copy original spectrum for k-correction calculation
+		org_spec = self.specfunc.deepcopy()
+		
 		# Move spectral function to z_p frame by correcting E_peak or temperature by the redshift (if spectral function has a peak energy or temperature)
 		for i, (key, val) in enumerate(self.specfunc.params.items()):
 			if key == "ep":
 				self.specfunc.params[key] *= (1+z_o)/(1+z_p)
 			if key == "temp":
 				self.specfunc.params[key] *= (1+z_o)/(1+z_p)
+
+		# Calculate k_correction factor
+		kcorr = k_corr(org_spec, z_o, emin, emax) / k_corr(self.specfunc, z_p, emin, emax)
 
 		##
 		# Shift Light Curve

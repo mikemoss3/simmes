@@ -40,16 +40,8 @@ def k_corr(specfunc, z, emin, emax):
 		Defines the observed energy range to calculate the k-correction between
 	""" 
 
-	# Create restframe spectrum by correcting E_peak or temperature by the redshift (if spectral function has a peak energy or temperature)
-	rs_specfunc = specfunc.copy()
-	for i, (key, val) in enumerate(rs_specfunc.params.items()):
-		if key == "ep":
-			rs_specfunc.params[key] *= (1+z)
-		if key == "temp":
-			rs_specfunc.params[key] *= (1+z)
-
 	# Evaluate bolometric spectrum in the rest frame of the source 
-	numerator = integrate.quad(lambda en: en*rs_specfunc(en), gc.bol_lum[0]/(1+z),gc.bol_lum[1]/(1+z))[0]
+	numerator = integrate.quad(lambda en: en*specfunc(en), gc.bol_lum[0]/(1+z),gc.bol_lum[1]/(1+z))[0]
 	# Evaluate spectrum within the defined band pass in the observer frame
 	denominator = integrate.quad(lambda en: en*specfunc(en), emin, emax)[0]
 	
