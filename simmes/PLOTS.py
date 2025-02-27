@@ -353,7 +353,7 @@ class PLOTSIMRES(PLOTS):
 		self.tight_layout()
 		self.plot_aesthetics(ax)
 
-	def redshift_duration_evo(self, sim_results, ax=None, t_true=None, t_max=None, bins=50, dur_frac=False, log=False, norm=mcolors.LogNorm(), inc_cbar=False, **kwargs):
+	def redshift_duration_evo(self, sim_results, ax=None, t_true=1, t_max=None, bins=50, dur_frac=False, log=False, norm=mcolors.LogNorm(), inc_cbar=False, inc_cosmo_line=True, **kwargs):
 		"""
 		Method to plot the measured duration of each synthetic light curve as a function redshift
 
@@ -399,6 +399,9 @@ class PLOTSIMRES(PLOTS):
 		
 		dur_arr = results["DURATION"]
 		if dur_frac is True:
+			if t_true is None:
+				print("A true duration must be given to plot a duration fraction.")
+				return;
 			dur_arr /= t_true
 		t_min = 0
 		if log is True:
@@ -434,12 +437,14 @@ class PLOTSIMRES(PLOTS):
 
 		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
 		if log is False:
-			ax.plot(z_arr, dilation_line(z_arr), color="C1", alpha=1, linewidth=3)
+			if inc_cosmo_line is True:
+				ax.plot(z_arr, dilation_line(z_arr), color="C1", alpha=1, linewidth=3)
 			ax.set_ylabel("Duration (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
 			ax.set_ylim(0)
 
 		else:
-			ax.plot(z_arr, np.log10(dilation_line(z_arr)), color="C1", alpha=1, linewidth=3)
+			if inc_cosmo_line is True:
+				ax.plot(z_arr, np.log10(dilation_line(z_arr)), color="C1", alpha=1, linewidth=3)
 			ax.set_ylabel("log(Duration)",fontsize=self.fontsize,fontweight=self.fontweight)
 			ax.set_ylim(-1)
 
@@ -448,7 +453,7 @@ class PLOTSIMRES(PLOTS):
 		self.tight_layout()
 		self.plot_aesthetics(ax)
 
-	def redshift_fluence_evo(self, sim_results, ax=None, F_true=None, F_max=None, bins=50, fluence_frac=False, inc_cbar=False, **kwargs):
+	def redshift_fluence_evo(self, sim_results, ax=None, F_true=10, F_max=None, bins=50, fluence_frac=False, inc_cbar=False, inc_cosmo_line=True, **kwargs):
 		"""
 		Method to plot the measured duration of each synthetic light curve as a function redshift
 
@@ -514,6 +519,9 @@ class PLOTSIMRES(PLOTS):
 		dur_arr = results["FLUENCE"]
 		dur_arr = np.log10(dur_arr)
 		if fluence_frac is True:
+			if F_true is None:
+				print("A true fluence must be given to plot a duration fraction.")
+				return;
 			dur_arr /= F_true
 
 		F_max = np.log10(F_max)
@@ -533,7 +541,8 @@ class PLOTSIMRES(PLOTS):
 
 		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
 
-		ax.plot(z_arr, np.log10(luminosity_distance(z_arr)), color="C1", alpha=1, linewidth=3) # 1/distance^2 line 
+		if inc_cosmo_line is True:
+			ax.plot(z_arr, np.log10(luminosity_distance(z_arr)), color="C1", alpha=1, linewidth=3) # 1/distance^2 line 
 		ax.plot(z_vals, np.log10(fluence_sens(t_vals)), color="magenta", linewidth=2) # 5-sigma fluence limit 
 		ax.set_ylabel(r"log(Photon Fluence) log(cnts cm$^{-2}$)",fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylim(F_min)
