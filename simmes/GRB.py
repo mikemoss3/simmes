@@ -117,6 +117,15 @@ class GRB(object):
 			What percentage the specified duration is of the total duration
 		ncp_prior : float
 			Number of change points. Used when calculating the duration using Bayesian blocks.
+
+		Returns:
+		----------
+		duration : float
+			Duration calculated by the Bayesian block algorithm (in units of seconds)
+		t_start : float
+			Start of the emission interval (in units of seconds)
+		phot_fluence : float
+			Photon fluence within the interval (in units of cnts/sec/cm^2)
 		"""
 
 		# If the same duration percentage and ncp_prior are called for, return the current duration information
@@ -140,6 +149,11 @@ class GRB(object):
 			Defines the percentage of the total duration to calculate the photon fluence over
 		tmin, tmax : float, float
 			Defines the time range to calculate the photon fluence over
+
+		Returns:
+		----------
+		phot_fluence : float
+			Photon fluence within the specified interval (in units of cnts/sec/cm^2)
 		"""
 		if (tmin is not None) and (tmax is not None):
 			return np.sum(self.light_curve['RATE'][
@@ -163,6 +177,11 @@ class GRB(object):
 			Defines the percentage of the total duration to calculate the photon flux over
 		tmin, tmax : float, float
 			Defines the time range to calculate the photon flux over
+
+		Returns:
+		----------
+		ave_phot_fluence : float
+			Average photon fluence within the specified interval (in units of cnts/sec/cm^2)
 		"""
 		if (tmin is not None) and (tmax is not None):
 			return self.get_photon_fluence(tmin=tmin,tmax=tmax)/(tmax-tmin)

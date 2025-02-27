@@ -470,7 +470,7 @@ class PLOTSIMRES(PLOTS):
 				If `[int, int]`, the number of bins in each dimension `(nx, ny = bins)`.
 				If array-like, the bin edges for the two dimensions `(x_edges = y_edges = bins)`.
 				If `[array, array]`, the bin edges in each dimension `(x_edges, y_edges = bins)`.
-			inc_cbar : bool
+		inc_cbar : bool
 			Indicates whether to include a colorbar or not
 		"""
 
