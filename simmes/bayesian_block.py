@@ -56,7 +56,7 @@ def bayesian_t_blocks(light_curve, dur_per=90, ncp_prior=6):
 			emission_interval = light_curve[np.argmax(t_start_tot<=light_curve['TIME']):np.argmax((t_start_tot+t_dur_tot)<=light_curve['TIME'])]
 			if len(emission_interval) == 0:
 				# Then no Bayesian blocks were found.
-				return 0, 0, 0
+				return 0, 0
 			# Find the total fluence 
 			tot_fluence = np.sum(emission_interval['RATE'])
 			# Find the normalized cumulative sum between the total duration 
