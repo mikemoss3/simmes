@@ -754,14 +754,10 @@ class PLOTRSP(PLOTS):
 	RSP : RSP
 		Response function object 
 	"""
-	def __init__(self, RSP=None):
+	def __init__(self):
 		PLOTS.__init__(self)
-		if RSP is None:
-			self.RSP = RSP()
-		else:
-			self.RSP = RSP
 
-	def plot_heatmap( self, RSP, ax=None, E_phot_bounds=None, E_chan_bounds=None):
+	def plot_heatmap(self, RSP, ax=None, E_phot_bounds=None, E_chan_bounds=None):
 		""" 
 		Plot heat map of the response matrix 
 
@@ -776,9 +772,6 @@ class PLOTRSP(PLOTS):
 		E_chan_bounds : np.ndarray
 			Channel energy bin edges
 		"""
-
-		if RSP is None:
-			RSP = self.RSP
 
 		if ax is None:
 			ax = plt.figure().gca()
@@ -804,7 +797,7 @@ class PLOTRSP(PLOTS):
 		self.plot_aesthetics(ax)
 
 
-	def plot_effarea( self, RSP=None, ax=None, det_area=1, E_phot_bounds=None, norm=1):
+	def plot_effarea(self, RSP, ax=None, det_area=1, E_phot_bounds=None, norm=1):
 		"""
 		Plot heat map of the response matrix 
 
@@ -823,9 +816,6 @@ class PLOTRSP(PLOTS):
 		norm : float
 			Optional normalization factor
 		"""
-
-		if RSP is None:
-			RSP = self.RSP
 		
 		if ax is None:
 			ax = plt.figure().gca()
