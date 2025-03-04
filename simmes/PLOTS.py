@@ -453,7 +453,7 @@ class PLOTSIMRES(PLOTS):
 		self.tight_layout()
 		self.plot_aesthetics(ax)
 
-	def redshift_fluence_evo(self, sim_results, ax=None, F_true=10, F_max=None, bins=50, fluence_frac=False, inc_cbar=False, inc_cosmo_line=True, **kwargs):
+	def redshift_fluence_evo(self, sim_results, ax=None, F_true=None, F_max=None, bins=50, fluence_frac=False, inc_cbar=False, inc_cosmo_line=True, **kwargs):
 		"""
 		Method to plot the measured duration of each synthetic light curve as a function redshift
 
