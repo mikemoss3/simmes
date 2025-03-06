@@ -11,6 +11,7 @@ import fitsio
 from scipy.stats import norm
 import copy 
 from pathlib import Path
+import scipy.integrate as integrate
 
 from simmes.util_packages.det_ang_dependence import find_grid_id
 
@@ -524,17 +525,15 @@ def make_folded_spec(source_spec_func, rsp):
 	folded_spec['ENERGY'] = rsp.ECHAN_MID
 
 	# Initialize the binned source spectrum
-	# If the source spectrum covers a smaller interval than the response matrix, any energy bin outside of the 
-	# source spectrum energy range will have a rate equal to zero.
-	binned_source_spec = np.zeros(shape=rsp.num_phot_bins,dtype=[("ENERGY",float),("RATE",float)])
-
-	binned_source_spec['ENERGY'] = rsp.ENERG_MID
-	binned_source_spec['RATE'] = source_spec_func(binned_source_spec['ENERGY'])
+	binned_source_spec = np.zeros(shape=rsp.num_phot_bins)  # photons / s / cm^2
+	for i in range(rsp.num_phot_bins):
+		binned_source_spec[i] = integrate.quad(source_spec_func, rsp.ENERG_LO[i], rsp.ENERG_HI[i])[0]
 
 	# Fold the correctly binned source spectrum with the response matrix
-	folded_spec['RATE'] = np.matmul(binned_source_spec['RATE'],rsp.MATRIX)/(rsp.ECHAN_HI - rsp.ECHAN_LO)
+	folded_spec['RATE'] = np.matmul(binned_source_spec, rsp.MATRIX)  # counts / s / cm^2
+	folded_spec['RATE'] /= (rsp.ECHAN_HI - rsp.ECHAN_LO) # counts / s / cm^2 / keV (can be compared to XSPEC)
 
-	# What should the uncertainty be?
+	# What should the uncertainty be? Is there an uncertainty associated with a well-defined source spectrum?
 	# folded_spec['UNC'] = np.sqrt(folded_spec['RATE'])
 	folded_spec['UNC'] = 0.05*folded_spec['RATE']
 
