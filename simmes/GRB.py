@@ -381,6 +381,9 @@ class GRB(object):
 			Indicates whether or not to remove the background signal outside the T100 range should be removed. 
 		"""
 
+		if z_o > z_p:
+			print("New redshift must be greater than or equal to current redshift.")
+			return None;
 		if z_o == z_p:
 			# No chage in the light curve or spectrum.
 			return;
@@ -393,6 +396,65 @@ class GRB(object):
 			inds = np.where( (self.light_curve['TIME'] > self.T100_start) & (self.light_curve['TIME'] < (self.T100_start+self.T100_dur)) )
 			new_light_curve = np.zeros(shape=len(self.light_curve))
 			new_light_curve[inds] = self.light_curve[inds]
+
+		# Apply time-dilation to light curve (i.e., correct the time binning)
+		# Calculate the start and stop times of the flux light curve in the z_p frame.
+		tpstart = self.light_curve['TIME'][0]*(1+z_p)/(1+z_o)
+		tpend = self.light_curve['TIME'][-1]*(1+z_p)/(1+z_o)
+
+		# Bin size of the light curve curve
+		bin_size = (self.light_curve['TIME'][1] - self.light_curve['TIME'][0])
+		# Create a time axis from tpstart to tpend with proper bin size
+		tmp_time_arr = np.arange(tpstart, tpend+bin_size, bin_size)
+
+		# Create an array to store the flux light curve in the z_p frame
+		flux_lc_at_z_p = np.zeros(shape=len(tmp_time_arr), dtype=([("TIME",float), ("RATE",float)]))
+		flux_lc_at_z_p['TIME'] = tmp_time_arr
+
+		# Temporary light curve to store z_p frame light curve
+		tmp_light_curve = np.zeros(shape=len(tmp_time_arr), dtype=[("TIME",float), ("RATE",float), ("UNC",float)])
+		tmp_light_curve['TIME'] = tmp_time_arr
+
+		# We must correct for time dilation by binning the flux into z_p frame time bins
+		# For each time bin of the z_o light curve:
+		for i in range(len(self.light_curve)-1):
+			# Time bin edges, left and right, of the z_o light curve
+			t_0_l = self.light_curve['TIME'][i]
+			t_0_r = self.light_curve['TIME'][i+1]
+
+			# In the z_p frame, this interval becomes
+			t_p_l = t_0_l*(1+z_p)/(1+z_o)
+			t_p_r = t_0_r*(1+z_p)/(1+z_o)
+
+			# Find the indices where the light curve is ** fully within ** this new interval
+			argstart = np.argmax(tmp_light_curve['TIME']>=t_p_l)
+			argend = np.argmax(tmp_light_curve['TIME']>=t_p_r) - 1
+
+			# Fraction of the interval missed on the left 
+			frac_left = (tmp_light_curve['TIME'][argstart] - t_p_l) / bin_size
+			# Fraction of the interval missed on the right  
+			frac_right = (t_p_r - tmp_light_curve['TIME'][argend]) / bin_size
+
+
+			# Flux to redistribute 
+			f_0 = self.light_curve['RATE'][i]
+			f_0_unc = self.light_curve['UNC'][i]
+			# Calculaute rate per full bin in z_p frame:
+			f_p = f_0 * bin_size / (t_p_r - t_p_l)
+			f_p_unc = f_0_unc * bin_size / (t_p_r - t_p_l)
+
+			# Redistribute flux in fully covered bins
+			tmp_light_curve['RATE'][argstart:argend] += np.ones(shape=argend - argstart) * f_p
+			tmp_light_curve['UNC'][argstart:argend] += np.ones(shape=argend - argstart) * f_p_unc
+			# Redistribute flux in partial bins
+			tmp_light_curve['RATE'][argstart-1] += f_p * frac_left
+			tmp_light_curve['UNC'][argstart-1] += f_p_unc * frac_left
+			tmp_light_curve['RATE'][argend] += f_p * frac_right
+			tmp_light_curve['UNC'][argend] += f_p_unc * frac_right
+
+		# Align the time array with zero
+		argt0 = np.argmax(tmp_time_arr>0)
+		tmp_light_curve['TIME'] -= tmp_time_arr[argt0]
 
 		# Copy original spectrum for k-correction calculation
 		org_spec = self.specfunc.deepcopy()
@@ -423,68 +485,6 @@ class GRB(object):
 		self.light_curve['RATE'] = self.light_curve['RATE'] * kcorr * dis_corr_to_z_o / dis_corr_to_z_p
 		self.light_curve['UNC'] = self.light_curve['UNC'] * kcorr * dis_corr_to_z_o / dis_corr_to_z_p
 		
-		# Apply time-dilation to light curve (i.e., correct the time binning)
-		# Calculate the start and stop times of the flux light curve in the z_p frame.
-		tpstart = self.light_curve['TIME'][0]*(1+z_p)/(1+z_o)
-		tpend = self.light_curve['TIME'][-1]*(1+z_p)/(1+z_o)
-
-		# Bin size of the light curve curve
-		bin_size = (self.light_curve['TIME'][1] - self.light_curve['TIME'][0])
-		# Create a time axis from tpstart to tpend with proper bin size
-		tmp_time_arr = np.arange(tpstart, tpend+bin_size, bin_size)
-
-		# Create an array to store the flux light curve in the z_p frame
-		flux_lc_at_z_p = np.zeros(shape=len(tmp_time_arr), dtype=([("TIME",float), ("RATE",float)]))
-		flux_lc_at_z_p['TIME'] = tmp_time_arr
-
-		# Temporary light curve to store z_p frame light curve
-		tmp_light_curve = np.zeros(shape=len(tmp_time_arr), dtype=[("TIME",float), ("RATE",float), ("UNC",float)])
-		tmp_light_curve['TIME'] = tmp_time_arr
-
-		# We must correct for time dilation by binning the flux into z_p frame time bins
-		if z_o > z_p:
-			# The light curve must be squeezed
-
-			# For each time bin of the z_p light curve curve:
-			for i in range(len(tmp_light_curve)-1):
-				# What time bin is this?
-				curr_time_bin = tmp_light_curve['TIME'][i]
-
-				# Find the indices of the z_o frame light curve where the time axis is encompassed by curr_time_bin*(1+z_o)/(1+z_p) and (1+curr_time_bin)*(1+z_o)/(1+z_p)
-				argstart = np.argmax(self.light_curve['TIME']>=curr_time_bin*(1+z_o)/(1+z_p))
-				argend = np.argmax(self.light_curve['TIME']>=(curr_time_bin+bin_size)*(1+z_o)/(1+z_p))
-
-				# Grab the total sum of the distance corrected flux within these time bins.
-				tmp_light_curve['RATE'][i] = np.sum(self.light_curve['RATE'][argstart:argend])
-				tmp_light_curve['UNC'][i] = np.sum(np.power(self.light_curve['UNC'][argstart:argend], 2)) # Add uncertainties in quadrature 
-		else:
-			# z_p > z_o, the light curve must be stretched
-
-			# For each time bin of the z_o light curve:
-			for i in range(len(self.light_curve)-1):
-				# What time bin is this?
-				curr_time_bin = self.light_curve['TIME'][i]
-
-				# Grab the distance corrected flux from the z_o. This flux must be distributed across multiple time bins.
-				curr_flux_to_distribute = self.light_curve['RATE'][i]
-				curr_flux_unc_to_distribute = self.light_curve['UNC'][i]
-
-				# Find the indices of z_p light curve where the time axis encompasses curr_time_bin*(1+z_p)/(1+z_o) and (curr_time_bin+time_bin_size)*(1+z_p)/(1+z_o)
-				argstart = np.argmax(tmp_light_curve['TIME']>=(curr_time_bin-bin_size)*(1+z_p)/(1+z_o))
-				argend = np.argmax(tmp_light_curve['TIME']>=(curr_time_bin+bin_size)*(1+z_p)/(1+z_o))
-
-				# How many time bins are within the time interval of curr_time_bin*(1+z_p)/(1+z_o) and (1+curr_time_bin)*(1+z_p)/(1+z_o) ?
-				# We need to know the number of time bins because we must divide the curr_flux_to_distribute across each time bin in the z_p frame
-				# that came from the (curr_time_bin : 1+curr_time_bin) time interval in the z_o frame.
-				num_new_time_bins = len(tmp_light_curve['TIME'][argstart:argend])
-				if num_new_time_bins == 0:
-					argend = argstart+1
-					num_new_time_bins = 1
-
-				# For the bins between (argstart:argend) assign the flux value of curr_flux_to_distribute/num_new_time_bins
-				tmp_light_curve['RATE'][argstart:argend] = tmp_light_curve['RATE'][argstart:argend] + np.ones(shape=num_new_time_bins) * (curr_flux_to_distribute/num_new_time_bins)
-				tmp_light_curve['UNC'][argstart:argend] = np.sqrt(tmp_light_curve['UNC'][argstart:argend]**2 + curr_flux_unc_to_distribute**2)
-
 		# Set the light curve to the distance corrected light curve
 		self.light_curve = tmp_light_curve
 
