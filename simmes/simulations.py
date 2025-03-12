@@ -72,8 +72,8 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 
 	if time_resolved == False:
 		# Fold spectrum through instrument response and calculate the count rate in the observation band
-		folded_spec = resp_mat.fold_spec(synth_grb.specfunc)  # counts / sec / keV
-		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / sec
+		folded_spec = resp_mat.fold_spec(synth_grb.specfunc)  # counts / s / cm^2
+		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / s / cm^2
 
 		# Using the total count rate from the spectrum and the relative flux level of the light curve, make a new light curve
 		# The synthetic GRB light curve technically has units of counts / sec / cm^2, but we are only using it as a template for relative flux values. 
@@ -82,8 +82,8 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 	else:
 		# Time-resolved analysis is True
 		# If there is any interval of the light curve that is not covered by the time resolved spectra, use time-integrated spectrum
-		folded_spec = resp_mat.fold_spec(synth_grb.specfunc)  # counts / sec / keV
-		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / sec
+		folded_spec = resp_mat.fold_spec(synth_grb.specfunc)  # counts / s / cm^2
+		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / s / cm^2
 		
 		arg_t_start = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[0]['TSTART'])
 		if arg_t_start > 0: 
