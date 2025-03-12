@@ -397,6 +397,35 @@ class GRB(object):
 			new_light_curve = np.zeros(shape=len(self.light_curve))
 			new_light_curve[inds] = self.light_curve[inds]
 
+		# Copy original spectrum for k-correction calculation
+		org_spec = self.specfunc.deepcopy()
+		
+		# Move spectral function to z_p frame by correcting E_peak or temperature by the redshift (if spectral function has a peak energy or temperature)
+		for i, (key, val) in enumerate(self.specfunc.params.items()):
+			if key == "ep":
+				self.specfunc.params[key] *= (1+z_o)/(1+z_p)
+			if key == "temp":
+				self.specfunc.params[key] *= (1+z_o)/(1+z_p)
+
+		# Calculate k_correction factor
+		kcorr = k_corr(org_spec, z_o, emin, emax) / k_corr(self.specfunc, z_p, emin, emax)
+
+		##
+		# Shift Light Curve
+		## 
+
+		# Apply distance corrections to flux values (See Bloom, Frail, and Sari 2001 Equation 4)
+		dis_corr_to_z_o = 1.
+		if z_o != 0:
+			dis_corr_to_z_o = 4 * np.pi * np.power(lum_dis(z_o), 2.) / (1+z_o)
+
+		dis_corr_to_z_p = 1.
+		if z_p != 0:
+			dis_corr_to_z_p = 4 * np.pi * np.power(lum_dis(z_p), 2.) / (1+z_p)
+		
+		self.light_curve['RATE'] = self.light_curve['RATE'] * kcorr * dis_corr_to_z_o / dis_corr_to_z_p
+		self.light_curve['UNC'] = self.light_curve['UNC'] * kcorr * dis_corr_to_z_o / dis_corr_to_z_p
+
 		# Apply time-dilation to light curve (i.e., correct the time binning)
 		# Calculate the start and stop times of the flux light curve in the z_p frame.
 		tpstart = self.light_curve['TIME'][0]*(1+z_p)/(1+z_o)
@@ -455,35 +484,6 @@ class GRB(object):
 		# Align the time array with zero
 		argt0 = np.argmax(tmp_time_arr>0)
 		tmp_light_curve['TIME'] -= tmp_time_arr[argt0]
-
-		# Copy original spectrum for k-correction calculation
-		org_spec = self.specfunc.deepcopy()
-		
-		# Move spectral function to z_p frame by correcting E_peak or temperature by the redshift (if spectral function has a peak energy or temperature)
-		for i, (key, val) in enumerate(self.specfunc.params.items()):
-			if key == "ep":
-				self.specfunc.params[key] *= (1+z_o)/(1+z_p)
-			if key == "temp":
-				self.specfunc.params[key] *= (1+z_o)/(1+z_p)
-
-		# Calculate k_correction factor
-		kcorr = k_corr(org_spec, z_o, emin, emax) / k_corr(self.specfunc, z_p, emin, emax)
-
-		##
-		# Shift Light Curve
-		## 
-
-		# Apply distance corrections to flux values (See Bloom, Frail, and Sari 2001 Equation 4)
-		dis_corr_to_z_o = 1.
-		if z_o != 0:
-			dis_corr_to_z_o = 4 * np.pi * np.power(lum_dis(z_o), 2.) / (1+z_o)
-
-		dis_corr_to_z_p = 1.
-		if z_p != 0:
-			dis_corr_to_z_p = 4 * np.pi * np.power(lum_dis(z_p), 2.) / (1+z_p)
-		
-		self.light_curve['RATE'] = self.light_curve['RATE'] * kcorr * dis_corr_to_z_o / dis_corr_to_z_p
-		self.light_curve['UNC'] = self.light_curve['UNC'] * kcorr * dis_corr_to_z_o / dis_corr_to_z_p
 		
 		# Set the light curve to the distance corrected light curve
 		self.light_curve = tmp_light_curve
