@@ -414,7 +414,7 @@ class GRB(object):
 		# Shift Light Curve
 		## 
 
-		# Apply distance corrections to flux values (See Bloom, Frail, and Sari 2001 Equation 4)
+		# Apply distance corrections to flux values (See Bloom, Frail, and Sari 2001 Equation 4 and Meszaros, Ripa, Ryde 2011 Equation 2)
 		dis_corr_to_z_o = 1.
 		if z_o != 0:
 			dis_corr_to_z_o = 4 * np.pi * np.power(lum_dis(z_o), 2.) / (1+z_o)
