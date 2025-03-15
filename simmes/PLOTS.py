@@ -636,11 +636,14 @@ class PLOTSAMPLE(PLOTS):
 		ax.set_xscale("log")
 		# ax.set_yscale("log")
 
+		ax.set_xlim(1)
+		ax.set_ylim(0,1.05)
+
 		if "label" in kwargs:
 			ax.legend()
 
-		ax.set_xlabel("T90", fontsize=14)
-		ax.set_ylabel("Normalied Histogram (arb units)", fontsize=14)
+		ax.set_xlabel(r"T$_{90}$ (sec)", fontsize=14)
+		ax.set_ylabel("Cumulative Histogram", fontsize=14)
 		ax.set_title("T90 Distrubtions", fontsize=14)
 
 		self.plot_aesthetics(ax)
@@ -681,12 +684,14 @@ class PLOTSAMPLE(PLOTS):
 		ax.set_xscale("log")
 		# ax.set_yscale("log")
 
+		ax.set_xlim(0.5)
+
 		if "label" in kwargs:
 			ax.legend()
 
 		ax.set_xlabel("Fluence (counts/det)", fontsize=self.fontsize)
-		ax.set_ylabel("Normalied Histogram (arb units)", fontsize=self.fontsize)
-		ax.set_title("T90 Fluence Distrubtion", fontsize=self.fontsize)
+		ax.set_ylabel("Cumulative Histogram", fontsize=self.fontsize)
+		ax.set_title("Fluence Distrubtion", fontsize=self.fontsize)
 
 		self.plot_aesthetics(ax)
 
