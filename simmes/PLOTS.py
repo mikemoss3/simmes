@@ -385,7 +385,12 @@ class PLOTSIMRES(PLOTS):
 
 		z_min, z_max = np.min(sim_results['z']), np.max(sim_results['z'])
 		if t_max is None:
-			t_max = np.max(sim_results['DURATION'])
+			hist, xedges, yedges = np.histogram2d(sim_results['z'], sim_results['DURATION'], bins=50)
+			# Threshold frequency
+			freq = 0.07 * len(sim_results[sim_results['z']==3])
+			# Zero out low values
+			hist[np.where(hist <= freq)] = 0
+			t_max = yedges[np.max(np.where(hist>0)[1])]
 
 		z_arr = np.linspace(0, z_max*1.1)
 		def dilation_line(z):
@@ -397,7 +402,7 @@ class PLOTSIMRES(PLOTS):
 		num_sims = len(results[results['z']==z_min])  # number of sims at each redshift bin
 		cmin= 0.07 * num_sims  # The 0.07 comes from a study on the false positive rate of the Bayesian block algorithm
 		# ax.set_facecolor(cmap(0))
-		
+
 		dur_arr = results["DURATION"]
 		if dur_frac is True:
 			if t_true is None:
