@@ -394,7 +394,8 @@ class PLOTSIMRES(PLOTS):
 		cmap = matplotlib.colormaps["viridis"].copy()
 		cmap.set_bad(color="w")
 		cmap.set_under(color="w")
-		cmin=0.5
+		num_sims = np.len(results[results['z']==z_min])  # number of sims at each redshift bin
+		cmin= 0.07 * num_sims  # The 0.07 comes from a study on the false positive rate of the Bayesian block algorithm
 		# ax.set_facecolor(cmap(0))
 		
 		dur_arr = results["DURATION"]
@@ -513,7 +514,8 @@ class PLOTSIMRES(PLOTS):
 		cmap = matplotlib.colormaps["viridis"].copy()
 		cmap.set_bad(color="w")
 		cmap.set_under(color="w")
-		cmin=0.1
+		num_sims = np.len(results[results['z']==z_min])  # number of sims at each redshift bin
+		cmin= 0.07 * num_sims  # The 0.07 comes from a study on the false positive rate of the Bayesian block algorithm
 		# ax.set_facecolor(cmap(0))
 
 		dur_arr = results["FLUENCE"]
