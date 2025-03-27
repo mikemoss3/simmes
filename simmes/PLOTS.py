@@ -387,7 +387,7 @@ class PLOTSIMRES(PLOTS):
 		if t_max is None:
 			hist, xedges, yedges = np.histogram2d(sim_results['z'], sim_results['DURATION'], bins=50)
 			# Threshold frequency
-			freq = 0.07 * len(sim_results[sim_results['z']==3])
+			freq = 0.07 * len(sim_results[sim_results['z']==z_min])
 			# Zero out low values
 			hist[np.where(hist <= freq)] = 0
 			t_max = yedges[np.max(np.where(hist>0)[1])]
