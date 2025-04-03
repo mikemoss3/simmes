@@ -400,7 +400,7 @@ class PLOTSIMRES(PLOTS):
 		cmap.set_bad(color="w")
 		cmap.set_under(color="w")
 		num_sims = len(results[results['z']==z_min])  # number of sims at each redshift bin
-		cmin= 0.07 * num_sims  # The 0.07 comes from a study on the false positive rate of the Bayesian block algorithm
+		cmin= 0.007 * num_sims  # The 0.007 comes from a study on the false positive rate of the Bayesian block algorithm
 		# ax.set_facecolor(cmap(0))
 
 		dur_arr = results["DURATION"]
@@ -520,7 +520,7 @@ class PLOTSIMRES(PLOTS):
 		cmap.set_bad(color="w")
 		cmap.set_under(color="w")
 		num_sims = len(results[results['z']==z_min])  # number of sims at each redshift bin
-		cmin= 0.07 * num_sims  # The 0.07 comes from a study on the false positive rate of the Bayesian block algorithm
+		cmin= 0.007 * num_sims  # The 0.007 comes from a study on the false positive rate of the Bayesian block algorithm
 		# ax.set_facecolor(cmap(0))
 
 		dur_arr = results["FLUENCE"]
