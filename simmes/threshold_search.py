@@ -248,8 +248,8 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 	if track_z is True: p.z_th_samples = [p.z_th]  # Keep track of redshift selections 
 
 	# Calculate the distance from the threshold value for the initial redshift 
-	p.det_ratio = _calc_det_rat(grb, p.z_th, p.threshold, p.trials, 
-								imx, imy, ndets,  
+	p.det_ratio = _calc_det_rat(grb=grb, z=p.z_th, trials=p.trials, 
+								imx=imx, imy=imy, ndets=ndets,  
 								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 								time_resolved=time_resolved, sim_triggers=sim_triggers)
 	# Initial difference between the current and desired detection ratio.
@@ -263,8 +263,8 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 		if track_z is True: p.z_th_samples.append(p.z_th)  # If indicated, track new redshift guess
 
 		# Calculate detection ratio for the current redshift guess
-		p.det_ratio = _calc_det_rat(grb, p.z_th, p.threshold, p.trials, 
-									imx, imy, ndets, 
+		p.det_ratio = _calc_det_rat(grb=grb, z=p.z_th, trials=p.trials, 
+									imx=imx, imy=imy, ndets=ndets, 
 									ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 									time_resolved=time_resolved, sim_triggers=sim_triggers)
 		# Calculate difference from threshold for this redshift 
