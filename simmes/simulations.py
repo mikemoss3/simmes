@@ -272,7 +272,6 @@ def rand_background_variance(size=1):
 
 	x_range = np.linspace(cut_min, cut_max)
 
-	# parameters = 0.0869, 0.0686, 9.929, 3.066 
 	parameters = [0.08694067, 0.06859141, 9.92930295, 3.06620674]
 	"""
 	Parameters:
