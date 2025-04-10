@@ -401,6 +401,7 @@ class PLOTSIMRES(PLOTS):
 		results = sim_results[sim_results['DURATION'] > 0]
 
 		z_min, z_max = np.min(sim_results['z']), np.max(sim_results['z'])
+		num_trials = len(results["DURATION"][results['z']==z_min])
 
 		if t_max is None:
 			# Determine bins before any cuts are applied
@@ -449,8 +450,7 @@ class PLOTSIMRES(PLOTS):
 		if inc_cbar == True:
 			divider = make_axes_locatable(ax)
 			cax = divider.append_axes('right', size='5%', pad=0.05)
-			num = len(results["DURATION"][results['z']==z_min])
-			cbar = fig.colorbar(im[3], cax=cax, orientation='vertical', ticks=[0.01*num, 0.1*num, num])
+			cbar = fig.colorbar(im[3], cax=cax, orientation='vertical', ticks=[0.01*num_trials, 0.1*num_trials, num_trials])
 			cbar.ax.set_yticklabels(["1%", "10%", "100%"])
 
 		# if (t_true is not None):
@@ -526,6 +526,8 @@ class PLOTSIMRES(PLOTS):
 		results = sim_results[sim_results['FLUENCE'] > 0]
 
 		z_min, z_max = np.min(sim_results['z']), np.max(sim_results['z'])
+		num_trials = len(results["DURATION"][results['z']==z_min])
+
 		if F_max is None:
 			F_max = np.max(sim_results['FLUENCE'])
 
@@ -584,8 +586,7 @@ class PLOTSIMRES(PLOTS):
 		if inc_cbar == True:
 			divider = make_axes_locatable(ax)
 			cax = divider.append_axes('right', size='5%', pad=0.05)
-			num = len(results["DURATION"][results['z']==z_min])
-			cbar = fig.colorbar(im[3], cax=cax, orientation='vertical', ticks=[0.01*num, 0.1*num, num])
+			cbar = fig.colorbar(im[3], cax=cax, orientation='vertical', ticks=[0.01*num_trials, 0.1*num_trials, num_trials])
 			cbar.ax.set_yticklabels(["1%", "10%", "100%"])
 
 		ax.axvline(x=z_min,color="k",linewidth=2, linestyle="dotted", label="Measured Redshift")
