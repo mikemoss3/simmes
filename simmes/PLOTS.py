@@ -354,9 +354,9 @@ class PLOTSIMRES(PLOTS):
 		self.plot_aesthetics(ax)
 
 	def redshift_duration_evo(self, sim_results, ax=None, 
-		t_true=1, t_max=None, bins=50, dur_frac=False, 
+		t_true=1, t_max=None, bins=None, dur_frac=False, 
 		log=False, norm=mcolors.LogNorm(), inc_cbar=False, 
-		cmin = 1,
+		cmin = 1, dt = 1,
 		inc_cosmo_line=True, **kwargs):
 		"""
 		Method to plot the measured duration of each synthetic light curve as a function redshift
@@ -388,6 +388,8 @@ class PLOTSIMRES(PLOTS):
 			Indicates whether to include a colorbar or not
 		cmin : float
 			Sets the minimum cut-off value for the density plot. Any bin with fewer counts than cmin are omitted. 
+		dt : float
+			The time bin size of the simulated light curve. This is used to determine histogram bins.
 		inc_cosmo_line : bool
 			Indicates whether to include the t_true*(1+z) line or not
 		"""
@@ -428,7 +430,11 @@ class PLOTSIMRES(PLOTS):
 			t_max = np.log10(t_max)
 			t_min = -1
 
-		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [t_min, t_max]], bins=bins, cmin=cmin, cmap=cmap, norm=norm, **kwargs) # output = counts, xbins, ybins, image
+		if bins == None:
+			z_bins = np.unique(sim_results['z'])
+			t_bins = np.arange(start=t_min, stop=t_max, step=dt)
+
+		im = ax.hist2d(results['z'], dur_arr, bins=[z_bins, t_bins], cmin=cmin, cmap=cmap, norm=norm, **kwargs) # output = counts, xbins, ybins, image
 
 		# h, xedges, yedges = np.histogram2d(results['z'], dur_arr, range= [[z_min, z_max], [t_min, t_max]])
 		# xbins = xedges[:-1] + (xedges[1] - xedges[0]) / 2
@@ -473,7 +479,7 @@ class PLOTSIMRES(PLOTS):
 		self.plot_aesthetics(ax)
 
 	def redshift_fluence_evo(self, sim_results, ax=None, 
-		F_true=None, F_max=None, F_min=None, bins=50, 
+		F_true=None, F_max=None, F_min=None, bins=None, 
 		fluence_frac=False, norm=mcolors.LogNorm(), inc_cbar=False, 
 		cmin = 1,
 		inc_cosmo_line=True, **kwargs):
@@ -563,7 +569,11 @@ class PLOTSIMRES(PLOTS):
 			F_min = np.min([-1, yedges[np.max(np.where(hist>0)[1])] ])
 		F_min = np.min([-1,np.log10(np.min(results['FLUENCE']))])
 
-		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [F_min, F_max]], bins=bins, cmin=cmin, cmap=cmap, norm=norm, **kwargs)
+		if bins == None:
+			z_bins = np.unique(sim_results['z'])
+			f_bins = np.linspace(start=F_min, stop=F_max, num=bins)
+
+		im = ax.hist2d(results['z'], dur_arr, bins=[z_bins, f_bins], cmin=cmin, cmap=cmap, norm=norm, **kwargs)
 
 		if inc_cbar == True:
 			divider = make_axes_locatable(ax)
