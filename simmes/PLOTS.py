@@ -405,7 +405,7 @@ class PLOTSIMRES(PLOTS):
 		if t_max is None:
 			# Determine bins before any cuts are applied
 			z_bins = np.unique(sim_results['z'])
-			t_bins = np.arange(start=0, stop=np.max(sim_results['DURAITON']), step=dt)
+			t_bins = np.arange(start=0, stop=np.max(sim_results['DURATION']), step=dt)
 			# Make a histogram
 			hist, xedges, yedges = np.histogram2d(sim_results['z'], sim_results['DURATION'], bins=[z_bins, t_bins])
 			# Remove bins that fall under the cut-off limit
