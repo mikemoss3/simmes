@@ -382,7 +382,7 @@ class PLOTSIMRES(PLOTS):
 			measurement to t_true
 		log : bool
 			Indicates if the y-axis should be taken to be the log of the data or not
-		norm : str or matplotlib.colors.Noramlize
+		norm : str or matplotlib.colors.Normalize
 			Sets the normalization scale for the density plot according to the colormap 
 		inc_cbar : bool
 			Indicates whether to include a colorbar or not
@@ -399,12 +399,13 @@ class PLOTSIMRES(PLOTS):
 		results = sim_results[sim_results['DURATION'] > 0]
 
 		z_min, z_max = np.min(sim_results['z']), np.max(sim_results['z'])
+
 		if t_max is None:
-			hist, xedges, yedges = np.histogram2d(sim_results['z'], sim_results['DURATION'], bins=50)
-			# Threshold frequency
-			freq = 0.07 * len(sim_results[sim_results['z']==z_min])
-			# Zero out low values
-			hist[np.where(hist <= freq)] = 0
+			# Make a histogram
+			hist, xedges, yedges = np.histogram2d(sim_results['z'], sim_results['DURATION'], bins=bins)
+			# Remove bins that fall under the cut-off limit
+			hist[np.where(hist <= cmin)] = 0
+			# Find T max of this histogram
 			t_max = yedges[np.max(np.where(hist>0)[1])]
 
 		z_arr = np.linspace(0, z_max*1.1)
@@ -472,7 +473,7 @@ class PLOTSIMRES(PLOTS):
 		self.plot_aesthetics(ax)
 
 	def redshift_fluence_evo(self, sim_results, ax=None, 
-		F_true=None, F_max=None, bins=50, 
+		F_true=None, F_max=None, F_min=None, bins=50, 
 		fluence_frac=False, norm=mcolors.LogNorm(), inc_cbar=False, 
 		cmin = 1,
 		inc_cosmo_line=True, **kwargs):
@@ -489,6 +490,8 @@ class PLOTSIMRES(PLOTS):
 			True fluence of the emission
 		F_max : float
 			y-axis maximum
+		F_min : float
+			y-axis minimum
 		bins : None or int or [int, int] or array-like or [array, array]
 			The bin specification:
 				If `int`, the number of bins for the two dimensions `(nx = ny = bins)`.
@@ -497,7 +500,7 @@ class PLOTSIMRES(PLOTS):
 				If `[array, array]`, the bin edges in each dimension `(x_edges, y_edges = bins)`.
 		fluence_frac : bool
 			Indicates whether the y-axis should be a fraction of the true fluence
-		norm : str or matplotlib.colors.Noramlize
+		norm : str or matplotlib.colors.Normalize
 			Sets the normalization scale for the density plot according to the colormap 
 		inc_cbar : bool
 			Indicates whether to include a colorbar or not
@@ -551,6 +554,13 @@ class PLOTSIMRES(PLOTS):
 			dur_arr /= F_true
 
 		F_max = np.log10(F_max)
+		if F_min is None:
+			# Make a histogram
+			hist, xedges, yedges = np.histogram2d(sim_results['z'], sim_results['DURATION'], bins=bins)
+			# Remove bins that fall under the cut-off limit
+			hist[np.where(hist <= cmin)] = 0
+			# Find T max of this histogram
+			F_min = np.min([-1, yedges[np.max(np.where(hist>0)[1])] ])
 		F_min = np.min([-1,np.log10(np.min(results['FLUENCE']))])
 
 		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [F_min, F_max]], bins=bins, cmin=cmin, cmap=cmap, norm=norm, **kwargs)
