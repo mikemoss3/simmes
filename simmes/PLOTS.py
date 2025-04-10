@@ -403,8 +403,11 @@ class PLOTSIMRES(PLOTS):
 		z_min, z_max = np.min(sim_results['z']), np.max(sim_results['z'])
 
 		if t_max is None:
+			# Determine bins before any cuts are applied
+			z_bins = np.unique(sim_results['z'])
+			t_bins = np.arange(start=0, stop=np.max(sim_results['DURAITON']), step=dt)
 			# Make a histogram
-			hist, xedges, yedges = np.histogram2d(sim_results['z'], sim_results['DURATION'], bins=bins)
+			hist, xedges, yedges = np.histogram2d(sim_results['z'], sim_results['DURATION'], bins=[z_bins, t_bins])
 			# Remove bins that fall under the cut-off limit
 			hist[np.where(hist <= cmin)] = 0
 			# Find T max of this histogram
@@ -561,8 +564,11 @@ class PLOTSIMRES(PLOTS):
 
 		F_max = np.log10(F_max)
 		if F_min is None:
+			# Determine bins before any cuts are applied
+			z_bins = np.unique(sim_results['z'])
+			f_bins = np.linspace(start=np.min(sim_results['FLUENCE']), stop=F_max, num=50)
 			# Make a histogram
-			hist, xedges, yedges = np.histogram2d(sim_results['z'], sim_results['DURATION'], bins=bins)
+			hist, xedges, yedges = np.histogram2d(sim_results['z'], sim_results['DURATION'], bins=[z_bins, f_bins])
 			# Remove bins that fall under the cut-off limit
 			hist[np.where(hist <= cmin)] = 0
 			# Find T max of this histogram
