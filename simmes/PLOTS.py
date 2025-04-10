@@ -355,7 +355,7 @@ class PLOTSIMRES(PLOTS):
 
 	def redshift_duration_evo(self, sim_results, ax=None, 
 		t_true=1, t_max=None, bins=None, dur_frac=False, 
-		log=False, norm=mcolors.LogNorm(), inc_cbar=False, 
+		log=False, norm=mcolors.LogNorm, inc_cbar=False, 
 		cmin = 1, dt = 1,
 		inc_cosmo_line=True, **kwargs):
 		"""
@@ -438,7 +438,7 @@ class PLOTSIMRES(PLOTS):
 			z_bins = np.unique(sim_results['z'])
 			t_bins = np.arange(start=t_min, stop=t_max, step=dt)
 
-		im = ax.hist2d(results['z'], dur_arr, bins=[z_bins, t_bins], cmin=cmin, cmap=cmap, norm=norm, **kwargs) # output = counts, xbins, ybins, image
+		im = ax.hist2d(results['z'], dur_arr, bins=[z_bins, t_bins], cmin=cmin, cmap=cmap, norm=norm(vmin=cmin, vmax= num_trials), **kwargs) # output = counts, xbins, ybins, image
 
 		# h, xedges, yedges = np.histogram2d(results['z'], dur_arr, range= [[z_min, z_max], [t_min, t_max]])
 		# xbins = xedges[:-1] + (xedges[1] - xedges[0]) / 2
@@ -483,7 +483,7 @@ class PLOTSIMRES(PLOTS):
 
 	def redshift_fluence_evo(self, sim_results, ax=None, 
 		F_true=None, F_max=None, F_min=None, bins=None, 
-		fluence_frac=False, norm=mcolors.LogNorm(), inc_cbar=False, 
+		fluence_frac=False, norm=mcolors.LogNorm, inc_cbar=False, 
 		cmin = 1,
 		inc_cosmo_line=True, **kwargs):
 		"""
@@ -581,7 +581,7 @@ class PLOTSIMRES(PLOTS):
 			z_bins = np.unique(sim_results['z'])
 			f_bins = np.linspace(start=F_min, stop=F_max, num=bins)
 
-		im = ax.hist2d(results['z'], dur_arr, bins=[z_bins, f_bins], cmin=cmin, cmap=cmap, norm=norm, **kwargs)
+		im = ax.hist2d(results['z'], dur_arr, bins=[z_bins, f_bins], cmin=cmin, cmap=cmap, norm=norm(vmin=cmin, vmax= num_trials), **kwargs)
 
 		if inc_cbar == True:
 			divider = make_axes_locatable(ax)
