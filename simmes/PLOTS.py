@@ -353,7 +353,11 @@ class PLOTSIMRES(PLOTS):
 		self.tight_layout()
 		self.plot_aesthetics(ax)
 
-	def redshift_duration_evo(self, sim_results, ax=None, t_true=1, t_max=None, bins=50, dur_frac=False, log=False, norm=mcolors.LogNorm(), inc_cbar=False, inc_cosmo_line=True, **kwargs):
+	def redshift_duration_evo(self, sim_results, ax=None, 
+		t_true=1, t_max=None, bins=50, dur_frac=False, 
+		log=False, norm=mcolors.LogNorm(), inc_cbar=False, 
+		cmin = 1,
+		inc_cosmo_line=True, **kwargs):
 		"""
 		Method to plot the measured duration of each synthetic light curve as a function redshift
 
@@ -373,8 +377,19 @@ class PLOTSIMRES(PLOTS):
 				If `[int, int]`, the number of bins in each dimension `(nx, ny = bins)`.
 				If array-like, the bin edges for the two dimensions `(x_edges = y_edges = bins)`.
 				If `[array, array]`, the bin edges in each dimension `(x_edges, y_edges = bins)`.
+		dur_frac : bool
+			Indicates whether the y-axis should be actual duration measurement of the ratio of the duration 
+			measurement to t_true
+		log : bool
+			Indicates if the y-axis should be taken to be the log of the data or not
+		norm : str or matplotlib.colors.Noramlize
+			Sets the normalization scale for the density plot according to the colormap 
 		inc_cbar : bool
 			Indicates whether to include a colorbar or not
+		cmin : float
+			Sets the minimum cut-off value for the density plot. Any bin with fewer counts than cmin are omitted. 
+		inc_cosmo_line : bool
+			Indicates whether to include the t_true*(1+z) line or not
 		"""
 
 		if ax is None:
@@ -399,9 +414,6 @@ class PLOTSIMRES(PLOTS):
 		cmap = matplotlib.colormaps["viridis"].copy()
 		cmap.set_bad(color="w")
 		cmap.set_under(color="w")
-		num_sims = len(results[results['z']==z_min])  # number of sims at each redshift bin
-		cmin= 0.007 * num_sims  # The 0.007 comes from a study on the false positive rate of the Bayesian block algorithm
-		# ax.set_facecolor(cmap(0))
 
 		dur_arr = results["DURATION"]
 		if dur_frac is True:
@@ -415,7 +427,7 @@ class PLOTSIMRES(PLOTS):
 			t_max = np.log10(t_max)
 			t_min = -1
 
-		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [t_min, t_max]], bins=bins, cmin=cmin, cmap=cmap, norm=mcolors.LogNorm(), **kwargs) # output = counts, xbins, ybins, image
+		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [t_min, t_max]], bins=bins, cmin=cmin, cmap=cmap, norm=norm, **kwargs) # output = counts, xbins, ybins, image
 
 		# h, xedges, yedges = np.histogram2d(results['z'], dur_arr, range= [[z_min, z_max], [t_min, t_max]])
 		# xbins = xedges[:-1] + (xedges[1] - xedges[0]) / 2
@@ -459,7 +471,11 @@ class PLOTSIMRES(PLOTS):
 		self.tight_layout()
 		self.plot_aesthetics(ax)
 
-	def redshift_fluence_evo(self, sim_results, ax=None, F_true=None, F_max=None, bins=50, fluence_frac=False, inc_cbar=False, inc_cosmo_line=True, **kwargs):
+	def redshift_fluence_evo(self, sim_results, ax=None, 
+		F_true=None, F_max=None, bins=50, 
+		fluence_frac=False, norm=mcolors.LogNorm(), inc_cbar=False, 
+		cmin = 1,
+		inc_cosmo_line=True, **kwargs):
 		"""
 		Method to plot the measured duration of each synthetic light curve as a function redshift
 
@@ -473,16 +489,22 @@ class PLOTSIMRES(PLOTS):
 			True fluence of the emission
 		F_max : float
 			y-axis maximum
-		fluence_frac : bool
-			Indicates whether the y-axis should be a fraction of the true fluence
 		bins : None or int or [int, int] or array-like or [array, array]
 			The bin specification:
 				If `int`, the number of bins for the two dimensions `(nx = ny = bins)`.
 				If `[int, int]`, the number of bins in each dimension `(nx, ny = bins)`.
 				If array-like, the bin edges for the two dimensions `(x_edges = y_edges = bins)`.
 				If `[array, array]`, the bin edges in each dimension `(x_edges, y_edges = bins)`.
+		fluence_frac : bool
+			Indicates whether the y-axis should be a fraction of the true fluence
+		norm : str or matplotlib.colors.Noramlize
+			Sets the normalization scale for the density plot according to the colormap 
 		inc_cbar : bool
 			Indicates whether to include a colorbar or not
+		cmin : float
+			Sets the minimum cut-off value for the density plot. Any bin with fewer counts than cmin are omitted. 
+		inc_cosmo_line : bool
+			Indicates whether to include the F_true/(1+z) line or not
 		"""
 
 		if ax is None:
@@ -519,9 +541,6 @@ class PLOTSIMRES(PLOTS):
 		cmap = matplotlib.colormaps["viridis"].copy()
 		cmap.set_bad(color="w")
 		cmap.set_under(color="w")
-		num_sims = len(results[results['z']==z_min])  # number of sims at each redshift bin
-		cmin= 0.007 * num_sims  # The 0.007 comes from a study on the false positive rate of the Bayesian block algorithm
-		# ax.set_facecolor(cmap(0))
 
 		dur_arr = results["FLUENCE"]
 		dur_arr = np.log10(dur_arr)
@@ -534,7 +553,7 @@ class PLOTSIMRES(PLOTS):
 		F_max = np.log10(F_max)
 		F_min = np.min([-1,np.log10(np.min(results['FLUENCE']))])
 
-		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [F_min, F_max]], bins=bins, cmin=cmin, cmap=cmap, **kwargs)
+		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [F_min, F_max]], bins=bins, cmin=cmin, cmap=cmap, norm=norm, **kwargs)
 
 		if inc_cbar == True:
 			divider = make_axes_locatable(ax)
