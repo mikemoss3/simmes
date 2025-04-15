@@ -529,7 +529,7 @@ class PLOTSIMRES(PLOTS):
 		num_trials = len(results["DURATION"][results['z']==z_min])
 
 		if F_max is None:
-			F_max = np.max(sim_results['FLUENCE'])
+			F_max = np.log10(np.max(sim_results['FLUENCE']))
 
 		if F_true is None:
 			F_true = np.mean(sim_results['FLUENCE'][sim_results['z']==z_min])
@@ -556,32 +556,29 @@ class PLOTSIMRES(PLOTS):
 		cmap.set_bad(color="w")
 		cmap.set_under(color="w")
 
-		dur_arr = results["FLUENCE"]
-		dur_arr = np.log10(dur_arr)
+		fluence_arr = np.log10(results["FLUENCE"])
 		if fluence_frac is True:
 			if F_true is None:
 				print("A true fluence must be given to plot a duration fraction.")
 				return;
-			dur_arr /= F_true
+			fluence_arr /= F_true
 
-		F_max = np.log10(F_max)
 		if F_min is None:
 			# Determine bins before any cuts are applied
 			z_bins = np.unique(sim_results['z'])
-			f_bins = np.linspace(start=np.min(sim_results['FLUENCE']), stop=F_max, num=50)
+			f_bins = np.linspace(start=np.min(fluence_arr), stop=F_max, num=50)
 			# Make a histogram
-			hist, xedges, yedges = np.histogram2d(sim_results['z'], sim_results['DURATION'], bins=[z_bins, f_bins])
+			hist, xedges, yedges = np.histogram2d(results['z'], fluence_arr, bins=[z_bins, f_bins])
 			# Remove bins that fall under the cut-off limit
 			hist[np.where(hist <= cmin)] = 0
-			# Find T max of this histogram
-			F_min = np.min([-1, yedges[np.max(np.where(hist>0)[1])] ])
-		F_min = np.min([-1,np.log10(np.min(results['FLUENCE']))])
+			# Find F min of this histogram
+			F_min = np.min([-1, yedges[np.min(np.where(hist>0)[1])] ])
 
 		if bins == None:
 			z_bins = np.unique(sim_results['z'])
-			f_bins = np.linspace(start=F_min, stop=F_max, num=bins)
+			f_bins = np.linspace(start=F_min, stop=F_max, num=int( (F_max - F_min)*30) )
 
-		im = ax.hist2d(results['z'], dur_arr, bins=[z_bins, f_bins], cmin=cmin, cmap=cmap, norm=norm(vmin=cmin, vmax= num_trials), **kwargs)
+		im = ax.hist2d(results['z'], fluence_arr, bins=[z_bins, f_bins], cmin=cmin, cmap=cmap, norm=norm(vmin=cmin, vmax= num_trials), **kwargs)
 
 		if inc_cbar == True:
 			divider = make_axes_locatable(ax)
