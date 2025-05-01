@@ -21,7 +21,7 @@ from simmes.PLOTS import PLOTGRB
 
 def simulate_observation(synth_grb, template_grb, resp_mat, 
 	imx, imy, ndets, 
-	z_p=0, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
+	z_p=None, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
 	time_resolved=False, sim_triggers=False, sim_bgd=True, bgd_size = 20):
 	
 	"""
@@ -62,6 +62,8 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 
 	# Initialize synthetic GRB
 	synth_grb.imx, synth_grb.imy = imx, imy
+	if z_p is None:
+		z_p = template_grb.z
 	synth_grb.z = z_p
 
 	# Apply distance corrections to GRB light curve and spectrum
