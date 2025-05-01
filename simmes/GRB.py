@@ -381,7 +381,7 @@ class GRB(object):
 			Indicates whether or not to remove the background signal outside the T100 range should be removed. 
 		"""
 
-		if z_o > z_p:
+		if z_o >= z_p:
 			print("New redshift must be greater than or equal to current redshift.")
 			return None;
 		if z_o == z_p:
