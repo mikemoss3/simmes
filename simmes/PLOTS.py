@@ -190,7 +190,7 @@ class PLOTGRB(PLOTS):
 			colors = _col_map(np.linspace(0, 1, len(grb.spectrafuncs)))
 			for i in range(len(grb.spectrafuncs)):
 				spectrum = grb.make_spectrum(emin = e_window[0], emax = e_window[1], num_bins=bins, spec_num=i)
-				ax.step(x=spectrum['ENERGY'],y=spectrum['ENERGY']**2 * spectrum['RATE']*norm, where="mid", alpha=alpha,**kwargs)
+				ax.step(x=spectrum['ENERGY'],y=spectrum['ENERGY']**2 * spectrum['RATE']*norm, where="mid", alpha=alpha, color=colors[i], **kwargs)
 
 		ax.set_xscale('log')
 		ax.set_yscale('log')
