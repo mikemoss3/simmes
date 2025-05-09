@@ -8,11 +8,10 @@ Defines the class and methods used for plotting simulation results.
 
 
 import numpy as np
-import matplotlib
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-import matplotlib.colormaps as cm
 from simmes.util_packages.cosmology import lum_dis
 from simmes.RSP import RSP
 
@@ -154,7 +153,7 @@ class PLOTGRB(PLOTS):
 
 		self.plot_aesthetics(ax)
 
-	def plot_spectrum(self, grb, e_window, time_resolved = False, bins = None, folded=False, rsp = None, ax=None, alpha=0.8, norm=1, cmap=cm['Blues'], **kwargs):
+	def plot_spectrum(self, grb, e_window, time_resolved = False, bins = None, folded=False, rsp = None, ax=None, alpha=0.8, norm=1, cmap='Blues', **kwargs):
 		"""
 		Method to plot the average duration percentage as a function of the position on the detector plane
 
@@ -187,7 +186,8 @@ class PLOTGRB(PLOTS):
 			ax.step(x=spectrum['ENERGY'],y=spectrum['ENERGY']**2 * spectrum['RATE']*norm, where="mid", alpha=alpha,**kwargs)
 			# ax.errorbar(x=spectrum['ENERGY'],y=spectrum['RATE']*norm,yerr=spectrum['UNC']*norm,fmt="",drawstyle="steps-mid",alpha=alpha,**kwargs)
 		else:
-			colors = cmap(np.linspace(0, 1, len(grb.spectrafuncs)))
+			_col_map = mpl.colormaps[cmap]
+			colors = _col_map(np.linspace(0, 1, len(grb.spectrafuncs)))
 			for i in range(len(grb.spectrafuncs)):
 				spectrum = grb.make_spectrum(emin = e_window[0], emax = e_window[1], num_bins=bins, spec_num=i)
 				ax.step(x=spectrum['ENERGY'],y=spectrum['ENERGY']**2 * spectrum['RATE']*norm, where="mid", alpha=alpha,**kwargs)
