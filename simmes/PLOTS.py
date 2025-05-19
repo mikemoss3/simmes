@@ -32,7 +32,7 @@ class PLOTS(object):
 		self.fontsize = fontsize
 		self.fontweight = fontweight
 
-	def plot_aesthetics(self, ax,xax=True, yax=True):
+	def plot_aesthetics(self, ax, xax=True, yax=True):
 		"""
 		This function is used to make bold and increase the font size of all plot tick markers
 
@@ -85,6 +85,9 @@ class PLOTS(object):
 			
 		ax.tick_params(direction="in",which="both")
 		ax.margins(x=0,y=0)
+
+		# Make the cursor x, y coordinates display in matplotlib window
+		ax.format_coord = lambda x, y: 'x={:g}, y={:g}'.format(x, y)
 
 	def show(self):
 		plt.show()
