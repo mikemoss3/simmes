@@ -397,24 +397,7 @@ class GRB(object):
 			new_light_curve = np.zeros(shape=len(self.light_curve))
 			new_light_curve[inds] = self.light_curve[inds]
 
-		# Copy original spectrum for k-correction calculation
-		org_spec = self.specfunc.deepcopy()
-		
-		# Move spectral function to z_p frame by correcting E_peak or temperature by the redshift (if spectral function has a peak energy or temperature)
-		for i, (key, val) in enumerate(self.specfunc.params.items()):
-			if key == "ep":
-				self.specfunc.params[key] *= (1+z_o)/(1+z_p)
-			if key == "temp":
-				self.specfunc.params[key] *= (1+z_o)/(1+z_p)
-
-		# Calculate k_correction factor
-		kcorr = k_corr(org_spec, z_o, emin, emax) / k_corr(self.specfunc, z_p, emin, emax)
-
-		##
-		# Shift Light Curve
-		## 
-
-		# Apply distance corrections to flux values (See Bloom, Frail, and Sari 2001 Equation 4 and Meszaros, Ripa, Ryde 2011 Equation 2)
+		# Calculate distance corrections to flux values (See Bloom, Frail, and Sari 2001 Equation 4 and Meszaros, Ripa, Ryde 2011 Equation 2)
 		dis_corr_to_z_o = 1.
 		if z_o != 0:
 			dis_corr_to_z_o = 4 * np.pi * np.power(lum_dis(z_o), 2.) / (1+z_o)
@@ -422,9 +405,52 @@ class GRB(object):
 		dis_corr_to_z_p = 1.
 		if z_p != 0:
 			dis_corr_to_z_p = 4 * np.pi * np.power(lum_dis(z_p), 2.) / (1+z_p)
+
+		# Calculate k-correction factor 
+		# Copy original spectrum and time-resolved spectra for k-correction calculation
+		org_spec = self.specfunc.deepcopy()
+
+		# Move spectral function to z_p frame by correcting E_peak or temperature by the redshift (if spectral function has a peak energy or temperature)
+		for i, (key, val) in enumerate(self.specfunc.params.items()):
+			if key == "ep":
+				self.specfunc.params[key] *= (1+z_o)/(1+z_p)
+			if key == "temp":
+				self.specfunc.params[key] *= (1+z_o)/(1+z_p)
+
+		# Calculate k-correction factor for entire interval
+		kcorr = k_corr(org_spec, z_o, emin, emax) / k_corr(self.specfunc, z_p, emin, emax)
 		
+		# Apply k-correction and distance correction to entire time interval
 		self.light_curve['RATE'] = self.light_curve['RATE'] * kcorr * dis_corr_to_z_o / dis_corr_to_z_p
 		self.light_curve['UNC'] = self.light_curve['UNC'] * kcorr * dis_corr_to_z_o / dis_corr_to_z_p
+
+		# If there are time-resolved spectra, calculate and update the k-correction for that interval
+		if len(self.spectrafuncs) > 0:
+			org_spectra = np.zeros(shape=len(self.spectrafuncs),dtype=[("TSTART",float),("TEND",float),("SPECFUNC",SPECFUNC)])
+			kcorr_res = np.zeros(shape=len(self.spectrafuncs))
+
+			# If there are time-resolved spectra, do the same for them
+			for s in range(len(self.spectrafuncs)):
+				org_spectra = self.spectrafuncs[s].deepcopy()
+				for i, (key, val) in enumerate(self.spectrafuncs[s].params.items()):
+					if key == "ep":
+						self.spectrafuncs[s].params[key] *= (1+z_o)/(1+z_p)
+					if key == "temp":
+						self.spectrafuncs[s].params[key] *= (1+z_o)/(1+z_p)
+
+				kcorr_res  = k_corr(org_spectra, z_o, emin, emax) / k_corr(self.spectrafuncs[s], z_p, emin, emax)
+
+				# Find what time interval this k correction applies to
+				ind_tstart = np.argmax(self.light_curve['TIME']>org_spectra[s]['TSTART'])
+				ind_tend = np.argmax(self.light_curve['TIME']>org_spectra[s]['TEND'])
+
+				# Apply k-correction and distance correction for this interval
+				self.light_curve['RATE'][ind_tstart:ind_tend] = self.light_curve['RATE'][ind_tstart:ind_tend] * kcorr_res * dis_corr_to_z_o / dis_corr_to_z_p
+				self.light_curve['UNC'][ind_tstart:ind_tend] = self.light_curve['UNC'][ind_tstart:ind_tend] * kcorr_res * dis_corr_to_z_o / dis_corr_to_z_p
+
+		##
+		# Time-dilate Light Curve
+		## 
 
 		# Apply time-dilation to light curve (i.e., correct the time binning)
 		# Calculate the start and stop times of the flux light curve in the z_p frame.
