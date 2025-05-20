@@ -335,7 +335,7 @@ class PLOTSIMRES(PLOTS):
 				ax.plot([x_divs[0], x_divs[-1]], [y_divs[i], y_divs[i]], color="k", alpha=0.2)
 
 
-		cmap = matplotlib.colormaps["viridis"].copy()
+		cmap = mpl.colormaps["viridis"].copy()
 		cmap.set_bad(color="gray")
 		cmap.set_under(color="gray")
 		cmin = np.min(1e-9)
@@ -422,7 +422,7 @@ class PLOTSIMRES(PLOTS):
 		def dilation_line(z):
 			return t_true*(1+z)/(1+z_min)
 
-		cmap = matplotlib.colormaps["viridis"].copy()
+		cmap = mpl.colormaps["viridis"].copy()
 		cmap.set_bad(color="w")
 		cmap.set_under(color="w")
 
@@ -556,7 +556,7 @@ class PLOTSIMRES(PLOTS):
 			t_vals[i] = np.mean(results['DURATION'][results['z']==z_vals[i]])
 			# t_vals[i] = np.min(results['DURATION'][results['z']==z_vals[i]])
 
-		cmap = matplotlib.colormaps["viridis"].copy()
+		cmap = mpl.colormaps["viridis"].copy()
 		cmap.set_bad(color="w")
 		cmap.set_under(color="w")
 
