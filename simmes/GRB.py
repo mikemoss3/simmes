@@ -426,19 +426,18 @@ class GRB(object):
 
 		# If there are time-resolved spectra, calculate and update the k-correction for that interval
 		if len(self.spectrafuncs) > 0:
-			org_spectra = np.zeros(shape=len(self.spectrafuncs),dtype=[("TSTART",float),("TEND",float),("SPECFUNC",SPECFUNC)])
 			kcorr_res = np.zeros(shape=len(self.spectrafuncs))
 
 			# If there are time-resolved spectra, do the same for them
 			for s in range(len(self.spectrafuncs)):
-				org_spectra = self.spectrafuncs[s].deepcopy()
-				for i, (key, val) in enumerate(self.spectrafuncs[s].params.items()):
+				org_spectra = self.spectrafuncs[s]['SPECFUNC'].deepcopy()
+				for i, (key, val) in enumerate(self.spectrafuncs[s]['SPECFUNC'].params.items()):
 					if key == "ep":
-						self.spectrafuncs[s].params[key] *= (1+z_o)/(1+z_p)
+						self.spectrafuncs[s]['SPECFUNC'].params[key] *= (1+z_o)/(1+z_p)
 					if key == "temp":
-						self.spectrafuncs[s].params[key] *= (1+z_o)/(1+z_p)
+						self.spectrafuncs[s]['SPECFUNC'].params[key] *= (1+z_o)/(1+z_p)
 
-				kcorr_res  = k_corr(org_spectra, z_o, emin, emax) / k_corr(self.spectrafuncs[s], z_p, emin, emax)
+				kcorr_res  = k_corr(org_spectra, z_o, emin, emax) / k_corr(self.spectrafuncs[s]['SPECFUNC'], z_p, emin, emax)
 
 				# Find what time interval this k correction applies to
 				ind_tstart = np.argmax(self.light_curve['TIME']>org_spectra[s]['TSTART'])
