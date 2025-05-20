@@ -440,8 +440,8 @@ class GRB(object):
 				kcorr_res  = k_corr(org_spectra, z_o, emin, emax) / k_corr(self.spectrafuncs[s]['SPECFUNC'], z_p, emin, emax)
 
 				# Find what time interval this k correction applies to
-				ind_tstart = np.argmax(self.light_curve['TIME']>org_spectra[s]['TSTART'])
-				ind_tend = np.argmax(self.light_curve['TIME']>org_spectra[s]['TEND'])
+				ind_tstart = np.argmax(self.light_curve['TIME']>self.spectrafuncs[s]['TSTART'])
+				ind_tend = np.argmax(self.light_curve['TIME']>self.spectrafuncs[s]['TEND'])
 
 				# Apply k-correction and distance correction for this interval
 				self.light_curve['RATE'][ind_tstart:ind_tend] = self.light_curve['RATE'][ind_tstart:ind_tend] * kcorr_res * dis_corr_to_z_o / dis_corr_to_z_p
