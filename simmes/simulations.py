@@ -352,7 +352,7 @@ def many_simulations(template_grb, param_list, trials,
 	# Simulate an observation for each parameter combination
 	for i in range(len(param_list)):
 		if verbose is True:
-			print("Param combination {}/{}:\n\tz = {:.2f}\n\timx, imy = {:.2f},{:.2f}\n\tndets={}".format(i+1, len(param_list), 
+			print("Param combination {}/{}:\n\tz = {:.2f}\n\timx, imy = {:.2f},{:.2f}\n\tndets = {}".format(i+1, len(param_list), 
 																							param_list[i][0], param_list[i][1], 
 																							param_list[i][2], int(param_list[i][3])) )
 	
