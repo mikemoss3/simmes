@@ -440,7 +440,7 @@ class PLOTSIMRES(PLOTS):
 
 		if bins == None:
 			num_z_bins = len(np.unique(sim_results['z']))
-			dz = (z_max - z_min)/len(num_z_bins)
+			dz = (z_max - z_min)/num_z_bins
 			z_bins = np.arange(start=z_min-dz, stop=z_max+dz, step=dz)
 			t_bins = np.arange(start=t_min, stop=t_max, step=dt)
 
@@ -572,9 +572,9 @@ class PLOTSIMRES(PLOTS):
 		if F_min is None:
 			# Determine bins before any cuts are applied
 			num_z_bins = len(np.unique(sim_results['z']))
-			dz = (z_max - z_min)/len(num_z_bins)
+			dz = (z_max - z_min)/num_z_bins
 			z_bins = np.arange(start=z_min-dz, stop=z_max+dz, step=dz)
-			
+
 			f_bins = np.linspace(start=np.min(fluence_arr), stop=F_max, num=50)
 			# Make a histogram
 			hist, xedges, yedges = np.histogram2d(results['z'], fluence_arr, bins=[z_bins, f_bins])
