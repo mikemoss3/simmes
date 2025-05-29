@@ -441,7 +441,7 @@ class PLOTSIMRES(PLOTS):
 		if bins == None:
 			num_z_bins = len(np.unique(sim_results['z']))
 			dz = (z_max - z_min)/num_z_bins
-			z_bins = np.arange(start=z_min-dz, stop=z_max+dz, step=dz)
+			z_bins = np.arange(start=z_min-(dz/2), stop=z_max+(dz/2), step=dz)
 			t_bins = np.arange(start=t_min, stop=t_max, step=dt)
 
 		im = ax.hist2d(results['z'], dur_arr, bins=[z_bins, t_bins], cmin=cmin, cmap=cmap, norm=norm(vmin=cmin, vmax= num_trials), **kwargs) # output = counts, xbins, ybins, image
@@ -573,7 +573,7 @@ class PLOTSIMRES(PLOTS):
 			# Determine bins before any cuts are applied
 			num_z_bins = len(np.unique(sim_results['z']))
 			dz = (z_max - z_min)/num_z_bins
-			z_bins = np.arange(start=z_min-dz, stop=z_max+dz, step=dz)
+			z_bins = np.arange(start=z_min-(dz/2), stop=z_max+(dz/2), step=dz)
 
 			f_bins = np.linspace(start=np.min(fluence_arr), stop=F_max, num=50)
 			# Make a histogram
@@ -586,8 +586,8 @@ class PLOTSIMRES(PLOTS):
 		if bins == None:
 			num_z_bins = len(np.unique(sim_results['z']))
 			dz = (z_max - z_min)/num_z_bins
-			z_bins = np.arange(start=z_min-dz, stop=z_max+dz, step=dz)
-			
+			z_bins = np.arange(start=z_min-(dz/2), stop=z_max+(dz/2), step=dz)
+
 			f_bins = np.linspace(start=F_min, stop=F_max, num=int( (F_max - F_min)*30) )
 
 		im = ax.hist2d(results['z'], fluence_arr, bins=[z_bins, f_bins], cmin=cmin, cmap=cmap, norm=norm(vmin=cmin, vmax= num_trials), **kwargs)
