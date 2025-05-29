@@ -584,7 +584,10 @@ class PLOTSIMRES(PLOTS):
 			F_min = np.min([-1, yedges[np.min(np.where(hist>0)[1])] ])
 
 		if bins == None:
-			z_bins = np.unique(sim_results['z'])
+			num_z_bins = len(np.unique(sim_results['z']))
+			dz = (z_max - z_min)/num_z_bins
+			z_bins = np.arange(start=z_min-dz, stop=z_max+dz, step=dz)
+			
 			f_bins = np.linspace(start=F_min, stop=F_max, num=int( (F_max - F_min)*30) )
 
 		im = ax.hist2d(results['z'], fluence_arr, bins=[z_bins, f_bins], cmin=cmin, cmap=cmap, norm=norm(vmin=cmin, vmax= num_trials), **kwargs)
