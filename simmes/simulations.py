@@ -66,6 +66,8 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 		z_p = template_grb.z
 	synth_grb.z = z_p
 
+	synth_grb.light_curve['RATE']/=np.max(synth_grb.light_curve['RATE'])
+
 	# Apply distance corrections to GRB light curve and spectrum
 	synth_grb.move_to_new_frame(z_o=template_grb.z, z_p=z_p, emin = band_rate_min, emax=band_rate_max)
 

@@ -416,13 +416,15 @@ class GRB(object):
 				self.specfunc.params[key] *= (1+z_o)/(1+z_p)
 			if key == "temp":
 				self.specfunc.params[key] *= (1+z_o)/(1+z_p)
+			if key == "norm":
+				self.specfunc.params[key] *= dis_corr_to_z_o / dis_corr_to_z_p
 
 		# Calculate k-correction factor for entire interval
 		kcorr = k_corr(org_spec, z_o, emin, emax) / k_corr(self.specfunc, z_p, emin, emax)
 		
 		# Apply k-correction and distance correction to entire time interval
-		self.light_curve['RATE'] = self.light_curve['RATE'] * kcorr * dis_corr_to_z_o / dis_corr_to_z_p
-		self.light_curve['UNC'] = self.light_curve['UNC'] * kcorr * dis_corr_to_z_o / dis_corr_to_z_p
+		self.light_curve['RATE'] = self.light_curve['RATE'] * kcorr #* dis_corr_to_z_o / dis_corr_to_z_p
+		self.light_curve['UNC'] = self.light_curve['UNC'] * kcorr #* dis_corr_to_z_o / dis_corr_to_z_p
 
 		# If there are time-resolved spectra, calculate and update the k-correction for that interval
 		if len(self.spectrafuncs) > 0:
@@ -436,6 +438,8 @@ class GRB(object):
 						self.spectrafuncs[s]['SPECFUNC'].params[key] *= (1+z_o)/(1+z_p)
 					if key == "temp":
 						self.spectrafuncs[s]['SPECFUNC'].params[key] *= (1+z_o)/(1+z_p)
+					if key == "norm":
+						self.specfunc.params[key] *= dis_corr_to_z_o / dis_corr_to_z_p
 
 				kcorr_res  = k_corr(org_spectra, z_o, emin, emax) / k_corr(self.spectrafuncs[s]['SPECFUNC'], z_p, emin, emax)
 
