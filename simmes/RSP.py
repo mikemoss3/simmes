@@ -520,7 +520,7 @@ def make_folded_spec(source_spec_func, rsp):
 	"""
 
 	# Initialize folded spectrum 
-	folded_spec = np.zeros(shape=rsp.num_chans,dtype=[("ENERGY",float),("RATE",float),("UNC",float)])
+	folded_spec = np.zeros(shape=rsp.num_chans,dtype=[("ENERGY",float),("RATE",float)])
 	# The folded spectrum will have the same energy bins as the response matrix
 	folded_spec['ENERGY'] = rsp.ECHAN_MID
 
@@ -530,11 +530,7 @@ def make_folded_spec(source_spec_func, rsp):
 		binned_source_spec[i] = integrate.quad(source_spec_func, rsp.ENERG_LO[i], rsp.ENERG_HI[i])[0]
 
 	# Fold the correctly binned source spectrum with the response matrix
-	folded_spec['RATE'] = np.matmul(binned_source_spec, rsp.MATRIX)  # counts / s / cm^2
-	folded_spec['RATE'] /= (rsp.ECHAN_HI - rsp.ECHAN_LO) # counts / s / cm^2 / keV (can be compared to XSPEC)
-
-	# What should the uncertainty be? Is there an uncertainty associated with a well-defined source spectrum?
-	# folded_spec['UNC'] = np.sqrt(folded_spec['RATE'])
-	folded_spec['UNC'] = 0.05*folded_spec['RATE']
+	folded_spec['RATE'] = np.matmul(binned_source_spec, rsp.MATRIX)  # counts / s / bin / det area
+	folded_spec['RATE'] /= (rsp.ECHAN_HI - rsp.ECHAN_LO) # counts / s / keV / det area (can be compared to XSPEC)
 
 	return folded_spec
