@@ -254,6 +254,47 @@ class CPL(SPECFUNC):
 
 		return flux_value
 
+class CPLSwift(SPECFUNC):
+	"""
+	Cut-off Power Law 
+
+	Parameters
+	----------
+	ep : float
+		Peak energy
+	alpha : float
+		Power law index
+	norm : float
+		Model normalization
+	enorm : float
+		Normalization energy
+	"""
+
+	def __init__(self, **kwargs):
+		self.name = "Swift/BAT Cut-off Power Law"
+
+		# Default values
+		def_ep = 100.
+		def_alpha = -1.
+		def_norm = 1.
+
+		self.params = {"ep" : def_ep, "alpha" : def_alpha, "norm" : def_norm}
+
+		super().__init__(**kwargs)
+
+	def evaluate(self, energy):
+		"""
+		Compute the cut-off power law spectrum at a particular energy given the current spectral parameters
+
+		Attributes
+		----------
+		energy : float 
+			Energy to evaluate the spetrum at
+		"""
+		flux_value = self.params['norm'] * np.power(energy/50.0, self.params['alpha']) * np.exp(- energy * (2.0 + self.params['alpha']) / self.params['ep'])
+
+		return flux_value
+
 class Blackbody(SPECFUNC):
 	"""
 	Blackbody function.
