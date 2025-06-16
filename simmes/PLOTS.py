@@ -824,7 +824,7 @@ class PLOTRSP(PLOTS):
 	def __init__(self):
 		PLOTS.__init__(self)
 
-	def plot_heatmap(self, RSP, ax=None, E_phot_bounds=None, E_chan_bounds=None):
+	def plot_heatmap(self, RSP, ax=None, E_phot_bounds=None, E_chan_bounds=None, **kwargs):
 		""" 
 		Plot heat map of the response matrix 
 
@@ -864,7 +864,7 @@ class PLOTRSP(PLOTS):
 		self.plot_aesthetics(ax)
 
 
-	def plot_effarea(self, RSP, ax=None, det_area=1, E_phot_bounds=None, norm=1):
+	def plot_effarea(self, RSP, ax=None, det_area=1, E_phot_bounds=None, norm=1, **kwargs):
 		"""
 		Plot heat map of the response matrix 
 
