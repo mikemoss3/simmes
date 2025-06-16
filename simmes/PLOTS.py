@@ -844,22 +844,22 @@ class PLOTRSP(PLOTS):
 			ax = plt.figure().gca()
 		fig = plt.gcf()
 
-		im = ax.pcolormesh(RSP.ECHAN_MID,RSP.ENERG_MID,RSP.MATRIX,shading='auto')
+		im = ax.pcolormesh(RSP.ECHAN_MID, RSP.ENERG_MID, RSP.MATRIX, shading='auto', **kwargs)
 
 		if E_chan_bounds is None:
-			ax.set_xlim(RSP.ECHAN_HI[0],RSP.ECHAN_LO[-1])
+			ax.set_xlim(RSP.ECHAN_HI[0], RSP.ECHAN_LO[-1])
 		else:
-			ax.set_xlim(E_chan_bounds[0],E_chan_bounds[1])
+			ax.set_xlim(E_chan_bounds[0], E_chan_bounds[1])
 		if E_phot_bounds is None:
-			ax.set_ylim(RSP.ENERG_HI[0],RSP.ENERG_LO[-5])
+			ax.set_ylim(RSP.ENERG_HI[0], RSP.ENERG_LO[-5])
 		else:
-			ax.set_xlim(E_phot_bounds[0],E_phot_bounds[1])
+			ax.set_xlim(E_phot_bounds[0], E_phot_bounds[1])
 
 		ax.set_xlabel('Instrument Channel Energy (keV)')
 		ax.set_ylabel('Photon Energy (keV)')
 
 		cbar = fig.colorbar(im)
-		cbar.ax.set_ylabel('Probability', rotation=270,labelpad=15)
+		cbar.ax.set_ylabel('Probability', rotation=270, labelpad=15)
 
 		self.plot_aesthetics(ax)
 
@@ -888,19 +888,19 @@ class PLOTRSP(PLOTS):
 			ax = plt.figure().gca()
 
 		# eff_area = np.sum(self.MATRIX,axis=1)/(self.ENERG_HI-self.ENERG_LO)
-		eff_area = np.zeros(shape=len(RSP.MATRIX))
-		for i in range(len(RSP.MATRIX)):
-			for j in range(len(RSP.MATRIX[0])):
+		eff_area = np.zeros( shape=len(RSP.MATRIX) )
+		for i in range( len(RSP.MATRIX) ):
+			for j in range( len(RSP.MATRIX[0]) ):
 				eff_area[i] += RSP.MATRIX[i][j]
 		
 		eff_area*=det_area
 
-		ax.step(RSP.ENERG_MID,eff_area*norm)
+		ax.step(RSP.ENERG_MID, eff_area*norm, **kwargs)
 
 		if E_phot_bounds is None:
-			ax.set_xlim(RSP.ENERG_MID[0],RSP.ENERG_MID[-1])
+			ax.set_xlim(RSP.ENERG_MID[0], RSP.ENERG_MID[-1])
 		else:
-			ax.set_xlim(E_phot_bounds[0],E_phot_bounds[1])
+			ax.set_xlim(E_phot_bounds[0], E_phot_bounds[1])
 
 		ax.set_xscale('log')
 		# ax.set_yscale('log')
