@@ -19,13 +19,14 @@ from simmes.util_packages.det_ang_dependence import find_pcode, find_inc_ang, fr
 import matplotlib.pyplot as plt
 from simmes.PLOTS import PLOTGRB
 
-def simulate_observation(synth_grb, template_grb, resp_mat, 
-	imx, imy, ndets, 
-	z_p=None, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
+def simulate_observation(synth_grb, resp_mat, 
+	imx, imy, ndets, z_p=None, 
+	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
 	time_resolved=False, sim_triggers=False, sim_bgd=True, bgd_size = 20):
 	
 	"""
-	Method to complete a simulation of a synthetic observation based on the input source frame GRB template and the desired observing conditions
+	Method to complete a simulation of a synthetic observation based on the input source frame GRB template 
+	and the desired observing conditions
 
 	Attributes:
 	--------------
@@ -34,7 +35,8 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 	synth_grb : GRB 
 		GRB class object that will hold the simulated light curve
 	resp_mat : RSP
-		Response matrix to convolve the template spectrum with. If no response matrix is given, a Swift/BAT response matrix is assumed from the given imx, imy
+		Response matrix to convolve the template spectrum with. If no response matrix is given, a Swift/BAT 
+		response matrix is assumed from the given imx, imy
 	imx, imy : float, float 
 		The x and y position of the GRB on the detector plane
 	ndets : int
@@ -62,61 +64,64 @@ def simulate_observation(synth_grb, template_grb, resp_mat,
 
 	# Initialize synthetic GRB
 	synth_grb.imx, synth_grb.imy = imx, imy
-	if z_p is None:
-		z_p = template_grb.z
-	synth_grb.z = z_p
 
-	synth_grb.light_curve['RATE']/=np.max(synth_grb.light_curve['RATE'])
-
-	# Apply distance corrections to GRB light curve and spectrum
-	synth_grb.move_to_new_frame(z_o=template_grb.z, z_p=z_p, emin = band_rate_min, emax=band_rate_max)
+	if (z_p is not None) and (z_p > synth_grb.z):
+		z_o = synth_grb.z
+		# Apply distance corrections to GRB light curve and spectrum
+		synth_grb.move_to_new_frame(z_o=z_o, z_p=z_p, emin = band_rate_min, emax=band_rate_max)
+	if (z_p < synth_grb.z):
+		print("GRBs can only be moved to higher redshifts.")
+		return 0;
 
 	# Calculate the fraction of the detectors currently enabled 
 	det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
 
 	if time_resolved == False:
 		# Fold spectrum through instrument response and calculate the count rate in the observation band
-		folded_spec = resp_mat.fold_spec(synth_grb.specfunc)  # Counts / s / keV / on-axis fully-illuminated detector
-		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac  # Counts / s /  on-axis fully-illuminated detector
+		folded_spec = resp_mat.fold_spec(synth_grb.specfunc)  # Counts / sec / keV / on-axis fully-illuminated detector
+		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac  # Counts / sec / on-axis fully-illuminated detector
 
-		# Using the total count rate from the spectrum and the relative flux level of the light curve, make a new light curve
-		# The synthetic GRB light curve technically has units of counts / sec / cm^2, but we are only using it as a template for relative flux values. 
-		# The actual flux is set by the band rate, which is in units of counts / sec 
-		synth_grb.light_curve['RATE'] *= rate_in_band # counts / sec
+		# Using the total count rate from the spectrum and 
+		# the relative flux level of the normalized synthetic light curve, make a new light curve
+		synth_grb.light_curve['RATE'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector  
+		synth_grb.light_curve['UNC'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector  
 	else:
 		# Time-resolved analysis is True
 		# If there is any interval of the light curve that is not covered by the time resolved spectra, use time-integrated spectrum
-		folded_spec = resp_mat.fold_spec(synth_grb.specfunc)  # counts / s / cm^2
-		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / s / cm^2
+		folded_spec = resp_mat.fold_spec(synth_grb.specfunc)  # Counts / sec / keV / on-axis fully-illuminated detector
+		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / sec / on-axis fully-illuminated detector
 		
 		arg_t_start = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[0]['TSTART'])
 		if arg_t_start > 0: 
-			synth_grb.light_curve[:arg_t_start]['RATE'] *= rate_in_band # counts / sec
+			synth_grb.light_curve[:arg_t_start]['RATE'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector
+			synth_grb.light_curve[:arg_t_start]['UNC'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector
 		
 		arg_t_end = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[-1]['TEND'])
 		if arg_t_end > 0:
-			synth_grb.light_curve[arg_t_end:]['RATE'] *= rate_in_band # counts / sec
+			synth_grb.light_curve[arg_t_end:]['RATE'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector
+			synth_grb.light_curve[arg_t_end:]['UNC'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector
 
 		# Fold time-resolved spectrum
 		for i in range(len(synth_grb.spectrafuncs)):
-			folded_spec = resp_mat.fold_spec(synth_grb.spectrafuncs[i]['SPECFUNC'])  # counts / sec / keV
-			rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / sec
+			folded_spec = resp_mat.fold_spec(synth_grb.spectrafuncs[i]['SPECFUNC'])  # Counts / sec / keV / on-axis fully-illuminated detector
+			rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac  # Counts / sec /  on-axis fully-illuminated detector
 
 			arg_t_start = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[i]['TSTART'])
 			arg_t_end = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[i]['TEND'])
-			synth_grb.light_curve[arg_t_start:arg_t_end]['RATE'] *= rate_in_band # counts / sec
+			synth_grb.light_curve[arg_t_start:arg_t_end]['RATE'] *= rate_in_band * 2  # counts / sec / on-axis fully-illuminated detector
+			synth_grb.light_curve[arg_t_start:arg_t_end]['UNC'] *= rate_in_band * 2  # counts / sec / on-axis fully-illuminated detector
 
 	# If we are testing the trigger algorithm:
 		# Modulate the light curve by the folded spectrum normalization for each energy band 
 		# Calculate the fraction of the quadrant exposure 
 
-
 	# Apply mask-weighting approximation to source rate signal 
-	synth_grb.light_curve = apply_mask_weighting(synth_grb.light_curve, imx, imy, ndets) # counts / sec / det
+	# synth_grb.light_curve = apply_mask_weighting(synth_grb.light_curve, imx, imy, ndets) # counts / sec / on-axis fully-illuminated detector
 
 	if sim_bgd == True:
 		# Add mask-weighted background rate to either side of mask-weighted source signal
-		synth_grb.light_curve = add_background(synth_grb.light_curve, bgd_size=bgd_size, dt = template_grb.dt) # counts / sec / det
+		t_bin_size = (synth_grb.light_curve['TIME'][1] - synth_grb.light_curve['TIME'][0])
+		synth_grb.light_curve = add_background(synth_grb.light_curve, bgd_size=bgd_size, dt = t_bin_size) # counts / sec / on-axis fully-illuminated detector
 
 
 	return synth_grb
@@ -175,7 +180,7 @@ def apply_mask_weighting(light_curve, imx, imy, ndets):
 	if pcode == 0:
 		# Source was not in the field of view
 		light_curve['UNC'] *= 0
-		light_curve['RATE'] *=0 # counts / sec / dets
+		light_curve['RATE'] *= 0 # counts / sec / dets
 		return light_curve
 
 	# Calculate the mask-weighted RATE column
@@ -199,7 +204,8 @@ def add_background(light_curve, bgd_size, dt):
 	Returns:
 	--------------
 	light_curve : np.ndarray with [("RATE", float), ("UNC", float)]
-		new light curve with background intervals added before and after the given light curve and added random background variance
+		new light curve with background intervals added before and after the given 
+		light curve and added random background variance
 	"""
 
 	sim_lc_length = int( (2*bgd_size/dt) + len(light_curve) ) # Length of the new light curve
@@ -215,7 +221,9 @@ def add_background(light_curve, bgd_size, dt):
 		)[:len(bgd_lc)]
 
 	# Pull a random background variance from the distribution created from observed values
-	variance = rand_background_variance()
+	variance = rand_background_variance()  # counts / sec / cm^2
+	variance *= 0.16  # counts / sec / det
+	
 	# Correct for time-bin size
 	variance /= np.sqrt(dt)
 
@@ -230,9 +238,9 @@ def add_background(light_curve, bgd_size, dt):
 
 	return bgd_lc
 
-def fit_function(t,fm,tm,r,d):
+def fred_function(t, fm, tm, r, d):
 	"""
-	FRED shaped light curve based on Equation 22 from Kocevski et al. 2003, basd on power law rise and exponential decay
+	FRED shaped curve based on Equation 22 from Kocevski et al. 2003; power law rise and exponential decay.
 
 	Attributes:
 	--------------
@@ -254,7 +262,8 @@ def fit_function(t,fm,tm,r,d):
 
 def rand_background_variance(size=1):
 	"""
-	Method that return a randomly selected from a distribution created from the measured background variances observed by Swift/BAT.
+	Method that return a randomly selected from a distribution created from the 
+	measured background variances observed by Swift/BAT.
 
 	The distribution function is created from the FRED function described in Kocevski 2003. 
 	The parameter values were found in a separate fit.  
@@ -267,7 +276,7 @@ def rand_background_variance(size=1):
 	Returns:
 	--------------
 	variance : float
-		Randomly selected background variance
+		Randomly selected background variance. Units counts / sec / cm^2.
 	"""
 
 	# There are only anomolous variances found outside of these cuts
@@ -286,7 +295,7 @@ def rand_background_variance(size=1):
 	"""
 
 	# Create distribution
-	distrib = rv_discrete(a=cut_min, b=cut_max, values=(x_range, fit_function(x_range, *parameters)) ) 
+	distrib = rv_discrete(a=cut_min, b=cut_max, values=(x_range, fred_function(x_range, *parameters)) ) 
 	# Select random value
 	variance = distrib.rvs(size=size)
 
@@ -351,6 +360,10 @@ def many_simulations(template_grb, param_list, trials,
 	if resp_mat is None:
 		resp_mat = RSP()
 
+		# Initialize response matrix based on imx, imy
+		# resp_mat.load_SwiftBAT_resp(param_list[0][1], param_list[0][2])
+		resp_mat.load_rsp_from_file("/Users/mjmoss/Research/grb-simmes/simmes-work/sw01205744000b_preslew.rsp")
+
 	# Simulate an observation for each parameter combination
 	for i in range(len(param_list)):
 		if verbose is True:
@@ -361,12 +374,19 @@ def many_simulations(template_grb, param_list, trials,
 		# Load Swift/BAT response matrix
 		try:
 			# If the imx, imy values have changed from the previous parameter combination, a new response file should be generated.
-			if (param_list[i][1] == param_list[i-1][1]) & (param_list[i][2] == param_list[i-1][2]):
+			if (param_list[i][1] != param_list[i-1][1]) | (param_list[i][2] != param_list[i-1][2]):
+				print("test imx imy ???")
 				# Load Swift BAT response based on the IMX, IMY position on the detector plane 
-				resp_mat.load_SwiftBAT_resp(param_list[i][1], param_list[i][2])
+				# resp_mat.load_SwiftBAT_resp(param_list[i][1], param_list[i][2])
+				resp_mat.load_rsp_from_file("/Users/mjmoss/Research/grb-simmes/simmes-work/sw01205744000b_preslew.rsp")
 		except:
-			# This was the first parameter list entry 
-			resp_mat.load_SwiftBAT_resp(param_list[i][1], param_list[i][2])
+			if i==0:
+				# This is the first entry in the parameter list, it's fine.
+				pass
+			else:
+				# Idk what went wrong 
+				print("Something went wrong with response loading.")
+				return;
 		
 		for j in range(trials):
 			# if verbose is True:
@@ -376,7 +396,7 @@ def many_simulations(template_grb, param_list, trials,
 
 			sim_results[["z", "imx", "imy", "ndets"]][sim_result_ind] = (param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3])
 
-			simulate_observation(synth_grb = synth_grb, template_grb=template_grb,resp_mat=resp_mat, z_p=param_list[i][0], 
+			simulate_observation(synth_grb = synth_grb, resp_mat=resp_mat, z_p=param_list[i][0], 
 								imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], 
 								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 								time_resolved = time_resolved, sim_triggers=sim_triggers, sim_bgd=sim_bgd, bgd_size=bgd_size)

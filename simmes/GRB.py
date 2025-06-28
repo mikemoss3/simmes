@@ -274,7 +274,7 @@ class GRB(object):
 
 		return spectrum
 
-	def load_light_curve(self, file_name, t_offset=0, rm_trigtime=False, T100_dur=None, T100_start=None, det_area=None):
+	def load_light_curve(self, file_name, norm = False, t_offset=0, rm_trigtime=False, T100_dur=None, T100_start=None, det_area=None):
 		"""
 		Method to load a light curve from either a .fits or .txt file
 
@@ -282,6 +282,8 @@ class GRB(object):
 		----------
 		file_name : str
 			Path to the file containing the light curve
+		norm : boolean
+			Indicates whether to normalize the light curve by the max count rate
 		t_offset : float
 			Include a time offset to the light curve
 		rm_trigtime : bool
@@ -308,6 +310,11 @@ class GRB(object):
 
 		# Time bin size
 		self.dt = (self.light_curve['TIME'][1] - self.light_curve['TIME'][0])
+
+		if norm is True:
+			# Normalize light curves by the max count rate (but keep relative uncertainty sizes)
+			self.light_curve['RATE']/=np.max(self.light_curve['RATE'])
+			self.light_curve['UNC']/=np.max(self.light_curve['RATE'])
 
 		# Correct for the size of a detector
 		if det_area is not None:
@@ -420,11 +427,13 @@ class GRB(object):
 				self.specfunc.params[key] *= dis_corr_to_z_o / dis_corr_to_z_p
 
 		# Calculate k-correction factor for entire interval
-		kcorr = k_corr(org_spec, z_o, emin, emax) / k_corr(self.specfunc, z_p, emin, emax)
+		# kcorr = k_corr(org_spec, z_o, emin, emax) / k_corr(self.specfunc, z_p, emin, emax)
 		
+		self.specfunc.params["norm"] *= k_corr(org_spec, z_o, emin, emax) / k_corr(self.specfunc, z_p, emin, emax)
+
 		# Apply k-correction and distance correction to entire time interval
-		self.light_curve['RATE'] = self.light_curve['RATE'] * kcorr #* dis_corr_to_z_o / dis_corr_to_z_p
-		self.light_curve['UNC'] = self.light_curve['UNC'] * kcorr #* dis_corr_to_z_o / dis_corr_to_z_p
+		# self.light_curve['RATE'] = self.light_curve['RATE'] * kcorr #* dis_corr_to_z_o / dis_corr_to_z_p
+		# self.light_curve['UNC'] = self.light_curve['UNC'] * kcorr #* dis_corr_to_z_o / dis_corr_to_z_p
 
 		# If there are time-resolved spectra, calculate and update the k-correction for that interval
 		if len(self.spectrafuncs) > 0:
@@ -439,17 +448,17 @@ class GRB(object):
 					if key == "temp":
 						self.spectrafuncs[s]['SPECFUNC'].params[key] *= (1+z_o)/(1+z_p)
 					if key == "norm":
-						self.specfunc.params[key] *= dis_corr_to_z_o / dis_corr_to_z_p
+						self.spectrafuncs[s]['SPECFUNC'].params[key] *= dis_corr_to_z_o / dis_corr_to_z_p
 
-				kcorr_res  = k_corr(org_spectra, z_o, emin, emax) / k_corr(self.spectrafuncs[s]['SPECFUNC'], z_p, emin, emax)
+				# Apply k-correction and distance correction for this spectrum
+				self.spectrafuncs[s]['SPECFUNC'].params["norm"] *= k_corr(org_spectra, z_o, emin, emax) / k_corr(self.spectrafuncs[s]['SPECFUNC'], z_p, emin, emax)
 
 				# Find what time interval this k correction applies to
-				ind_tstart = np.argmax(self.light_curve['TIME']>self.spectrafuncs[s]['TSTART'])
-				ind_tend = np.argmax(self.light_curve['TIME']>self.spectrafuncs[s]['TEND'])
+				# ind_tstart = np.argmax(self.light_curve['TIME']>self.spectrafuncs[s]['TSTART'])
+				# ind_tend = np.argmax(self.light_curve['TIME']>self.spectrafuncs[s]['TEND'])
 
-				# Apply k-correction and distance correction for this interval
-				self.light_curve['RATE'][ind_tstart:ind_tend] = self.light_curve['RATE'][ind_tstart:ind_tend] * kcorr_res * dis_corr_to_z_o / dis_corr_to_z_p
-				self.light_curve['UNC'][ind_tstart:ind_tend] = self.light_curve['UNC'][ind_tstart:ind_tend] * kcorr_res * dis_corr_to_z_o / dis_corr_to_z_p
+				# self.light_curve['RATE'][ind_tstart:ind_tend] = self.light_curve['RATE'][ind_tstart:ind_tend] * kcorr_res * dis_corr_to_z_o / dis_corr_to_z_p
+				# self.light_curve['UNC'][ind_tstart:ind_tend] = self.light_curve['UNC'][ind_tstart:ind_tend] * kcorr_res * dis_corr_to_z_o / dis_corr_to_z_p
 
 		##
 		# Time-dilate Light Curve

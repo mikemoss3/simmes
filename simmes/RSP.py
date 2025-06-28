@@ -33,7 +33,7 @@ class RSP(object):
 		Number of instrument channels
 	"""
 
-	def __init__(self, E_phot_min=1, E_phot_max=10, num_phot_bins=10, E_chan_min=1, E_chan_max=10,num_chans=10):
+	def __init__(self, E_phot_min=1, E_phot_max=10, num_phot_bins=10, E_chan_min=1, E_chan_max=10, num_chans=10):
 		"""
 		RSP class initialization 
 		
@@ -57,7 +57,7 @@ class RSP(object):
 		self.num_chans = num_chans
 		
 		self.set_E_phot(E_phot_min=E_phot_min, E_phot_max=E_phot_max, num_phot_bins=num_phot_bins,verbose=False)
-		self.set_E_chans(E_chan_min=E_chan_min,E_chan_max=E_chan_max,num_chans=num_chans,verbose=False)
+		self.set_E_chans(E_chan_min=E_chan_min, E_chan_max=E_chan_max, num_chans=num_chans, verbose=False)
 		
 		self.N_GRP = np.ones(shape=num_phot_bins) # The number of 'channel subsets' for for the energy bin
 		self.F_CHAN = np.zeros(shape=num_phot_bins) # The channel number of the start of each "channel subset" for the energy bin
@@ -194,25 +194,27 @@ class RSP(object):
 		if num_chans is not None:
 			self.num_chans = num_chans
 
-		self.ENERG_LO = np.zeros(shape=self.num_phot_bins)
-		self.ENERG_HI = np.zeros(shape=self.num_phot_bins)
-		self.ENERG_MID = np.zeros(shape=self.num_phot_bins)
-		self.N_GRP = np.zeros(shape=self.num_phot_bins)
-		self.F_CHAN = np.zeros(shape=self.num_phot_bins)
-		self.N_CHAN = np.zeros(shape=self.num_phot_bins)
+		self.ENERG_LO = np.zeros( shape=self.num_phot_bins )
+		self.ENERG_HI = np.zeros( shape=self.num_phot_bins )
+		self.ENERG_MID = np.zeros( shape=self.num_phot_bins )
+		self.N_GRP = np.zeros( shape=self.num_phot_bins )
+		self.F_CHAN = np.zeros( shape=self.num_phot_bins )
+		self.N_CHAN = np.zeros( shape=self.num_phot_bins )
 
-		self.ECHAN_LO = np.zeros(shape=self.num_chans)
-		self.ECHAN_HI = np.zeros(shape=self.num_chans)
-		self.ECHAN_MID = np.zeros(shape=self.num_chans)
+		self.ECHAN_LO = np.zeros( shape=self.num_chans )
+		self.ECHAN_HI = np.zeros( shape=self.num_chans )
+		self.ECHAN_MID = np.zeros( shape=self.num_chans )
 
-		self.MATRIX = np.zeros(shape=(self.num_phot_bins, self.num_chans))
+		self.MATRIX = np.zeros(shape=(self.num_chans, self.num_phot_bins))
 
 	def identity(self):
 		""" Make identity matrix """
+		if self.num_phot_bins != self.num_chans:
+			print("Identity matrix must be a square matrix")
+			return 1;
+
 		for i in range(self.num_phot_bins):
-			for j in range(self.num_chans):
-				if i==j:
-					self.MATRIX[i,j] = 1
+			self.MATRIX[j, i] = 1
 
 	def overDeltaE(self, alpha=2):
 		"""
@@ -228,14 +230,15 @@ class RSP(object):
 				self.MATRIX[i,j] = 1/(1+np.abs(self.ECHAN_MID[j] - self.ENERG_MID[i])**alpha)
 			
 			# Normalize this column
-			self.MATRIX[i]/=np.sum(self.MATRIX[i])
+			self.MATRIX[:, i] /= np.sum(self.MATRIX[:, i])
 
 	def gauss(self):
 		""" Decrease as probability in a Gaussian behavior as channel energy moves away from photon energy """
+		
 		for i in range(self.num_phot_bins):
-			dist = norm(self.ENERG_MID[i],np.sqrt(self.ENERG_MID[i]))
+			dist = norm(self.ENERG_MID[i], np.sqrt(self.ENERG_MID[i]))
 			for j in range(self.num_chans):
-				self.MATRIX[i,j] = dist.pdf(self.ECHAN_MID[j])
+				self.MATRIX[j, i] = dist.pdf(self.ECHAN_MID[j])
 
 	def load_rsp_from_file(self, file_name):
 		"""
@@ -250,8 +253,8 @@ class RSP(object):
 		--------------
 		None
 		""" 
-		resp_data = fitsio.read(filename=file_name,ext=1)
-		ebounds_data = fitsio.read(file_name,ext=2)
+		resp_data = fitsio.read(filename=file_name, ext=1)
+		ebounds_data = fitsio.read(file_name, ext=2)
 		
 		self.num_phot_bins = len(resp_data)
 		self.num_chans = len(ebounds_data)
@@ -262,7 +265,7 @@ class RSP(object):
 		self.N_GRP = np.zeros(shape=self.num_phot_bins)
 		self.F_CHAN = np.zeros(shape=self.num_phot_bins)
 		self.N_CHAN = np.zeros(shape=self.num_phot_bins)
-		self.MATRIX = np.zeros(shape=(self.num_phot_bins,self.num_chans) )
+		self.MATRIX = np.zeros(shape=(self.num_chans, self.num_phot_bins) )
 
 		self.ECHAN_LO = np.zeros(shape=self.num_chans)
 		self.ECHAN_HI = np.zeros(shape=self.num_chans)
@@ -271,17 +274,18 @@ class RSP(object):
 		for i in range(self.num_phot_bins):
 			self.ENERG_LO[i] = resp_data[i][0] # Incoming photon energy, lower bound
 			self.ENERG_HI[i] =  resp_data[i][1] # Incoming photon energy, upper bound
-			self.ENERG_MID[i] =  (self.ENERG_LO[i]+self.ENERG_HI[i])/2 # Incoming photon energy, bin center
+			self.ENERG_MID[i] =  (self.ENERG_LO[i]+self.ENERG_HI[i])/2. # Incoming photon energy, bin center
 			self.N_GRP[i] = resp_data[i][2] # The number of 'channel subsets' for for the energy bin
 			self.F_CHAN[i] = resp_data[i][3] # The channel number of the start of each "channel subset" for the energy bin
 			self.N_CHAN[i] = resp_data[i][4] # The number of channels within each "channel subset" for the energy bin
-			self.MATRIX[i] = resp_data[i][5] # Contains all the response probability values for each
+			
+			self.MATRIX[:,i] = resp_data[i][5] # Contains all the response probability values for each
 			# 										'channel subset' corresponding to the energy bin for a given row
 		
 		for i in range(self.num_chans):
 			self.ECHAN_LO[i] = ebounds_data[i][1] # Instrument energy channel lower bound
 			self.ECHAN_HI[i] = ebounds_data[i][2] # Instrument energy channel upper bound
-			self.ECHAN_MID[i] = (self.ECHAN_LO[i]+self.ECHAN_HI[i])/2 # Instrument energy channel center
+			self.ECHAN_MID[i] = (self.ECHAN_LO[i]+self.ECHAN_HI[i])/2. # Instrument energy channel center
 
 	def _load_swift_bat_rsp_from_file(self, file_name):
 		"""
@@ -296,8 +300,8 @@ class RSP(object):
 		--------------
 		None
 		""" 
-		resp_data = fitsio.read(filename=file_name,ext=1)
-		ebounds_data = fitsio.read(file_name,ext=2)
+		resp_data = fitsio.read(filename=file_name, ext=1)
+		ebounds_data = fitsio.read(file_name, ext=2)
 		
 		self.num_phot_bins = len(resp_data)
 		self.num_chans = len(ebounds_data)
@@ -308,7 +312,7 @@ class RSP(object):
 		self.N_GRP = np.zeros(shape=self.num_phot_bins)
 		self.F_CHAN = np.zeros(shape=self.num_phot_bins)
 		self.N_CHAN = np.zeros(shape=self.num_phot_bins)
-		self.MATRIX = np.zeros(shape=(self.num_phot_bins,self.num_chans) )
+		self.MATRIX = np.zeros(shape=(self.num_chans, self.num_phot_bins) )
 
 		self.ECHAN_LO = np.zeros(shape=self.num_chans)
 		self.ECHAN_HI = np.zeros(shape=self.num_chans)
@@ -316,16 +320,16 @@ class RSP(object):
 
 		self.ENERG_LO = resp_data["ENERG_LO"] # Incoming photon energy, lower bound
 		self.ENERG_HI =  resp_data["ENERG_HI"] # Incoming photon energy, upper bound
-		self.ENERG_MID =  (self.ENERG_LO+self.ENERG_HI)/2 # Incoming photon energy, bin center
+		self.ENERG_MID =  (self.ENERG_LO+self.ENERG_HI)/2. # Incoming photon energy, bin center
 		self.N_GRP = resp_data["N_GRP"] # The number of 'channel subsets' for for the energy bin
 		self.F_CHAN = resp_data["F_CHAN"] # The channel number of the start of each "channel subset" for the energy bin
 		self.N_CHAN = resp_data["N_CHAN"] # The number of channels within each "channel subset" for the energy bin
-		self.MATRIX = resp_data["MATRIX"] # Contains all the response probability values for each
+		self.MATRIX = resp_data["MATRIX"].T # Contains all the response probability values for each
 		# 										'channel subset' corresponding to the energy bin for a given row
 
 		self.ECHAN_LO = ebounds_data["E_MIN"] # Instrument energy channel lower bound
 		self.ECHAN_HI = ebounds_data["E_MAX"] # Instrument energy channel upper bound
-		self.ECHAN_MID = (self.ECHAN_LO+self.ECHAN_HI)/2 # Instrument energy channel center
+		self.ECHAN_MID = (self.ECHAN_LO+self.ECHAN_HI)/2. # Instrument energy channel center
 
 	def load_SwiftBAT_resp(self, imx, imy):
 		"""
@@ -451,7 +455,7 @@ class RSP(object):
 			term2 = grid_rsps[1].MATRIX * (imx2 - imx)*(imy -  imy1)
 			term3 = grid_rsps[2].MATRIX * (imx - imx1)*(imy2 - imy)
 			term4 = grid_rsps[3].MATRIX * (imx - imx1)*(imy - imy1)
-			self.MATRIX = norm * (term1 + term2 + term3 + term4)
+			self.MATRIX = ( norm * (term1 + term2 + term3 + term4) ).T
 		
 	
 	def fold_spec(self, specfunc):
@@ -469,7 +473,7 @@ class RSP(object):
 			Array holding a folded spectrum
 		"""
 
-		folded_spec = make_folded_spec(specfunc,self)
+		folded_spec = make_folded_spec(specfunc, self)
 
 		return folded_spec
 
@@ -497,9 +501,9 @@ def make_en_axis(Emin, Emax, num_en_bins):
 		Array storing the energy axis from Emin to Emax
 	"""
 
-	en_axis = np.zeros(shape=num_en_bins,dtype=[("Elo",float),("Emid",float),("Ehi",float)])
-	en_axis['Elo'] = np.logspace(np.log10(Emin),np.log10(Emax),num_en_bins,endpoint=False)
-	en_axis['Ehi'] = np.logspace(np.log10(en_axis["Elo"][1]),np.log10(Emax),num_en_bins,endpoint=True)
+	en_axis = np.zeros(shape=num_en_bins, dtype=[("Elo",float), ("Emid",float), ("Ehi",float)])
+	en_axis['Elo'] = np.logspace(np.log10(Emin), np.log10(Emax), num_en_bins, endpoint=False)
+	en_axis['Ehi'] = np.logspace(np.log10(en_axis["Elo"][1]), np.log10(Emax), num_en_bins, endpoint=True)
 	en_axis['Emid'] = (en_axis['Ehi'] + en_axis['Elo'])/2
 	return en_axis
 
@@ -520,7 +524,7 @@ def make_folded_spec(source_spec_func, rsp):
 	"""
 
 	# Initialize folded spectrum 
-	folded_spec = np.zeros(shape=rsp.num_chans,dtype=[("ENERGY",float),("RATE",float)])
+	folded_spec = np.zeros(shape=rsp.num_chans,dtype=[("ENERGY",float), ("RATE",float)])
 	# The folded spectrum will have the same energy bins as the response matrix
 	folded_spec['ENERGY'] = rsp.ECHAN_MID
 
@@ -530,7 +534,7 @@ def make_folded_spec(source_spec_func, rsp):
 		binned_source_spec[i] = integrate.quad(source_spec_func, rsp.ENERG_LO[i], rsp.ENERG_HI[i])[0]
 
 	# Fold the correctly binned source spectrum with the response matrix
-	folded_spec['RATE'] = np.matmul(binned_source_spec, rsp.MATRIX)  # counts / s / bin / det area
+	folded_spec['RATE'] = np.matmul(rsp.MATRIX, binned_source_spec)  # counts / s / bin / det area
 	folded_spec['RATE'] /= (rsp.ECHAN_HI - rsp.ECHAN_LO) # counts / s / keV / det area (can be compared to XSPEC)
 
 	return folded_spec

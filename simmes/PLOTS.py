@@ -544,12 +544,13 @@ class PLOTSIMRES(PLOTS):
 		def luminosity_distance(z):
 			arr = np.zeros(shape=len(z))
 			for i in range(len(z)):
-				arr[i] = F_true * (lum_dis(z_min) / lum_dis(z[i]) )**2
+				k_corr_rat = 1
+				arr[i] = F_true * k_corr_rat * ((1+z[i])/(1+z_min)) *(lum_dis(z_min) / lum_dis(z[i]) )**2
 			return arr
 
 		# Swift/BAT 5-sigma Fluence sensitivity line (see Baumgartner 2013)
 		def fluence_sens(time):
-			return 1.18 * 2.4*10**(-2) * time**(1./2.) / 0.16
+			return 0.16 * 1.18 * 2.4*10**(-2) * time**(1./2.)  # Units counts / det
 
 		z_vals = np.unique(sim_results['z'])
 		t_vals = np.zeros(shape=len(z_vals))
