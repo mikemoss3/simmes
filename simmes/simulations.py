@@ -361,8 +361,7 @@ def many_simulations(template_grb, param_list, trials,
 		resp_mat = RSP()
 
 		# Initialize response matrix based on imx, imy
-		# resp_mat.load_SwiftBAT_resp(param_list[0][1], param_list[0][2])
-		resp_mat.load_rsp_from_file("/Users/mjmoss/Research/grb-simmes/simmes-work/sw01205744000b_preslew.rsp")
+		resp_mat.load_SwiftBAT_resp(param_list[0][1], param_list[0][2])
 
 	# Simulate an observation for each parameter combination
 	for i in range(len(param_list)):
@@ -375,10 +374,8 @@ def many_simulations(template_grb, param_list, trials,
 		try:
 			# If the imx, imy values have changed from the previous parameter combination, a new response file should be generated.
 			if (param_list[i][1] != param_list[i-1][1]) | (param_list[i][2] != param_list[i-1][2]):
-				print("test imx imy ???")
 				# Load Swift BAT response based on the IMX, IMY position on the detector plane 
-				# resp_mat.load_SwiftBAT_resp(param_list[i][1], param_list[i][2])
-				resp_mat.load_rsp_from_file("/Users/mjmoss/Research/grb-simmes/simmes-work/sw01205744000b_preslew.rsp")
+				resp_mat.load_SwiftBAT_resp(param_list[i][1], param_list[i][2])
 		except:
 			if i==0:
 				# This is the first entry in the parameter list, it's fine.

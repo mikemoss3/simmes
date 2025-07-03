@@ -372,7 +372,8 @@ class RSP(object):
 		# If this imx, imy combination is exactly at a grid center, we don't need to interpolate
 		if np.any(imx == imx_imy_info['imx']) and np.any(imy == imx_imy_info['imy']):
 			grid_id = imx_imy_info[ (imx_imy_info['imx']==imx) & (imx_imy_info['imy']==imy) ]['GRIDID'][0]
-			self._load_swift_bat_rsp_from_file(file_name = path_here.joinpath("util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(grid_id)) )
+			# self._load_swift_bat_rsp_from_file(file_name = path_here.joinpath("util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(grid_id)) )
+			self._load_swift_bat_rsp_from_file(file_name = path_here.joinpath("util_packages/files-swift-bat-resps/bat_grid_{}.rsp".format(grid_id)) )
 
 			# Else, we need to interpolate
 		else:
@@ -432,7 +433,8 @@ class RSP(object):
 				else:
 					use_ind = i
 					grid_rsps[i] = RSP()
-					grid_rsps[i]._load_swift_bat_rsp_from_file(file_name = path_here.joinpath("util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(grid_ids[i])) )
+					# grid_rsps[i]._load_swift_bat_rsp_from_file(file_name = path_here.joinpath("util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(grid_ids[i])) )
+					grid_rsps[i]._load_swift_bat_rsp_from_file(file_name = path_here.joinpath("util_packages/files-swift-bat-resps/bat_grid_{}.rsp".format(grid_ids[i])) )
 
 			# Initialize response matrix for imx, imy
 			self.copy_structure(grid_rsps[use_ind])
