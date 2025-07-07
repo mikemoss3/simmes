@@ -69,9 +69,10 @@ def simulate_observation(synth_grb, resp_mat,
 		z_o = synth_grb.z
 		# Apply distance corrections to GRB light curve and spectrum
 		synth_grb.move_to_new_frame(z_o=z_o, z_p=z_p, emin = band_rate_min, emax=band_rate_max)
-	elif (z_p < synth_grb.z):
+	elif (z_p is not None) and (z_p < synth_grb.z):
 		print("GRBs can only be moved to higher redshifts.")
 		return 0;
+	# Else, z_p is None and we assume z_p = z_o (i.e., no redshift change)
 
 	# Calculate the fraction of the detectors currently enabled 
 	det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
