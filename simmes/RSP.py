@@ -457,7 +457,7 @@ class RSP(object):
 			term2 = grid_rsps[1].MATRIX * (imx2 - imx)*(imy -  imy1)
 			term3 = grid_rsps[2].MATRIX * (imx - imx1)*(imy2 - imy)
 			term4 = grid_rsps[3].MATRIX * (imx - imx1)*(imy - imy1)
-			self.MATRIX = ( norm * (term1 + term2 + term3 + term4) ).T
+			self.MATRIX = ( norm * (term1 + term2 + term3 + term4) )
 		
 	
 	def fold_spec(self, specfunc):
