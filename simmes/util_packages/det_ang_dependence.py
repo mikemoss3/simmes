@@ -2,8 +2,8 @@ import numpy as np
 from astropy.io import fits
 from pathlib import Path
 
-
 path_here = Path(__file__).parent
+
 def find_grid_id(imx,imy):
 	"""
 	Method to find the Swift/BAT response matrix GridID based on the position of the source on the detector plane according to Lien et al 2012.
@@ -65,9 +65,10 @@ def find_pcode(imx,imy):
 
 	# This is the correct way to find the pcode, but doesn't work with response function grid	
 	# Load pcode map image 
-	pcode_img = fits.getdata("./util_packages/files-det-ang-dependence/pcode-map.img",ext=0) # indexing as pcode_img[y-index, x-index]
+	pcode_img = fits.getdata( path_here.joinpath("files-det-ang-dependence/pcode-map.img"),ext=0) # indexing as pcode_img[y-index, x-index]
 	# Load header from file
-	pcode_img_header = fits.getheader("./util_packages/files-det-ang-dependence/pcode-map.img",ext=0)
+	pcode_img_header = fits.getheader( path_here.joinpath("files-det-ang-dependence/pcode-map.img"),ext=0)
+
 
 	# Make (imx, imy) grid based on the indices (i,j)
 	# i and j are the indices of each pixel
