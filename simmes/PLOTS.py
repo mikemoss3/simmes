@@ -889,10 +889,10 @@ class PLOTRSP(PLOTS):
 			ax = plt.figure().gca()
 
 		# eff_area = np.sum(self.MATRIX,axis=1)/(self.ENERG_HI-self.ENERG_LO)
-		eff_area = np.zeros( shape=len(RSP.MATRIX) )
-		for i in range( len(RSP.MATRIX) ):
-			for j in range( len(RSP.MATRIX[0]) ):
-				eff_area[i] += RSP.MATRIX[i][j]
+		eff_area = np.zeros( shape=RSP.num_phot_bins )
+		for i in range( RSP.num_phot_bins ):
+			for j in range( RSP.num_chans ):
+				eff_area[i] += RSP.MATRIX[j][i]
 		
 		eff_area*=det_area
 
