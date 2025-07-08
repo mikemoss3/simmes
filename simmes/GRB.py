@@ -314,7 +314,7 @@ class GRB(object):
 		if norm is True:
 			# Normalize light curves by the max count rate (but keep relative uncertainty sizes)
 			self.light_curve['RATE']/=np.max(self.light_curve['RATE'])
-			self.light_curve['UNC']/=np.max(self.light_curve['RATE'])
+			self.light_curve['UNC']*=0
 
 		# Correct for the size of a detector
 		if det_area is not None:
