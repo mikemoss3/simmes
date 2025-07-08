@@ -85,7 +85,6 @@ def simulate_observation(synth_grb, resp_mat,
 		# Using the total count rate from the spectrum and 
 		# the relative flux level of the normalized synthetic light curve, make a new light curve
 		synth_grb.light_curve['RATE'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector  
-		synth_grb.light_curve['UNC'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector  
 	else:
 		# Time-resolved analysis is True
 		# If there is any interval of the light curve that is not covered by the time resolved spectra, use time-integrated spectrum
@@ -95,12 +94,10 @@ def simulate_observation(synth_grb, resp_mat,
 		arg_t_start = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[0]['TSTART'])
 		if arg_t_start > 0: 
 			synth_grb.light_curve[:arg_t_start]['RATE'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector
-			synth_grb.light_curve[:arg_t_start]['UNC'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector
 		
 		arg_t_end = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[-1]['TEND'])
 		if arg_t_end > 0:
 			synth_grb.light_curve[arg_t_end:]['RATE'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector
-			synth_grb.light_curve[arg_t_end:]['UNC'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector
 
 		# Fold time-resolved spectrum
 		for i in range(len(synth_grb.spectrafuncs)):
@@ -110,7 +107,6 @@ def simulate_observation(synth_grb, resp_mat,
 			arg_t_start = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[i]['TSTART'])
 			arg_t_end = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[i]['TEND'])
 			synth_grb.light_curve[arg_t_start:arg_t_end]['RATE'] *= rate_in_band * 2  # counts / sec / on-axis fully-illuminated detector
-			synth_grb.light_curve[arg_t_start:arg_t_end]['UNC'] *= rate_in_band * 2  # counts / sec / on-axis fully-illuminated detector
 
 	# If we are testing the trigger algorithm:
 		# Modulate the light curve by the folded spectrum normalization for each energy band 
@@ -119,11 +115,22 @@ def simulate_observation(synth_grb, resp_mat,
 	# Apply mask-weighting approximation to source rate signal 
 	# synth_grb.light_curve = apply_mask_weighting(synth_grb.light_curve, imx, imy, ndets) # counts / sec / on-axis fully-illuminated detector
 
+	t_bin_size = (synth_grb.light_curve['TIME'][1] - synth_grb.light_curve['TIME'][0])
 	if sim_bgd == True:
 		# Add mask-weighted background rate to either side of mask-weighted source signal
-		t_bin_size = (synth_grb.light_curve['TIME'][1] - synth_grb.light_curve['TIME'][0])
 		synth_grb.light_curve = add_background(synth_grb.light_curve, bgd_size=bgd_size, dt = t_bin_size) # counts / sec / on-axis fully-illuminated detector
 
+	# Add variations
+
+	# Pull a random background variance from the distribution created from observed values
+	variance = rand_background_variance()  # counts / sec / cm^2
+	variance *= 0.16  # counts / sec / det
+	variance /= np.sqrt(t_bin_size) # scale for time-bin size
+
+	# Fluctuate the background according to a Normal distribution around 0 with a standard variation equal to the background variance
+	synth_grb.light_curve['RATE'] += np.random.normal( loc=np.zeros(shape=len(synth_grb.light_curve)), scale=variance)
+	# Set the uncertainty of the count rate to the variance. 
+	synth_grb.light_curve['UNC'] = np.ones(shape=len(synth_grb.light_curve))*variance
 
 	return synth_grb
 
@@ -220,18 +227,6 @@ def add_background(light_curve, bgd_size, dt):
 		stop= light_curve['TIME'][-1]+bgd_size+dt, 
 		step= dt
 		)[:len(bgd_lc)]
-
-	# Pull a random background variance from the distribution created from observed values
-	variance = rand_background_variance()  # counts / sec / cm^2
-	variance *= 0.16  # counts / sec / det
-	
-	# Correct for time-bin size
-	variance /= np.sqrt(dt)
-
-	# Fluctuate the background according to a Normal distribution around 0 with a standard variation equal to the background variance
-	bgd_lc['RATE'] = np.random.normal( loc=np.zeros(shape=len(bgd_lc)), scale=variance)
-	# Set the uncertainty of the count rate to the variance. 
-	bgd_lc['UNC'] = np.ones(shape=len(bgd_lc))*variance
 
 	len_sim = len(light_curve['RATE']) # Length of the source signal
 	argstart = np.argmax(bgd_lc['TIME']>=light_curve['TIME'][0]) # Start index of the signal in the new light curve	
