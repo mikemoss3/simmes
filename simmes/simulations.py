@@ -84,7 +84,7 @@ def simulate_observation(synth_grb, resp_mat,
 
 		# Using the total count rate from the spectrum and 
 		# the relative flux level of the normalized synthetic light curve, make a new light curve
-		synth_grb.light_curve['RATE'] *= rate_in_band # counts / sec / on-axis fully-illuminated detector  
+		synth_grb.light_curve['RATE'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector  
 	else:
 		# Time-resolved analysis is True
 		# If there is any interval of the light curve that is not covered by the time resolved spectra, use time-integrated spectrum
@@ -93,11 +93,11 @@ def simulate_observation(synth_grb, resp_mat,
 		
 		arg_t_start = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[0]['TSTART'])
 		if arg_t_start > 0: 
-			synth_grb.light_curve[:arg_t_start]['RATE'] *= rate_in_band # counts / sec / on-axis fully-illuminated detector
+			synth_grb.light_curve[:arg_t_start]['RATE'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector
 		
 		arg_t_end = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[-1]['TEND'])
 		if arg_t_end > 0:
-			synth_grb.light_curve[arg_t_end:]['RATE'] *= rate_in_band # counts / sec / on-axis fully-illuminated detector
+			synth_grb.light_curve[arg_t_end:]['RATE'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector
 
 		# Fold time-resolved spectrum
 		for i in range(len(synth_grb.spectrafuncs)):
@@ -106,7 +106,7 @@ def simulate_observation(synth_grb, resp_mat,
 
 			arg_t_start = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[i]['TSTART'])
 			arg_t_end = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[i]['TEND'])
-			synth_grb.light_curve[arg_t_start:arg_t_end]['RATE'] *= rate_in_band  # counts / sec / on-axis fully-illuminated detector
+			synth_grb.light_curve[arg_t_start:arg_t_end]['RATE'] *= rate_in_band * 2  # counts / sec / on-axis fully-illuminated detector
 
 	# If we are testing the trigger algorithm:
 		# Modulate the light curve by the folded spectrum normalization for each energy band 
