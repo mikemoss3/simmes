@@ -537,6 +537,6 @@ def make_folded_spec(source_spec_func, rsp):
 
 	# Fold the correctly binned source spectrum with the response matrix
 	folded_spec['RATE'] = np.matmul(rsp.MATRIX, binned_source_spec)  # counts / s / bin / det area
-	folded_spec['RATE'] /= (rsp.ECHAN_HI - rsp.ECHAN_LO) # counts / s / keV / det area (can be compared to XSPEC)
+	# folded_spec['RATE'] /= (rsp.ECHAN_HI - rsp.ECHAN_LO) # counts / s / keV / det area (can be compared to XSPEC)
 
 	return folded_spec
