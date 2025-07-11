@@ -12,8 +12,9 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from simmes.util_packages.cosmology import lum_dis
+from simmes.util_packages.cosmology import lum_dis, k_corr
 from simmes.RSP import RSP
+from simmes.SPECFUNC import SPECFUNC
 
 class PLOTS(object):
 	"""
@@ -490,8 +491,8 @@ class PLOTSIMRES(PLOTS):
 	def redshift_fluence_evo(self, sim_results, ax=None, 
 		F_true=None, F_max=None, F_min=None, bins=None, 
 		fluence_frac=False, norm=mcolors.LogNorm, inc_cbar=False, 
-		cmin = 1,
-		inc_cosmo_line=True, **kwargs):
+		cmin = 1, inc_sensitivity_line = True,
+		inc_cosmo_line=False, specfunc=None, e_min=15, e_max=350, **kwargs):
 		"""
 		Method to plot the measured duration of each synthetic light curve as a function redshift
 
@@ -502,7 +503,7 @@ class PLOTSIMRES(PLOTS):
 		ax : matplotlib.axes
 			Axis on which to create the figure
 		F_true : float
-			True fluence of the emission
+			Observed fluence of the burst at the lowest redshift 
 		F_max : float
 			y-axis maximum
 		F_min : float
@@ -522,12 +523,23 @@ class PLOTSIMRES(PLOTS):
 		cmin : float
 			Sets the minimum cut-off value for the density plot. Any bin with fewer counts than cmin are omitted. 
 		inc_cosmo_line : bool
+			Indicates whether to include the 5-sigma sensitivty line (for Swift/BAT)
+		inc_cosmo_line : bool
 			Indicates whether to include the F_true/(1+z) line or not
+		specfunc : SPECFUNC
+			The observed spectral function of the burst at the lowest redshift 
+		e_min, e_max : float, float
+			Minimum and maximum energy values of the observed band, used for k-correction calculations. 
+			Defaults are 15 and 350 keV, respectively, to represent Swift/BAT energy band.
 		"""
 
 		if ax is None:
 			ax = plt.figure().gca()
 		fig = plt.gcf()
+
+		if (inc_cosmo_line == True) and not isinstance(specfunc, SPECFUNC):
+			print("If a cosmological fluence line is to be included, a spectral function of type SPECFUNC must also be given.")
+			return;
 
 		results = sim_results[sim_results['FLUENCE'] > 0]
 
@@ -539,25 +551,6 @@ class PLOTSIMRES(PLOTS):
 
 		if F_true is None:
 			F_true = np.mean(sim_results['FLUENCE'][sim_results['z']==z_min])
-
-		z_arr = np.linspace(z_min, z_max*1.1)
-		def luminosity_distance(z):
-			arr = np.zeros(shape=len(z))
-			for i in range(len(z)):
-				k_corr_rat = 1
-				arr[i] = F_true * k_corr_rat * ((1+z[i])/(1+z_min)) *(lum_dis(z_min) / lum_dis(z[i]) )**2
-			return arr
-
-		# Swift/BAT 5-sigma Fluence sensitivity line (see Baumgartner 2013)
-		def fluence_sens(time):
-			return 0.16 * 1.18 * 2.4*10**(-2) * time**(1./2.)  # Units counts / det
-
-		z_vals = np.unique(sim_results['z'])
-		t_vals = np.zeros(shape=len(z_vals))
-		for i in range(len(z_vals)):
-			# t_vals[i] = np.mean(results['DURATION'][results['z']==z_min]) * (1+z_vals[i])
-			t_vals[i] = np.mean(results['DURATION'][results['z']==z_vals[i]])
-			# t_vals[i] = np.min(results['DURATION'][results['z']==z_vals[i]])
 
 		cmap = mpl.colormaps["viridis"].copy()
 		cmap.set_bad(color="w")
@@ -591,7 +584,9 @@ class PLOTSIMRES(PLOTS):
 
 			f_bins = np.linspace(start=F_min, stop=F_max, num=int( (F_max - F_min)*30) )
 
-		im = ax.hist2d(results['z'], fluence_arr, bins=[z_bins, f_bins], cmin=cmin, cmap=cmap, norm=norm(vmin=cmin, vmax= num_trials), **kwargs)
+		im = ax.hist2d(results['z'], fluence_arr, 
+						bins=[z_bins, f_bins], cmin=cmin, cmap=cmap, 
+						norm=norm(vmin=cmin, vmax= num_trials), **kwargs)
 
 		if inc_cbar == True:
 			divider = make_axes_locatable(ax)
@@ -605,18 +600,52 @@ class PLOTSIMRES(PLOTS):
 		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
 
 		if inc_cosmo_line is True:
-			ax.plot(z_arr, np.log10(luminosity_distance(z_arr)), color="C1", alpha=1, linewidth=3) # 1/distance^2 line 
-		ax.plot(z_vals, np.log10(fluence_sens(t_vals)), color="magenta", linewidth=2) # 5-sigma fluence limit 
+			z_arr = np.linspace(z_min, z_max*1.1)
+			
+			ax.plot(z_arr, 
+				np.log10(self._luminosity_distance(z_arr, specfunc, F_true, z_min, e_min, e_max)), 
+				color="C1", alpha=1, linewidth=3)
+
+		if inc_sensitivity_line is True:
+			z_vals = np.unique(sim_results['z'])
+			t_vals = np.zeros(shape=len(z_vals))
+			for i in range(len(z_vals)):
+				t_vals[i] = np.mean(results['DURATION'][results['z']==z_vals[i]])
+
+			ax.plot(z_vals, np.log10(self._fluence_sens(t_vals)), color="magenta", linewidth=2) # 5-sigma fluence limit 
 		ax.set_ylabel(r"log(Photon Fluence) log(cnts cm$^{-2}$)",fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylim(F_min)
 
 		ax.set_xlim(0, z_max)
 
-
 		# cbar.set_label("Frequency",fontsize=self.fontsize,fontweight=self.fontweight)
 
 		self.tight_layout()
 		self.plot_aesthetics(ax)
+
+
+	def _fluence_sens(self, time):
+		# Swift/BAT 5-sigma Fluence sensitivity line (see Baumgartner 2013)
+		return 0.16 * 1.18 * 2.4*10**(-2) * time**(1./2.)  # Units of counts / det
+
+	def _luminosity_distance(self, z, specfunc, F_true, z_min, e_min, e_max):
+		# Analytically calculate fluence evolution across cosmological distances
+
+		arr = np.zeros(shape=len(z))
+		for i in range(len(z)):
+			new_spec = specfunc.deepcopy()
+			# Move spectral function to z_p frame by correcting E_peak or temperature by the redshift 
+			# (if spectral function has a peak energy or temperature)
+			for i, (key, val) in enumerate(new_spec.params.items()):
+				if key == "ep":
+					new_spec.params[key] *= (1+z_min)/(1+z[i])
+				if key == "temp":
+					new_spec.params[key] *= (1+z_min)/(1+z[i])
+
+			k_corr_rat = k_corr(specfunc, z_min, e_min, e_max) / k_corr(new_spec, z[i], e_min, e_max)
+
+			arr[i] = F_true * k_corr_rat * ((1+z[i])/(1+z_min)) * (lum_dis(z_min) / lum_dis(z[i]) )**2
+		return arr
 
 	def det_frac(self, sim_results, ax=None, alpha=0.4, step="mid", **kwargs):
 		"""
