@@ -613,6 +613,7 @@ class PLOTSIMRES(PLOTS):
 				t_vals[i] = np.mean(results['DURATION'][results['z']==z_vals[i]])
 
 			ax.plot(z_vals, np.log10(self._fluence_sens(t_vals)), color="magenta", linewidth=2) # 5-sigma fluence limit 
+
 		ax.set_ylabel(r"log(Photon Fluence) log(cnts cm$^{-2}$)",fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylim(F_min)
 
@@ -636,7 +637,7 @@ class PLOTSIMRES(PLOTS):
 			new_spec = specfunc.deepcopy()
 			# Move spectral function to z_p frame by correcting E_peak or temperature by the redshift 
 			# (if spectral function has a peak energy or temperature)
-			for i, (key, val) in enumerate(new_spec.params.items()):
+			for j, (key, val) in enumerate(new_spec.params.items()):
 				if key == "ep":
 					new_spec.params[key] *= (1+z_min)/(1+z[i])
 				if key == "temp":
