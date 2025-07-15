@@ -158,6 +158,6 @@ def add_spec_fluctuations(spectrum):
 	spectrum['RATE'] += np.random.normal( loc=np.zeros(shape=len(spectrum)), scale=variances)
 
 	# Add systematic fluctuations
-	spectrum['RATE'] += np.random.normal( loc=np.zeros(shape=len(spectrum)), scale=spectrum['RATE']*sys_err_arr["SYS_ERR"])
+	spectrum['RATE'] += np.random.normal( loc=np.zeros(shape=len(spectrum)), scale=np.abs(spectrum['RATE']*sys_err_arr["SYS_ERR"]))
 
 	return spectrum
