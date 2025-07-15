@@ -6,7 +6,6 @@ This package defines functions used to obtain the duration and fluence measureme
 """
 
 import numpy as np
-from scipy.stats import rv_discrete
 
 from simmes.GRB import GRB
 from simmes.RSP import RSP
@@ -14,7 +13,7 @@ from simmes.bayesian_block import bayesian_t_blocks
 from simmes.fluence import calc_fluence
 from simmes.util_packages.datatypes import dt_sim_res
 from simmes.util_packages.det_ang_dependence import find_pcode, find_inc_ang, fraction_correction
-
+from simmes.util_packages.fluctuations import add_light_curve_flucations
 
 import matplotlib.pyplot as plt
 from simmes.PLOTS import PLOTGRB
@@ -121,15 +120,7 @@ def simulate_observation(synth_grb, resp_mat,
 		synth_grb.light_curve = add_background(synth_grb.light_curve, bgd_size=bgd_size, dt = t_bin_size) # counts / sec / on-axis fully-illuminated detector
 
 	# Add variations
-	# Pull a random background variance from the distribution created from observed values
-	variance = rand_background_variance()  # counts / sec / cm^2
-	variance *= 0.16  # counts / sec / det
-	variance /= np.sqrt(t_bin_size) # scale for time-bin size
-
-	# Fluctuate the background according to a Normal distribution around 0 with a standard variation equal to the background variance
-	synth_grb.light_curve['RATE'] += np.random.normal( loc=np.zeros(shape=len(synth_grb.light_curve)), scale=variance)
-	# Set the uncertainty of the count rate to the variance. 
-	synth_grb.light_curve['UNC'] = np.ones(shape=len(synth_grb.light_curve))*variance
+	synth_grb.light_curve = add_light_curve_flucations(synth_grb.light_curve, t_bin_size)
 
 	return synth_grb
 
@@ -232,69 +223,6 @@ def add_background(light_curve, bgd_size, dt):
 	bgd_lc[argstart: argstart+len_sim]['RATE'] += light_curve['RATE'] # Add signal to background light curve
 
 	return bgd_lc
-
-def fred_function(t, fm, tm, r, d):
-	"""
-	FRED shaped curve based on Equation 22 from Kocevski et al. 2003; power law rise and exponential decay.
-
-	Attributes:
-	--------------
-	t = time since trigger
-	fm = flux at peak of the pulse (fm = F(tm))
-	tm = t_max or the peak time of the pulse 
-	r = rise constant
-	d = decay constant 
-
-	Returns:
-	--------------
-	flux : float
-		amplitude of the FRED function at time t
-	"""
-
-	flux = fm*np.power(t/tm,r)*np.power( (d/(d+r)) + ((r/(d+r))*np.power(t/tm,r+1)) ,-(r+d)/(r+1))
-
-	return flux
-
-def rand_background_variance(size=1):
-	"""
-	Method that return a randomly selected from a distribution created from the 
-	measured background variances observed by Swift/BAT.
-
-	The distribution function is created from the FRED function described in Kocevski 2003. 
-	The parameter values were found in a separate fit.  
-	
-	Attributes:
-	--------------
-	size : int
-		Number of backgrounds to sample
-
-	Returns:
-	--------------
-	variance : float
-		Randomly selected background variance. Units counts / sec / cm^2.
-	"""
-
-	# There are only anomolous variances found outside of these cuts
-	cut_min = 0.02
-	cut_max = 0.25
-
-	x_range = np.linspace(cut_min, cut_max)
-
-	parameters = [0.08694067, 0.06859141, 9.92930295, 3.06620674]
-	"""
-	Parameters:
-	fm = flux at peak of the pulse (fm = F(tm))
-	tm = t_max or the peak time of the pulse 
-	r = rise constant
-	d = decay constant
-	"""
-
-	# Create distribution
-	distrib = rv_discrete(a=cut_min, b=cut_max, values=(x_range, fred_function(x_range, *parameters)) ) 
-	# Select random value
-	variance = distrib.rvs(size=size)
-
-	return variance
 
 def many_simulations(template_grb, param_list, trials, 
 	resp_mat = None, dur_per = 90, ndet_max=32768, band_rate_min=14, band_rate_max=350, 

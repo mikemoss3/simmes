@@ -14,6 +14,7 @@ from pathlib import Path
 import scipy.integrate as integrate
 
 from simmes.util_packages.det_ang_dependence import find_grid_id
+from simmes.util_packages.fluctuations import add_spec_fluctuations
 
 path_here = Path(__file__).parent
 
@@ -460,7 +461,7 @@ class RSP(object):
 			self.MATRIX = ( norm * (term1 + term2 + term3 + term4) )
 		
 	
-	def fold_spec(self, specfunc):
+	def fold_spec(self, specfunc, add_fluc=False):
 		"""
 		Method to fold a spectrum through this response matrix
 
@@ -475,7 +476,7 @@ class RSP(object):
 			Array holding a folded spectrum
 		"""
 
-		folded_spec = make_folded_spec(specfunc, self)
+		folded_spec = make_folded_spec(specfunc, self, add_fluc=add_fluc)
 
 		return folded_spec
 
@@ -509,7 +510,7 @@ def make_en_axis(Emin, Emax, num_en_bins):
 	en_axis['Emid'] = (en_axis['Ehi'] + en_axis['Elo'])/2
 	return en_axis
 
-def make_folded_spec(source_spec_func, rsp):
+def make_folded_spec(source_spec_func, rsp, add_fluc=False):
 	""" 
 	Convolve spectral function with instrument response to obtain observed spectrum
 
@@ -519,6 +520,10 @@ def make_folded_spec(source_spec_func, rsp):
 		Unfolded source spectral function
 	rsp : RSP
 		Response matrix to convolve with
+	add_fluc : boolean 
+		Indicates whether or not to include random fluctuations to the spectrum.
+		The fluctuations are taken from distributions of BAT statistical and systematic errors. 
+
 	Returns:
 	--------------
 	folded_spec : np.ndarray with [("ENERGY",float),("RATE",float),("UNC",float)]
@@ -538,5 +543,8 @@ def make_folded_spec(source_spec_func, rsp):
 	# Fold the correctly binned source spectrum with the response matrix
 	folded_spec['RATE'] = np.matmul(rsp.MATRIX, binned_source_spec)  # counts / s / bin / det area
 	folded_spec['RATE'] /= (rsp.ECHAN_HI - rsp.ECHAN_LO) # counts / s / keV / det area (can be compared to XSPEC)
+
+	if add_fluc is True:
+		folded_spec = add_spec_fluctuations(folded_spec)
 
 	return folded_spec
