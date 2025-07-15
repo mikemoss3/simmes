@@ -61,7 +61,7 @@ def rand_variance(fm, tm, r, d, cut_min, cut_max, size=1):
 		Randomly selected background variance. Units counts / sec / cm^2.
 	"""
 
-	x_range = np.linspace(cut_min, cut_max)
+	x_range = np.linspace(cut_min, cut_max, num=100)
 
 	# Create distribution
 	distrib = rv_discrete(a=cut_min, b=cut_max, values=(x_range, fred_function(x_range, fm, tm, r, d)) ) 
@@ -93,7 +93,7 @@ def add_light_curve_flucations(light_curve, t_bin_size):
 	cut_min = 0.02
 	cut_max = 0.25
 
-	parameters = [0.08694067, 0.06859141, 9.92930295, 3.06620674]
+	parameters = [0.04305558, 0.06859141, 9.92930295, 3.06620674]
 	"""
 	These parameter values were found in a separate fit.
 	
