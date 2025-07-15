@@ -61,7 +61,7 @@ def rand_variance(fm, tm, r, d, cut_min, cut_max, size=1):
 		Randomly selected background variance. Units counts / sec / cm^2.
 	"""
 
-	x_range = np.linspace(cut_min, cut_max, size=100)
+	x_range = np.linspace(cut_min, cut_max, num=100)
 
 	# Create distribution
 	distrib = rv_discrete(a=cut_min, b=cut_max, values=(x_range, fred_function(x_range, fm, tm, r, d)) ) 
