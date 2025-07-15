@@ -146,7 +146,7 @@ def add_spec_fluctuations(spectrum):
 
 	# For each channel, grab statistical variances.
 	variances = np.zeros(shape=len(spectrum))
-	for i in range(spectrum):
+	for i in range(len(spectrum)):
 		# Grab statistical error PDF for this channel
 		variances[i] = rand_variance(fm = stat_errors["FM"][i], 
 								tm = stat_errors["TM"][i], 
