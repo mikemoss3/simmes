@@ -138,10 +138,10 @@ def add_spec_fluctuations(spectrum):
 	"""
 
 	# Load best-fit parameters of per-energy-channel statistical error distributions
-	stat_errors = np.loadtxt(path_here.joinpath("util_packages/files-spec-unc/spec-unc-fit-params.txt"), 
+	stat_errors = np.loadtxt(path_here.joinpath("files-spec-unc/spec-unc-fit-params.txt"), 
 								dtype=[("CHAN", int), ("FM", float), ("TM", float), ("R", float), ("D", float)])
 	# Load per-energy-channel fractional systematic errors
-	sys_err_arr = np.loadtxt(path_here.joinpath("util_packages/files-spec-unc/bat-chan-sys-err-fracs.txt"), 
+	sys_err_arr = np.loadtxt(path_here.joinpath("files-spec-unc/bat-chan-sys-err-fracs.txt"), 
 								dtype=[("CHAN", int), ("SYS_ERR", float)])
 
 	# For each channel, grab statistical variances.
