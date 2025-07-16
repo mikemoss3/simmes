@@ -355,6 +355,7 @@ def _calc_det_rat(grb, z, trials,
 	"""
 	param_list = np.array([[z, imx, imy, ndets]])  # Make param list
 	resp_mat = RSP()  # Initialize a response matrix object 
+	resp_mat.load_SwiftBAT_resp(imx, imy)  # Load Swift/BAT response according to given imx, imy
 	sim_results = many_simulations(grb, param_list, trials, resp_mat=resp_mat, 
 									ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max,
 									time_resolved=time_resolved, sim_triggers=sim_triggers)  # Perform simulations of burst at this redshift
