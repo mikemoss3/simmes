@@ -130,14 +130,16 @@ def find_z_threshold(grb, threshold, imx, imy, ndets, trials,
 		Minimum and maximum of the energy band over which to calculate source photon flux
 	sim_triggers : boolean
 		Whether or not to simulate the Swift/BAT trigger algorithms or not
+	track_z : boolean
+		Whether or not to track the redshift guesses evaluated by the search algorithm
 
 	Returns:
 	------------------------
 	z_max : float
 		The maximum redshift that the given GRB can be detected above a specified threshold 
 		for the specified observing conditions.
-	z_samples : ndarray (float)
-		Array of redshifts found by the algorithm
+	z_samples : ndarray(dtype = float) (optional)
+		Array of redshifts found by the algorithm. Only returned if track_z = True
 	"""
 
 	if (threshold > 1) or (threshold < 0):
@@ -221,14 +223,16 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 		Minimum and maximum of the energy band over which to calculate source photon flux
 	sim_triggers : boolean
 		Whether or not to simulate the Swift/BAT trigger algorithms or not
+	track_z : boolean
+		Whether or not to track the redshift guesses evaluated by the search algorithm
 
 	Returns:
 	------------------------
 	z_max : float
 		The maximum redshift that the given GRB can be detected above a specified threshold 
 		for the specified observing conditions.
-	z_samples : ndarray (float)
-		Array of redshifts found by the algorithm
+	z_samples : ndarray(dtype = float) (optional)
+		Array of redshifts found by the algorithm. Only returned if track_z = True
 	"""
 
 	tolerance = num_sigma*np.sqrt(trials) / trials  # Calculate tolerance factor for the detection ratio
@@ -285,19 +289,8 @@ def _bisection(params):
 
 	Attributes:
 	------------------------
-	z_th : float
-		Current threshold redshift guess
-	differene : float 
-		Difference between the current and desired detection ratios
-	z_lo, z_hi : float, float
-		Lower and upper bounds of redshift range
-
-	Returns:
-	------------------------
-	z_th : float
-		New threshold redshift guess
-	z_lo, z_hi : float, float
-		Updated lower and upper bounds of redshift range
+	params : PARAMS
+		PARAMS object that necessary redshift guess infomation.
 	"""
 
 	if params.difference > 0:
@@ -317,15 +310,8 @@ def _half_gaussian(params):
 
 	Attributes:
 	------------------------
-	z_th : float
-		Mean of the half Gaussian, i.e., the current threshold redshift guess
-	difference : float
-		Standard deviation of the half Gaussian, i.e., the difference between the current and desired detection ratios
-
-	Returns:
-	------------------------
-	x : float
-		Random parameter value picked from the distribution
+	params : PARAMS
+		PARAMS object that necessary redshift guess infomation.
 	"""
 
 	# Select new redshift using a half-normal distribution in the direction required to match the threshold
