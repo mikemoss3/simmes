@@ -443,6 +443,7 @@ class PLOTSIMRES(PLOTS):
 			num_z_bins = len(np.unique(sim_results['z']))
 			dz = (z_max - z_min)/num_z_bins
 			z_bins = np.arange(start=z_min-(dz/2), stop=z_max+(dz/2), step=dz)
+
 			t_bins = np.arange(start=t_min, stop=t_max, step=dt)
 
 		im = ax.hist2d(results['z'], dur_arr, bins=[z_bins, t_bins], cmin=cmin, cmap=cmap, norm=norm(vmin=cmin, vmax= num_trials), **kwargs) # output = counts, xbins, ybins, image
@@ -678,6 +679,8 @@ class PLOTSIMRES(PLOTS):
 
 		ax.fill_between(x=zs, y1=(num_det+np.sqrt(trials))/trials, y2 = (num_det-np.sqrt(trials))/trials, alpha=alpha, step=step, **kwargs)
 		ax.step(zs, perc, where=step, **kwargs)
+
+		ax.set_ylim(0, 1)
 
 		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylabel("Detection Fraction",fontsize=self.fontsize,fontweight=self.fontweight)
