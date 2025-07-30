@@ -442,7 +442,7 @@ class PLOTSIMRES(PLOTS):
 		if bins == None:
 			num_z_bins = len(np.unique(sim_results['z']))
 			dz = (z_max - z_min)/num_z_bins
-			z_bins = np.arange(start=z_min-(dz/2), stop=z_max+(dz/2), step=dz)
+			z_bins = np.linspace(start=z_min-(dz/2), stop=z_max+(dz/2), num=num_z_bins+1)
 
 			t_bins = np.arange(start=t_min, stop=t_max, step=dt)
 
@@ -581,7 +581,7 @@ class PLOTSIMRES(PLOTS):
 		if bins == None:
 			num_z_bins = len(np.unique(sim_results['z']))
 			dz = (z_max - z_min)/num_z_bins
-			z_bins = np.arange(start=z_min-(dz/2), stop=z_max+(dz/2), step=dz)
+			z_bins = np.linspace(start=z_min-(dz/2), stop=z_max+(dz/2), num=num_z_bins+1)
 
 			f_bins = np.linspace(start=F_min, stop=F_max, num=int( (F_max - F_min)*30) )
 
@@ -680,13 +680,13 @@ class PLOTSIMRES(PLOTS):
 		ax.fill_between(x=zs, y1=(num_det+np.sqrt(trials))/trials, y2 = (num_det-np.sqrt(trials))/trials, alpha=alpha, step=step, **kwargs)
 		ax.step(zs, perc, where=step, **kwargs)
 
-		ax.set_ylim(0, 1)
 
 		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylabel("Detection Fraction",fontsize=self.fontsize,fontweight=self.fontweight)
 
 		self.tight_layout()
 		self.plot_aesthetics(ax)
+		ax.set_ylim(0, 1)
 
 class PLOTSAMPLE(PLOTS):
 	def __init__(self):
