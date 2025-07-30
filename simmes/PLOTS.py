@@ -359,9 +359,9 @@ class PLOTSIMRES(PLOTS):
 		self.plot_aesthetics(ax)
 
 	def redshift_duration_evo(self, sim_results, ax=None, 
-		t_true=1, t_max=None, bins=None, dur_frac=False, 
+		t_true=1, t_max=None, dt = None, t_bins=None, z_bins=None, dur_frac=False, 
 		log=False, norm=mcolors.LogNorm, inc_cbar=False, 
-		cmin = 1, dt = 1,
+		cmin = 1,
 		inc_cosmo_line=True, **kwargs):
 		"""
 		Method to plot the measured duration of each synthetic light curve as a function redshift
@@ -376,12 +376,17 @@ class PLOTSIMRES(PLOTS):
 			True duration of the emission
 		t_max : float
 			y-axis maximum
-		bins : None or int or [int, int] or array-like or [array, array]
+		dt : float
+			The time bin size of the simulated light curve. This is used to determine histogram bins.
+		t_bins : None or int or array-like
 			The bin specification:
-				If `int`, the number of bins for the two dimensions `(nx = ny = bins)`.
-				If `[int, int]`, the number of bins in each dimension `(nx, ny = bins)`.
-				If array-like, the bin edges for the two dimensions `(x_edges = y_edges = bins)`.
-				If `[array, array]`, the bin edges in each dimension `(x_edges, y_edges = bins)`.
+				If `int`, the number of duration bins `(ny = t_bins)`.
+				If array-like, the bin edges for the duration bins `(y_edges = t_bins)`.
+			Takes precedence over dt parameter.
+		z_bins : None or int or array-like
+			The bin specification:
+				If `int`, the number of redshift bins `(nx = z_bins)`.
+				If array-like, the bin edges for the redshift bins `(x_edges = z_bins)`.
 		dur_frac : bool
 			Indicates whether the y-axis should be actual duration measurement of the ratio of the duration 
 			measurement to t_true
@@ -393,8 +398,6 @@ class PLOTSIMRES(PLOTS):
 			Indicates whether to include a colorbar or not
 		cmin : float
 			Sets the minimum cut-off value for the density plot. Any bin with fewer counts than cmin are omitted. 
-		dt : float
-			The time bin size of the simulated light curve. This is used to determine histogram bins.
 		inc_cosmo_line : bool
 			Indicates whether to include the t_true*(1+z) line or not
 		"""
@@ -409,15 +412,7 @@ class PLOTSIMRES(PLOTS):
 		num_trials = len(results["DURATION"][results['z']==z_min])
 
 		if t_max is None:
-			# Determine bins before any cuts are applied
-			z_bins = np.unique(sim_results['z'])
-			t_bins = np.arange(start=0, stop=np.max(sim_results['DURATION']), step=dt)
-			# Make a histogram
-			hist, xedges, yedges = np.histogram2d(sim_results['z'], sim_results['DURATION'], bins=[z_bins, t_bins])
-			# Remove bins that fall under the cut-off limit
-			hist[np.where(hist <= cmin)] = 0
-			# Find T max of this histogram
-			t_max = yedges[np.max(np.where(hist>0)[1])]
+			t_max = np.max(sim_results['DURATION'])
 
 		z_arr = np.linspace(0, z_max*1.1)
 		def dilation_line(z):
@@ -439,12 +434,29 @@ class PLOTSIMRES(PLOTS):
 			t_max = np.log10(t_max)
 			t_min = -1
 
-		if bins == None:
+		# Determine redshift bins 
+		if isinstance(z_bins, int):
+			num_z_bins = z_bins
+		else:
 			num_z_bins = len(np.unique(sim_results['z']))
-			dz = (z_max - z_min)/num_z_bins
+		dz = (z_max - z_min)/num_z_bins
+		if not isinstance(z_bins, np.ndarray):
 			z_bins = np.linspace(start=z_min-(dz/2), stop=z_max+(dz/2), num=num_z_bins+1)
 
-			t_bins = np.arange(start=t_min, stop=t_max, step=dt)
+		# Determine duration bins 
+		if isinstance(t_bins, int):
+			num_t_bins = t_bins
+		else:
+			num_t_bins = int( (t_max - t_min)*50)
+		
+		if dt is None:
+			dt = (t_max - t_min)/num_t_bins
+		else:
+			# dt value was given by user, and num_t_bins must be defined.
+			num_t_bins = int( (t_max - t_min) / dt )
+		
+		if not isinstance(t_bins, np.ndarray):
+			t_bins = np.linspace(start=t_min-(dt/2), stop=t_max+(dt/2), num = num_t_bins)
 
 		im = ax.hist2d(results['z'], dur_arr, bins=[z_bins, t_bins], cmin=cmin, cmap=cmap, norm=norm(vmin=cmin, vmax= num_trials), **kwargs) # output = counts, xbins, ybins, image
 
@@ -490,7 +502,7 @@ class PLOTSIMRES(PLOTS):
 		self.plot_aesthetics(ax)
 
 	def redshift_fluence_evo(self, sim_results, ax=None, 
-		F_true=None, F_max=None, F_min=None, bins=None, 
+		F_true=None, F_max=None, F_min=None, f_bins=None, z_bins=None,
 		fluence_frac=False, norm=mcolors.LogNorm, inc_cbar=False, 
 		cmin = 1, inc_sensitivity_line = True,
 		inc_cosmo_line=False, specfunc=None, e_min=15, e_max=350, **kwargs):
@@ -509,12 +521,14 @@ class PLOTSIMRES(PLOTS):
 			y-axis maximum
 		F_min : float
 			y-axis minimum
-		bins : None or int or [int, int] or array-like or [array, array]
+		f_bins : None or int or array-like
 			The bin specification:
-				If `int`, the number of bins for the two dimensions `(nx = ny = bins)`.
-				If `[int, int]`, the number of bins in each dimension `(nx, ny = bins)`.
-				If array-like, the bin edges for the two dimensions `(x_edges = y_edges = bins)`.
-				If `[array, array]`, the bin edges in each dimension `(x_edges, y_edges = bins)`.
+				If `int`, the number of fluence bins `(ny = f_bins)`.
+				If array-like, the bin edges for the fluence bins `(y_edges = f_bins)`.
+		z_bins : None or int or array-like
+			The bin specification:
+				If `int`, the number of redshift bins `(nx = z_bins)`.
+				If array-like, the bin edges for the redshift bins `(x_edges = z_bins)`.
 		fluence_frac : bool
 			Indicates whether the y-axis should be a fraction of the true fluence
 		norm : str or matplotlib.colors.Normalize
@@ -566,24 +580,35 @@ class PLOTSIMRES(PLOTS):
 
 		if F_min is None:
 			# Determine bins before any cuts are applied
-			num_z_bins = len(np.unique(sim_results['z']))
-			dz = (z_max - z_min)/num_z_bins
-			z_bins = np.arange(start=z_min-(dz/2), stop=z_max+(dz/2), step=dz)
+			tmp_num_z_bins = len(np.unique(sim_results['z']))
+			tmp_dz = (z_max - z_min)/tmp_num_z_bins
+			tmp_z_bins = np.arange(start=z_min-(tmp_dz/2), stop=z_max+(tmp_dz/2), step=tmp_dz)
 
-			f_bins = np.linspace(start=np.min(fluence_arr), stop=F_max, num=50)
+			tmp_f_bins = np.linspace(start=np.min(fluence_arr), stop=F_max, num=50)
 			# Make a histogram
-			hist, xedges, yedges = np.histogram2d(results['z'], fluence_arr, bins=[z_bins, f_bins])
+			hist, xedges, yedges = np.histogram2d(results['z'], fluence_arr, bins=[tmp_z_bins, tmp_f_bins])
 			# Remove bins that fall under the cut-off limit
 			hist[np.where(hist <= cmin)] = 0
 			# Find F min of this histogram
 			F_min = np.min([-1, yedges[np.min(np.where(hist>0)[1])] ])
 
-		if bins == None:
+		# Determine redshift bins 
+		if isinstance(z_bins, int):
+			num_z_bins = z_bins
+		else:
 			num_z_bins = len(np.unique(sim_results['z']))
-			dz = (z_max - z_min)/num_z_bins
+		dz = (z_max - z_min)/num_z_bins
+		if not isinstance(z_bins, np.ndarray):
 			z_bins = np.linspace(start=z_min-(dz/2), stop=z_max+(dz/2), num=num_z_bins+1)
 
-			f_bins = np.linspace(start=F_min, stop=F_max, num=int( (F_max - F_min)*30) )
+		# Determine fluence bins 
+		if isinstance(f_bins, int):
+			num_f_bins = f_bins
+		else:
+			num_f_bins = int( (F_max - F_min)*50)
+		df = (F_max - F_min)/num_f_bins
+		if not isinstance(f_bins, np.ndarray):
+			f_bins = np.linspace(start=F_min-(df/2), stop=F_max+(df/2), num = num_f_bins)
 
 		im = ax.hist2d(results['z'], fluence_arr, 
 						bins=[z_bins, f_bins], cmin=cmin, cmap=cmap, 
