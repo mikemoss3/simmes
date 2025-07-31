@@ -78,7 +78,7 @@ def simulate_observation(synth_grb, resp_mat,
 
 	if time_resolved == False:
 		# Fold spectrum through instrument response and calculate the count rate in the observation band
-		folded_spec = resp_mat.fold_spec(synth_grb.specfunc, add_fluc=True)  # Counts / sec / keV / on-axis fully-illuminated detector
+		folded_spec = resp_mat.fold_spec(synth_grb.specfunc, add_fluc=False)  # Counts / sec / keV / on-axis fully-illuminated detector
 		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac  # Counts / sec / on-axis fully-illuminated detector
 
 		# Using the total count rate from the spectrum and 
