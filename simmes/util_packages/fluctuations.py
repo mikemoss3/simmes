@@ -153,7 +153,7 @@ def add_spec_fluctuations(spectrum):
 								r = stat_errors["R"][i], 
 								d = stat_errors["D"][i],
 								cut_min = 0, cut_max = 0.02)
-		
+
 	# Add statistical fluctuations
 	spectrum['RATE'] += np.random.normal( loc=np.zeros(shape=len(spectrum)), scale=variances)
 
