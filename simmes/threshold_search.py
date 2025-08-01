@@ -262,38 +262,51 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 		p.difference = 0
 		p.z_th = np.random.uniform(low=p.z_lo, high=p.z_hi)
 
-	if track_z is True: p.z_th_samples = [p.z_th]  # Keep track of redshift selections 
-
 	# Calculate the distance from the threshold value for the initial redshift 
 	p.det_ratio = _calc_det_rat(grb=grb, z=p.z_th, trials=p.trials, 
 								imx=imx, imy=imy, ndets=ndets, bgd_size=bgd_size, 
 								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
-								time_resolved=time_resolved, sim_triggers=sim_triggers, verbose=verbose)
+								time_resolved=time_resolved, sim_triggers=sim_triggers)
+
+	if track_z is True: 
+		# If indicated, track new redshift guess and the new detection ratio
+		p.z_th_samples.append(p.z_th) 
+		p.det_ratio_samples.append(p.det_ratio)
+
 	# Initial difference between the current and desired detection ratio.
 	p.difference = p.det_ratio - p.threshold  # Must be between -1 and 1
+	if verbose is True:
+		print("At {:2f}, detection ratio = {:3f}".format(p.z_th, p.det_ratio))
 
 	while p.flag:
 		# Update redshift guess (and parameter values)
 		method(p)
 
-		if p.z_th <= 0: p.z_th = 1e-3  # Make sure z > 0
-		if track_z is True: p.z_th_samples.append(p.z_th)  # If indicated, track new redshift guess
-
+		if p.z_th <= 0: p.z_th = 1e-3  # Make sure z > 0 
+		
 		# Calculate detection ratio for the current redshift guess
 		p.det_ratio = _calc_det_rat(grb=grb, z=p.z_th, trials=p.trials, 
 									imx=imx, imy=imy, ndets=ndets, bgd_size=bgd_size,
 									ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
-									time_resolved=time_resolved, sim_triggers=sim_triggers, verbose=verbose)
+									time_resolved=time_resolved, sim_triggers=sim_triggers)
+		if track_z is True: 
+			# If indicated, track new redshift guess and the new detection ratio
+			p.z_th_samples.append(p.z_th) 
+			p.det_ratio_samples.append(p.det_ratio)
+
 		# Calculate difference from threshold for this redshift 
 		p.difference = p.det_ratio - p.threshold
+
+		if verbose is True:
+			print("At {:.2f}, detection ratio = {:3f}".format(p.z_th, p.det_ratio))
 
 		# Check if we've found a redshift with a detection ratio within the tolerance of the desired detection ratio
 		p.check_result()
 
 	if track_z is True:
-		return np.array( (p.z_th, np.array(p.z_th_samples)), dtype=[("zth",float), ("ztrack",object)] )
+		return np.array( (p.z_th, p.det_ratio, np.array(p.z_th_samples), np.array(p.det_ratio_samples)), dtype=[("zth",float), ("DetRat") ("ztrack",object), ("DetRattrack", object)] )
 	else:
-		return np.array( p.z_th, dtype=[("zth",float)] )
+		return np.array( (p.z_th, p.det_ratio), dtype=[("zth",float), ("DetRat", float)] )
 
 def _bisection(params):
 	"""
@@ -336,7 +349,7 @@ def _half_gaussian(params):
 def _calc_det_rat(grb, z, trials,
 	imx, imy, ndets, bgd_size = 20, 
 	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
-	time_resolved=False, sim_triggers=False, verbose = False):
+	time_resolved=False, sim_triggers=False):
 	"""
 	Calculates the ratio of successful detections vs the number of simulations performed, i.e., the detection ratio
 
@@ -362,8 +375,6 @@ def _calc_det_rat(grb, z, trials,
 		Whether or not to use time resolved spectra (held by the GRB object)
 	sim_triggers : boolean
 		Whether or not to simulate the Swift/BAT trigger algorithms or not
-	verbose : boolean
-		Whether or not to print code activity
 
 	Returns:
 	------------------------
@@ -375,7 +386,7 @@ def _calc_det_rat(grb, z, trials,
 	resp_mat.load_SwiftBAT_resp(imx, imy)  # Load Swift/BAT response according to given imx, imy
 	sim_results = many_simulations(grb, param_list, trials, resp_mat=resp_mat, 
 									ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max,
-									bgd_size=bgd_size, verbose=verbose,
+									bgd_size=bgd_size,
 									time_resolved=time_resolved, sim_triggers=sim_triggers)  # Perform simulations of burst at this redshift
 
 	det_ratio = len( sim_results[ sim_results['DURATION']>0 ] ) / trials  # Calculate ratio of successful detections
