@@ -91,7 +91,7 @@ class PARAMS(object):
 		if (np.abs(self.difference) <= self.tolerance) and (self.det_ratio>self.tolerance):
 			self.flag = False
 			if self.verbose is True:
-				print("Detection ration difference is below tolerance.")
+				print("Detection ratio difference is below tolerance.")
 
 def find_z_threshold(grb, threshold, tolerance, 
 	imx, imy, ndets, trials, 
