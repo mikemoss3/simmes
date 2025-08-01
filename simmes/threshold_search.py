@@ -19,7 +19,7 @@ class PARAMS(object):
 	"""
 	Object to hold parameters of the search algorithm
 	"""
-	def __init__(self, threshold, trials, tolerance, z_tolerance):
+	def __init__(self, threshold, trials, tolerance, z_tolerance, verbose=False):
 		"""
 		Method used to estimate the highest redshift a given GRB could be observed
 		with a detection rate equal to `threshold` (within a given tolerance).
@@ -59,6 +59,7 @@ class PARAMS(object):
 		self.iter = 0  # Iterator
 
 		self.flag = True  # Flag indicating whether the search should continue
+		self.verbose = verbose  # Print reason for ending search
 
 	def check_sign(self):
 		"""
@@ -79,6 +80,8 @@ class PARAMS(object):
 		"""
 		if( (self.z_hi - self.z_lo) < self.z_tolerance ):
 			self.flag = False  # End the search
+			if self.verbose is True:
+				print("Redshift change is below tolerance.")
 
 	def check_result(self):
 		"""
@@ -87,6 +90,8 @@ class PARAMS(object):
 		"""
 		if (np.abs(self.difference) <= self.tolerance) and (self.det_ratio>self.tolerance):
 			self.flag = False
+			if self.verbose is True:
+				print("Detection ration difference is below tolerance.")
 
 def find_z_threshold(grb, threshold, tolerance, 
 	imx, imy, ndets, trials, 
@@ -254,7 +259,7 @@ def _find_z_threshold_work(grb, threshold, tolerance,
 	"""
 
 	# Set up parameter storage and search method 
-	p = PARAMS(threshold=threshold, trials=trials, tolerance=tolerance, z_tolerance=z_tolerance)
+	p = PARAMS(threshold=threshold, trials=trials, tolerance=tolerance, z_tolerance=z_tolerance, verbose=verbose)
 	p.z_lo = z_min
 	p.z_hi = z_max
 	if search_method == "Bisection":
