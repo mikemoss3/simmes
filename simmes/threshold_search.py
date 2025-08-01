@@ -282,7 +282,6 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 		# Calculate detection ratio for the current redshift guess
 		p.det_ratio = _calc_det_rat(grb=grb, z=p.z_th, trials=p.trials, 
 									imx=imx, imy=imy, ndets=ndets, bgd_size=bgd_size,
-									bgd_size=bgd_size, verbose=verbose,
 									ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 									time_resolved=time_resolved, sim_triggers=sim_triggers, verbose=verbose)
 		# Calculate difference from threshold for this redshift 
