@@ -285,6 +285,9 @@ def _find_z_threshold_work(grb, threshold, tolerance,
 	p.difference = p.det_ratio - p.threshold  # Must be between -1 and 1
 	if verbose is True:
 		print("At z = {:.2f}, detection ratio = {:.3f}".format(p.z_th, p.det_ratio))
+		
+	# Check if we've found a redshift with a detection ratio within the tolerance of the desired detection ratio
+	p.check_result()
 
 	while p.flag:
 		# Update redshift guess (and parameter values)
