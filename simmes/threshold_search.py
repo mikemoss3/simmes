@@ -85,13 +85,14 @@ class PARAMS(object):
 		If the current difference from the desired detection threshold is within the accepted tolerance 
 		(and above zero), then we've found our redshift.
 		"""
-		if (np.abs(self.difference) <= self.tolerance):
+		if (np.abs(self.difference) <= self.tolerance) and (self.det_ratio>self.tolerance):
 			self.flag = False
 
-def find_z_threshold(grb, threshold, imx, imy, ndets, trials, 
-	z_min, z_max, searches=1, num_sigma=1, z_tolerance=0.05,
+def find_z_threshold(grb, threshold, tolerance, 
+	imx, imy, ndets, trials, 
+	z_min, z_max, searches=1,
 	bgd_size = 20, multiproc=True, workers = mp.cpu_count(),
-	search_method = "Bisection",
+	search_method = "Bisection", z_tolerance=0.05,
 	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
 	time_resolved=False, sim_triggers=False, track_z=False, 
 	verbose = False):
@@ -106,6 +107,8 @@ def find_z_threshold(grb, threshold, imx, imy, ndets, trials,
 		GRB class object that holds the template GRB
 	threshold : float
 		The ratio of successful detections to total trials desired by the user
+	tolerance : float
+		Determines acceptance range around the desired detection threshold 
 	imx, imy : 	float, float 
 		The x and y position of the GRB on the detector plane
 	ndets : int
@@ -116,11 +119,6 @@ def find_z_threshold(grb, threshold, imx, imy, ndets, trials,
 		Bounds of the redshift search
 	searches : int
 		Number of searches for the threshold redshift to be performed
-	num_sigma : float
-		Determines the accuracy range of the search. Assuming the simulated detection fractions 
-		will have Guassian uncertainties, sigma is the square root of the number of trials.
-	z_tolerance : float
-		Tolerance range around the threshold redshift
 	bgd_size : float
 		Background amount to add when adding in a background (in seconds)
 	multiproc : boolean
@@ -130,6 +128,9 @@ def find_z_threshold(grb, threshold, imx, imy, ndets, trials,
 	search_method : string
 		Options include "Gaussian" and "Bisection".
 		Indicates which search algorithm to use to find the threshold redshift
+	z_tolerance : float
+		If the change in redshift between two searches is less than z_tolerance, the simulation will end.
+		This is to avoid possible non-covergence issues.
 	ndet_max : int
 		Maximum number of detectors on the detector plane (for Swift/BAT ndet_max = 32,768)
 	band_rate_min, band_rate_max : float, float
@@ -169,9 +170,10 @@ def find_z_threshold(grb, threshold, imx, imy, ndets, trials,
 			template_grbs[i] = grb.deepcopy() # Create template GRB copies
 
 		# Set up partial function with positional arguments 
-		parfunc = partial(_find_z_threshold_work, threshold=threshold, imx=imx, imy=imx, ndets=ndets,
+		parfunc = partial(_find_z_threshold_work, threshold=threshold, tolerance=tolerance,
+								imx=imx, imy=imx, ndets=ndets,
 								trials = trials, z_min = z_min, z_max = z_max, bgd_size = bgd_size,
-								num_sigma=num_sigma, z_tolerance=0.05, search_method = search_method,
+								search_method = search_method, z_tolerance=0.05,
 								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 								time_resolved=time_resolved, sim_triggers=sim_triggers, track_z=track_z, verbose=False)
 		# Set up a pool of workers
@@ -183,9 +185,10 @@ def find_z_threshold(grb, threshold, imx, imy, ndets, trials,
 		results = np.hstack(results)
 
 	else:
-		results = _find_z_threshold_work(grb, threshold=threshold, imx=imx, imy=imx, ndets=ndets,
+		results = _find_z_threshold_work(grb, threshold=threshold, tolerance=tolerance,
+								imx=imx, imy=imx, ndets=ndets,
 								trials = trials, z_min = z_min, z_max = z_max, bgd_size = bgd_size,
-								num_sigma=num_sigma, z_tolerance=0.05, search_method = search_method,
+								search_method = search_method, z_tolerance=0.05,
 								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 								time_resolved=time_resolved, sim_triggers=sim_triggers, track_z=track_z, verbose=verbose)
 
@@ -195,9 +198,10 @@ def _init_process_seed():
 	# Instance a random seed
 	seed()
 
-def _find_z_threshold_work(grb, threshold, imx, imy, ndets, 
-	trials, z_min, z_max, num_sigma=1, z_tolerance=0.05, 
-	bgd_size = 20, search_method = "Bisection",
+def _find_z_threshold_work(grb, threshold, tolerance,
+	imx, imy, ndets, 
+	trials, z_min, z_max,
+	bgd_size = 20, search_method = "Bisection", z_tolerance=0.05,
 	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
 	time_resolved=False, sim_triggers=False, track_z=False, verbose = False):
 	"""
@@ -210,7 +214,9 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 	grb : GRB 
 		GRB class object that holds the template GRB
 	threshold : float
-		The threshold of successful detections to total trials desired by the user
+		The ratio of successful detections to total trials desired by the user
+	tolerance : float
+		Determines acceptance range around the desired detection threshold
 	imx, imy : 	float, float 
 		The x and y position of the GRB on the detector plane
 	ndets : int
@@ -219,16 +225,14 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 		Number of trials to perform at each sampled redshift 
 	z_min, z_max : float, float
 		Bounds of the redshift search
-	num_sigma : float
-		Determines the accuracy range of the search. Assuming the simulated detection fractions 
-		will have Guassian uncertainties, sigma is the square root of the number of trials.
-	z_tolerance : float
-		Tolerance range around the threshold redshift
 	bgd_size : float
 		Background amount to add when adding in a background (in seconds)
 	search_method : string
 		Options include "Gaussian" and "Bisection".
 		Indicates which search algorithm to use to find the threshold redshift
+	z_tolerance : float
+		If the change in redshift between two searches is less than z_tolerance, the simulation will end.
+		This is to avoid possible non-covergence issues.
 	ndet_max : int
 		Maximum number of detectors on the detector plane (for Swift/BAT ndet_max = 32,768)
 	band_rate_min, band_rate_max : float, float
@@ -248,8 +252,6 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 	z_samples : ndarray(dtype = float) (optional)
 		Array of redshifts found by the algorithm. Only returned if track_z = True
 	"""
-
-	tolerance = num_sigma*np.sqrt(trials) / trials  # Calculate tolerance factor for the detection ratio
 
 	# Set up parameter storage and search method 
 	p = PARAMS(threshold=threshold, trials=trials, tolerance=tolerance, z_tolerance=z_tolerance)
