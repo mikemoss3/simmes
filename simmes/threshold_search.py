@@ -50,8 +50,9 @@ class PARAMS(object):
 		self.z_hi = None  # Initial redshift range upper bound
 
 		self.z_th = None  # Threshold redshift to perform simulation
-		self.z_track = [self.z_th]  # Use to store z_th values
+		self.z_th_samples = []  # Use to store z_th values
 		self.det_ratio = None  # Current detection ratio found for z_th
+		self.det_ratio_samples = [] # Used to store detection ratio values
 		self.difference = None  # Difference between detection rate and threshold 
 		self.sign = 1  # Sign of `difference` variable
 
@@ -84,7 +85,7 @@ class PARAMS(object):
 		If the current difference from the desired detection threshold is within the accepted tolerance 
 		(and above zero), then we've found our redshift.
 		"""
-		if (np.abs(self.difference) <= self.tolerance) and (self.det_ratio>self.tolerance):
+		if (np.abs(self.difference) <= self.tolerance):
 			self.flag = False
 
 def find_z_threshold(grb, threshold, imx, imy, ndets, trials, 
@@ -276,7 +277,7 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 	# Initial difference between the current and desired detection ratio.
 	p.difference = p.det_ratio - p.threshold  # Must be between -1 and 1
 	if verbose is True:
-		print("At {:2f}, detection ratio = {:3f}".format(p.z_th, p.det_ratio))
+		print("At z = {:.2f}, detection ratio = {:.3f}".format(p.z_th, p.det_ratio))
 
 	while p.flag:
 		# Update redshift guess (and parameter values)
@@ -298,15 +299,15 @@ def _find_z_threshold_work(grb, threshold, imx, imy, ndets,
 		p.difference = p.det_ratio - p.threshold
 
 		if verbose is True:
-			print("At {:.2f}, detection ratio = {:3f}".format(p.z_th, p.det_ratio))
+			print("At z = {:.2f}, detection ratio = {:.3f}".format(p.z_th, p.det_ratio))
 
 		# Check if we've found a redshift with a detection ratio within the tolerance of the desired detection ratio
 		p.check_result()
 
 	if track_z is True:
-		return np.array( (p.z_th, p.det_ratio, np.array(p.z_th_samples), np.array(p.det_ratio_samples)), dtype=[("zth",float), ("DetRat") ("ztrack",object), ("DetRattrack", object)] )
+		return np.array( (p.z_th, p.det_ratio, np.array(p.z_th_samples), np.array(p.det_ratio_samples)), dtype=[("zth",float), ("DetRat", float), ("ztrack", object), ("DetRattrack", object)] )
 	else:
-		return np.array( (p.z_th, p.det_ratio), dtype=[("zth",float), ("DetRat", float)] )
+		return np.array( (p.z_th, p.det_ratio), dtype=[("zth", float), ("DetRat", float)] )
 
 def _bisection(params):
 	"""
