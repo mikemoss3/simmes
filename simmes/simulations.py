@@ -29,8 +29,6 @@ def simulate_observation(synth_grb, resp_mat,
 
 	Attributes:
 	--------------
-	template_grb : GRB 
-		GRB class object that holds the source frame information of the template GRB
 	synth_grb : GRB 
 		GRB class object that will hold the simulated light curve
 	resp_mat : RSP
@@ -276,7 +274,7 @@ def many_simulations(template_grb, param_list, trials,
 		synth_grb_arr = np.zeros(shape=len(param_list), dtype=GRB)
 
 	if verbose is True:
-		print("Tot number of param combinations for GRB {} = {} ".format( template_grb.grbname ,len(param_list)) )
+		print("Tot number of param combinations for GRB {} = {} ".format( template_grb.grbname, len(param_list)) )
 
 	
 	# Initialize a Response Matrix object if none was given
@@ -324,13 +322,17 @@ def many_simulations(template_grb, param_list, trials,
 			sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
 		
 			if sim_results['DURATION'][sim_result_ind] > 0:	
-				sim_results[["T100DURATION", "T100START"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=99) # Find the Duration and the fluence 
-				
+
 				sim_results[["FLUENCE", "1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["DURATION"][sim_result_ind], 
 																						sim_results['TSTART'][sim_result_ind])
-				
-				sim_results[["T100FLUENCE", "1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["T100DURATION"][sim_result_ind], 
-																							sim_results['T100START'][sim_result_ind])
+
+				if sim_results['FLUENCE'][sim_result_ind] < 0:
+					sim_results[["DURATION", "TSTART", "FLUENCE", "1sPeakFlux"]][sim_result_ind] = 0., 0., 0., 0.
+				else:
+					sim_results[["T100DURATION", "T100START"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=99) # Find the Duration and the fluence 
+									
+					sim_results[["T100FLUENCE", "1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["T100DURATION"][sim_result_ind], 
+																								sim_results['T100START'][sim_result_ind])
 
 			# Increase simulation index
 			sim_result_ind +=1
