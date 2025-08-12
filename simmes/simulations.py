@@ -20,7 +20,7 @@ from simmes.PLOTS import PLOTGRB
 
 def simulate_observation(synth_grb, resp_mat, 
 	imx, imy, ndets, z_p=None, 
-	ndet_max=32768, band_rate_min=14, band_rate_max=350, 
+	ndet_max=32768, band_rate_min=15, band_rate_max=350, 
 	time_resolved=False, sim_triggers=False, sim_bgd=True, bgd_size = 20):
 	
 	"""
@@ -77,33 +77,33 @@ def simulate_observation(synth_grb, resp_mat,
 	if time_resolved == False:
 		# Fold spectrum through instrument response and calculate the count rate in the observation band
 		folded_spec = resp_mat.fold_spec(synth_grb.specfunc, add_fluc=False)  # Counts / sec / keV / on-axis fully-illuminated detector
-		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac  # Counts / sec / on-axis fully-illuminated detector
+		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * 2. * det_frac  # Counts / sec / on-axis fully-illuminated detector
 
 		# Using the total count rate from the spectrum and 
-		# the relative flux level of the normalized synthetic light curve, make a new light curve
-		synth_grb.light_curve['RATE'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector  
+		# the relative flux level of the normalized synthetic light curve, make a mock light curve
+		synth_grb.light_curve['RATE'] *= rate_in_band # counts / sec / on-axis fully-illuminated detector  
 	else:
 		# Time-resolved analysis is True
 		# If there is any interval of the light curve that is not covered by the time resolved spectra, use time-integrated spectrum
 		folded_spec = resp_mat.fold_spec(synth_grb.specfunc)  # Counts / sec / keV / on-axis fully-illuminated detector
-		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / sec / on-axis fully-illuminated detector
+		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * 2. * det_frac # counts / sec / on-axis fully-illuminated detector
 		
 		arg_t_start = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[0]['TSTART'])
 		if arg_t_start > 0: 
-			synth_grb.light_curve[:arg_t_start]['RATE'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector
+			synth_grb.light_curve[:arg_t_start]['RATE'] *= rate_in_band # counts / sec / on-axis fully-illuminated detector
 		
 		arg_t_end = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[-1]['TEND'])
 		if arg_t_end > 0:
-			synth_grb.light_curve[arg_t_end:]['RATE'] *= rate_in_band * 2 # counts / sec / on-axis fully-illuminated detector
+			synth_grb.light_curve[arg_t_end:]['RATE'] *= rate_in_band # counts / sec / on-axis fully-illuminated detector
 
 		# Fold time-resolved spectrum
 		for i in range(len(synth_grb.spectrafuncs)):
 			folded_spec = resp_mat.fold_spec(synth_grb.spectrafuncs[i]['SPECFUNC'])  # Counts / sec / keV / on-axis fully-illuminated detector
-			rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac  # Counts / sec /  on-axis fully-illuminated detector
+			rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * 2. * det_frac  # Counts / sec /  on-axis fully-illuminated detector
 
 			arg_t_start = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[i]['TSTART'])
 			arg_t_end = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[i]['TEND'])
-			synth_grb.light_curve[arg_t_start:arg_t_end]['RATE'] *= rate_in_band * 2  # counts / sec / on-axis fully-illuminated detector
+			synth_grb.light_curve[arg_t_start:arg_t_end]['RATE'] *= rate_in_band  # counts / sec / on-axis fully-illuminated detector
 
 	# If we are testing the trigger algorithm:
 		# Modulate the light curve by the folded spectrum normalization for each energy band 
