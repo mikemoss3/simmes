@@ -507,7 +507,7 @@ class PLOTSIMRES(PLOTS):
 		cmin = 1, inc_sensitivity_line = True,
 		inc_cosmo_line=False, specfunc=None, e_min=15, e_max=350, **kwargs):
 		"""
-		Method to plot the measured duration of each synthetic light curve as a function redshift
+		Method to plot the measured fluence of each synthetic light curve as a function redshift
 
 		Attributes:
 		----------
@@ -537,7 +537,7 @@ class PLOTSIMRES(PLOTS):
 			Indicates whether to include a colorbar or not
 		cmin : float
 			Sets the minimum cut-off value for the density plot. Any bin with fewer counts than cmin are omitted. 
-		inc_cosmo_line : bool
+		inc_sensitivity_line : bool
 			Indicates whether to include the 5-sigma sensitivty line (for Swift/BAT)
 		inc_cosmo_line : bool
 			Indicates whether to include the F_true/(1+z) line or not
@@ -573,9 +573,6 @@ class PLOTSIMRES(PLOTS):
 
 		fluence_arr = np.log10(results["FLUENCE"])
 		if fluence_frac is True:
-			if F_true is None:
-				print("A true fluence must be given to plot a duration fraction.")
-				return;
 			fluence_arr /= F_true
 
 		if F_min is None:
@@ -629,7 +626,7 @@ class PLOTSIMRES(PLOTS):
 			z_arr = np.linspace(z_min, z_max*1.1)
 			
 			ax.plot(z_arr, 
-				np.log10(self._luminosity_distance(z_arr, specfunc, F_true, z_min, e_min, e_max)), 
+				np.log10(self._luminosity_distance(2, z_arr, specfunc, F_true, z_min, e_min, e_max)), 
 				color="C1", alpha=1, linewidth=3)
 
 		if inc_sensitivity_line is True:
@@ -640,7 +637,7 @@ class PLOTSIMRES(PLOTS):
 
 			ax.plot(z_vals, np.log10(self._fluence_sens(t_vals)), color="magenta", linewidth=2) # 5-sigma fluence limit 
 
-		ax.set_ylabel(r"log(Photon Fluence) log(cnts cm$^{-2}$)",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_ylabel(r"log(Photon Fluence)\n(log(cnts det$^{-1}$))",fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylim(F_min)
 
 		ax.set_xlim(0, z_max)
@@ -653,10 +650,17 @@ class PLOTSIMRES(PLOTS):
 
 	def _fluence_sens(self, time):
 		# Swift/BAT 5-sigma Fluence sensitivity line (see Baumgartner 2013)
-		return 1.18 * 2.4*10**(-2) * time**(1./2.)  # Units of counts / s / det
+		return 1.18 * 2.4*10**(-2) * time**(1./2.)  # Units of counts / det
 
-	def _luminosity_distance(self, z, specfunc, F_true, z_min, e_min, e_max):
-		# Analytically calculate fluence evolution across cosmological distances
+	def _flux_sens(self, time):
+		# Swift/BAT 5-sigma flux sensitivity line (see Baumgartner 2013)
+		return 1.18 * 2.4*10**(-2) * time**(-1./2.)  # Units of counts / s / det
+
+	def _luminosity_distance(self, N, z, specfunc, F_true, z_min, e_min, e_max):
+		# Analytically calculate fluence or flux evolution across cosmological distances
+		# N = 0 --> energy flux
+		# N = 1 --> photon flux or energy fluence
+		# N = 2 --> photon fluence
 
 		arr = np.zeros(shape=len(z))
 		for i in range(len(z)):
@@ -671,7 +675,7 @@ class PLOTSIMRES(PLOTS):
 
 			k_corr_rat = k_corr(specfunc, z_min, e_min, e_max) / k_corr(new_spec, z[i], e_min, e_max)
 
-			arr[i] = F_true * k_corr_rat * ((1+z[i])/(1+z_min)) * (lum_dis(z_min) / lum_dis(z[i]) )**2
+			arr[i] = F_true * k_corr_rat * ((1+z[i])/(1+z_min))**N * (lum_dis(z_min) / lum_dis(z[i]) )**2
 		return arr
 
 	def det_frac(self, sim_results, ax=None, alpha=0.4, step="mid", **kwargs):
@@ -712,6 +716,137 @@ class PLOTSIMRES(PLOTS):
 		self.tight_layout()
 		self.plot_aesthetics(ax)
 		ax.set_ylim(0, 1)
+
+	def redshift_fpeak_evo(self, sim_results, ax=None, 
+		fp_true=None, fp_max=None, fp_bins=None, z_bins=None,
+		flux_frac = False, norm=mcolors.LogNorm, inc_cbar=False,
+		cmin = 1, inc_sensitivity_line = True,
+		inc_cosmo_line=False, specfunc=None, e_min=15, e_max=350, **kwargs):
+		"""
+		Method to plot the measured peak flux of each synthetic light curve as a function redshift
+
+		Attributes:
+		----------
+		sim_results : dt_sim_res
+			Simulation results to be plotted
+		ax : matplotlib.axes
+			Axis on which to create the figure
+		fp_true : float
+			Observed peak flux of the burst at the lowest redshift 
+		fp_max : float
+			y-axis maximum
+		fp_bins : None or int or array-like
+			The bin specification:
+				If `int`, the number of peak flux bins `(ny = fp_bins)`.
+				If array-like, the bin edges for the peak flux bins `(y_edges = fp_bins)`.
+		z_bins : None or int or array-like
+			The bin specification:
+				If `int`, the number of redshift bins `(nx = z_bins)`.
+				If array-like, the bin edges for the redshift bins `(x_edges = z_bins)`.
+		flux_frac : bool
+			Indicates whether the y-axis should be a fraction of the true fluence
+		norm : str or matplotlib.colors.Normalize
+			Sets the normalization scale for the density plot according to the colormap 
+		inc_cbar : bool
+			Indicates whether to include a colorbar or not
+		cmin : float
+			Sets the minimum cut-off value for the density plot. Any bin with fewer counts than cmin are omitted. 
+		inc_sensitivity_line : bool
+			Indicates whether to include the 5-sigma sensitivty line (for Swift/BAT)
+		inc_cosmo_line : bool
+			Indicates whether to include the F_true/(1+z) line or not
+		specfunc : SPECFUNC
+			The observed spectral function of the burst at the lowest redshift 
+		e_min, e_max : float, float
+			Minimum and maximum energy values of the observed band, used for k-correction calculations. 
+			Defaults are 15 and 350 keV, respectively, to represent Swift/BAT energy band.
+		"""
+
+		if ax is None:
+			ax = plt.figure().gca()
+		fig = plt.gcf()
+
+		if (inc_cosmo_line == True) and not isinstance(specfunc, SPECFUNC):
+			print("If a cosmological flux line is to be included, a spectral function of type SPECFUNC must also be given.")
+			return;
+
+		results = sim_results[sim_results['1sPeakFlux'] > 0]
+
+		z_min, z_max = np.min(sim_results['z']), np.max(sim_results['z'])
+		num_trials = len(results["DURATION"][results['z']==z_min])
+
+		if fp_true is None:
+			fp_true = np.mean(sim_results['1sPeakFlux'][sim_results['z']==z_min])
+
+		if fp_max is None:
+			fp_max = np.log10(np.max(sim_results['1sPeakFlux']))
+
+		cmap = mpl.colormaps["viridis"].copy()
+		cmap.set_bad(color="w")
+		cmap.set_under(color="w")
+
+		flux_arr = np.log10(results["1sPeakFlux"])
+		if flux_frac is True:
+			flux_arr /= fp_true
+
+		# Determine redshift bins 
+		if isinstance(z_bins, int):
+			num_z_bins = z_bins
+		else:
+			num_z_bins = len(np.unique(sim_results['z']))
+		dz = (z_max - z_min)/num_z_bins
+		if not isinstance(z_bins, np.ndarray):
+			z_bins = np.linspace(start=z_min-(dz/2), stop=z_max+(dz/2), num=num_z_bins+1)
+
+		# Determine fluence bins 
+		fp_min = -3 # Log 
+		if isinstance(fp_bins, int):
+			num_fp_bins = fp_bins
+		else:
+			num_fp_bins = int( (fp_max - fp_min)*50)
+		df = (fp_max - fp_min)/num_fp_bins
+		if not isinstance(fp_bins, np.ndarray):
+			fp_bins = np.linspace(start=fp_min-(df/2), stop=fp_max+(df/2), num = num_fp_bins)
+
+		im = ax.hist2d(results['z'], flux_arr, 
+						bins=[z_bins, fp_bins], cmin=cmin, cmap=cmap, 
+						norm=norm(vmin=cmin, vmax= num_trials), **kwargs)
+
+		if inc_cbar == True:
+			divider = make_axes_locatable(ax)
+			cax = divider.append_axes('right', size='5%', pad=0.05)
+			cbar = fig.colorbar(im[3], cax=cax, orientation='vertical', ticks=[0.01*num_trials, 0.1*num_trials, num_trials])
+			cbar.ax.set_yticklabels(["1%", "10%", "100%"])
+
+		ax.axvline(x=z_min,color="k",linewidth=2, linestyle="dotted", label="Measured Redshift")
+		# ax.axvline(x=z_max,color="C1",linewidth=2, label="Max. Simulated Redshift")
+
+		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
+
+		if inc_cosmo_line is True:
+			z_arr = np.linspace(z_min, z_max*1.1)
+			
+			ax.plot(z_arr, 
+				np.log10(self._luminosity_distance(1, z_arr, specfunc, fp_true, z_min, e_min, e_max)), 
+				color="C1", alpha=1, linewidth=3)
+
+		if inc_sensitivity_line is True:
+			z_vals = np.unique(sim_results['z'])
+			t_vals = np.zeros(shape=len(z_vals))
+			for i in range(len(z_vals)):
+				t_vals[i] = np.mean(results['DURATION'][results['z']==z_vals[i]])
+
+			ax.plot(z_vals, np.log10(self._flux_sens(t_vals)), color="magenta", linewidth=2) # 5-sigma flux limit 
+
+		ax.set_ylabel(r"log(1s Peak Flux)\n(log(cnts s$^{-1}$ det$^{-1}$))",fontsize=self.fontsize, fontweight=self.fontweight)
+		ax.set_ylim(-3)
+
+		ax.set_xlim(0, z_max)
+
+		# cbar.set_label("Frequency",fontsize=self.fontsize,fontweight=self.fontweight)
+
+		self.tight_layout()
+		self.plot_aesthetics(ax)
 
 class PLOTSAMPLE(PLOTS):
 	def __init__(self):
