@@ -127,18 +127,6 @@ def custom_bb(light_curve, ncp_prior):
 		last[R] = i_max
 		best[R] = A_R[i_max]
 
-	### Even more stripped down astropy implementations
-	# a_k = 0.5 * np.cumsum(ak_raw)  # a_k: eq. 31
-	# b_k = np.cumsum(bk_raw)  # b_k: eq. 32
-	# fit_vec = fitness(a_k, b_k)  # Evaluate fitness function, log(L^k_max) eq. 41
-	# for R in range(N):
-	# 	A_R = fit_vec[:R+1] - ncp_prior
-	# 	A_R[1:] += best[:R]
-
-	# 	i_max = np.argmax(A_R)  # Find max likelihood
-	# 	last[R] = i_max  # Record max likelihood index
-	# 	best[R] = A_R[i_max]  # Record max likelihood
-
 	# ----------------------------------------------------------------
 	# Now find changepoints by iteratively peeling off the last block
 	# ----------------------------------------------------------------
