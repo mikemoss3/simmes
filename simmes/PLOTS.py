@@ -637,7 +637,7 @@ class PLOTSIMRES(PLOTS):
 
 			ax.plot(z_vals, np.log10(self._fluence_sens(t_vals)), color="magenta", linewidth=2) # 5-sigma fluence limit 
 
-		ax.set_ylabel(r"log(Photon Fluence)\n(log(cnts det$^{-1}$))",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_ylabel("log(Photon Fluence)\n"+r"(log(cnts det$^{-1}$))",fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylim(F_min)
 
 		ax.set_xlim(0, z_max)
@@ -838,7 +838,7 @@ class PLOTSIMRES(PLOTS):
 
 			ax.plot(z_vals, np.log10(self._flux_sens(t_vals)), color="magenta", linewidth=2) # 5-sigma flux limit 
 
-		ax.set_ylabel(r"log(1s Peak Flux)\n(log(cnts s$^{-1}$ det$^{-1}$))",fontsize=self.fontsize, fontweight=self.fontweight)
+		ax.set_ylabel("log(1s Peak Flux)\n"+r"(log(cnts s$^{-1}$ det$^{-1}$))",fontsize=self.fontsize, fontweight=self.fontweight)
 		ax.set_ylim(-3)
 
 		ax.set_xlim(0, z_max)
@@ -900,7 +900,7 @@ class PLOTSAMPLE(PLOTS):
 
 		ax.set_xlabel(r"T$_{90}$ (sec)", fontsize=14)
 		ax.set_ylabel("Cumulative Histogram", fontsize=14)
-		ax.set_title("T90 Distrubtions", fontsize=14)
+		# ax.set_title("T90 Distrubtions", fontsize=14)
 
 		self.plot_aesthetics(ax)
 
@@ -945,9 +945,9 @@ class PLOTSAMPLE(PLOTS):
 		if "label" in kwargs:
 			ax.legend()
 
-		ax.set_xlabel("Fluence (counts/det)", fontsize=self.fontsize)
+		ax.set_xlabel("Fluence (cnts/det)", fontsize=self.fontsize)
 		ax.set_ylabel("Cumulative Histogram", fontsize=self.fontsize)
-		ax.set_title("Fluence Distrubtion", fontsize=self.fontsize)
+		# ax.set_title("Fluence Distrubtion", fontsize=self.fontsize)
 
 		self.plot_aesthetics(ax)
 
@@ -992,7 +992,7 @@ class PLOTSAMPLE(PLOTS):
 
 		ax.set_xlabel("1s Peak Flux (counts/sec/det)", fontsize=self.fontsize)
 		ax.set_ylabel("Normalied Histogram (arb units)", fontsize=self.fontsize)
-		ax.set_title("1s Peak Flux Distrubtion", fontsize=self.fontsize)
+		# ax.set_title("1s Peak Flux Distrubtion", fontsize=self.fontsize)
 
 		self.plot_aesthetics(ax)
 
