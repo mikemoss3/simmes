@@ -650,11 +650,11 @@ class PLOTSIMRES(PLOTS):
 
 	def _fluence_sens(self, time):
 		# Swift/BAT 5-sigma Fluence sensitivity line (see Baumgartner 2013)
-		return 1.18 * 2.4*10**(-2) * time**(1./2.)  # Units of counts / det
+		return 1.18 * 3.86*10**(-2) * time**(1./2.)  # Units of counts / det
 
 	def _flux_sens(self, time):
 		# Swift/BAT 5-sigma flux sensitivity line (see Baumgartner 2013)
-		return 1.18 * 2.4*10**(-2) * time**(-1./2.)  # Units of counts / s / det
+		return 1.18 * 3.86*10**(-2) * time**(-1./2.)  # Units of counts / s / det
 
 	def _luminosity_distance(self, N, z, specfunc, F_true, z_min, e_min, e_max):
 		# Analytically calculate fluence or flux evolution across cosmological distances
