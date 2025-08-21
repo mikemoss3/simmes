@@ -24,10 +24,10 @@ def calc_fluence(light_curve, duration, tstart):
 
 	# Calculate the average 1 second peak flux 
 	if dt < 1:
-		num_bins = int(np.ceil(1 / dt)) # number of time bins that make up one second 
+		num_bins = int(np.ceil(1 / dt / 2)) # number of time bins that make up one second 
 
 		arg_max = np.argwhere(subint_light_curve['RATE'] == np.max(subint_light_curve['RATE']) )[0][0]
-		flux_peak_1s = np.mean( subint_light_curve['RATE'][arg_max: arg_max+num_bins] )
+		flux_peak_1s = np.mean( subint_light_curve['RATE'][arg_max-num_bins: arg_max+num_bins] )
 
 	else:
 		flux_peak_1s = np.max(subint_light_curve['RATE'])
