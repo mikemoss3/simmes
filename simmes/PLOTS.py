@@ -664,7 +664,7 @@ class PLOTSIMRES(PLOTS):
 		time : float
 			Duration of the emission
 		"""
-		return np.ones(shape=len(time)) * 1.12*10**(-2)* np.sqrt(2 * np.log10(n))* time**(1./2.)  # Units of counts / det
+		return 1.12*10**(-2)* np.sqrt(2 * np.log10(n))* time**(1./2.)  # Units of counts / det
 
 	def _flux_sens(self, n, dt):
 		"""
@@ -865,10 +865,8 @@ class PLOTSIMRES(PLOTS):
 		if inc_sensitivity_line is True:
 			z_vals = np.unique(sim_results['z'])
 			t_vals = np.zeros(shape=len(z_vals))
-			for i in range(len(z_vals)):
-				t_vals[i] = np.mean(results['DURATION'][results['z']==z_vals[i]])
 
-			ax.plot(z_vals, np.log10(self._flux_sens(num_t_bins, dt)), color="magenta", linewidth=2) # 5-sigma flux limit 
+			ax.plot(z_vals, np.ones(shape=len(z_vals)) * np.log10(self._flux_sens(num_t_bins, dt)), color="magenta", linewidth=2) # 5-sigma flux limit 
 
 		ax.set_ylabel("log(1s Peak Flux)\n"+r"(log(cnts s$^{-1}$ det$^{-1}$))",fontsize=self.fontsize, fontweight=self.fontweight)
 		ax.set_ylim(-3)
