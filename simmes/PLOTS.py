@@ -653,8 +653,8 @@ class PLOTSIMRES(PLOTS):
 		return 1.18 * 2.4*10**(-2) * np.power(time, 0.5)  # Units of counts / det
 
 	def _flux_sens(self, time):
-		# Swift/BAT 1-sigma flux sensitivity line (see Baumgartner 2013)
-		return 1.12e-2 * np.power( time , -0.5)  # counts / s / det
+		# Swift/BAT 5-sigma flux sensitivity line (see Baumgartner 2013)
+		return 2.5 * 1.12e-5 * np.power( time , -0.5)  # Units of counts / s / det
 
 	def _luminosity_distance(self, N, z, specfunc, F_true, z_min, e_min, e_max):
 		# Analytically calculate fluence or flux evolution across cosmological distances
