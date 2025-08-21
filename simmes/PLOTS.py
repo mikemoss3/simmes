@@ -504,7 +504,7 @@ class PLOTSIMRES(PLOTS):
 	def redshift_fluence_evo(self, sim_results, ax=None, 
 		F_true=None, F_max=None, F_min=None, f_bins=None, z_bins=None,
 		fluence_frac=False, norm=mcolors.LogNorm, inc_cbar=False, 
-		cmin = 1, inc_sensitivity_line = True,
+		cmin = 1, inc_sensitivity_line = False, num_t_bins = None,
 		inc_cosmo_line=False, specfunc=None, e_min=15, e_max=350, **kwargs):
 		"""
 		Method to plot the measured fluence of each synthetic light curve as a function redshift
@@ -554,6 +554,9 @@ class PLOTSIMRES(PLOTS):
 
 		if (inc_cosmo_line == True) and not isinstance(specfunc, SPECFUNC):
 			print("If a cosmological fluence line is to be included, a spectral function of type SPECFUNC must also be given.")
+			return;
+		if (inc_sensitivity_line) and (num_t_bins is None):
+			print("If a fluence sensitivity line is to be included, the number of Bayesian block measurements (i.e., time bins) must be given.")
 			return;
 
 		results = sim_results[sim_results['FLUENCE'] > 0]
@@ -635,7 +638,7 @@ class PLOTSIMRES(PLOTS):
 			for i in range(len(z_vals)):
 				t_vals[i] = np.mean(results['DURATION'][results['z']==z_vals[i]])
 
-			ax.plot(z_vals, np.log10(self._fluence_sens(t_vals)), color="magenta", linewidth=2) # 5-sigma fluence limit 
+			ax.plot(z_vals, np.log10(self._fluence_sens(num_t_bins, t_vals)), color="magenta", linewidth=2) # 5-sigma fluence limit 
 
 		ax.set_ylabel("log(Photon Fluence)\n"+r"(log(cnts det$^{-1}$))",fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylim(F_min)
@@ -648,13 +651,36 @@ class PLOTSIMRES(PLOTS):
 		self.plot_aesthetics(ax)
 
 
-	def _fluence_sens(self, time):
-		# Swift/BAT 5-sigma Fluence sensitivity line (see Baumgartner 2013)
-		return 1.18 * 2.4*10**(-2) * np.power(time, 0.5)  # Units of counts / det
+	def _fluence_sens(self, n, time):
+		"""
+		Calculate fluence limit. 
+		Based on the threshold of Bayesian block algorithm (Scargle et al 2013, Eq. 15) 
+		and average background fluctuations of BAT
 
-	def _flux_sens(self, time):
-		# Swift/BAT 5-sigma flux sensitivity line (see Baumgartner 2013)
-		return 2.5 * 1.12e-5 * np.power( time , -0.5)  # Units of counts / s / det
+		Attributes:
+		----------
+		n : int
+			number of measurements made by the Bayesian block algorithm
+		time : float
+			Duration of the emission
+		"""
+		return np.ones(shape=len(time)) * 1.12*10**(-2)* np.sqrt(2 * np.log10(n))* time**(1./2.)  # Units of counts / det
+
+	def _flux_sens(self, n, dt):
+		"""
+		Calculate flux limit. 
+		Based on the threshold of Bayesian block algorithm (Scargle et al 2013, Eq. 15) 
+		and average background fluctuations of BAT
+
+		Attributes:
+		----------
+		n : int
+			Number of measurements made by the Bayesian block algorithm
+		dt : float 
+			Light curve time bin size 
+		"""
+
+		return 1.12*10**(-2)* np.sqrt(2 * np.log10(n)) * dt  # Units of counts / det
 
 	def _luminosity_distance(self, N, z, specfunc, F_true, z_min, e_min, e_max):
 		# Analytically calculate fluence or flux evolution across cosmological distances
@@ -720,7 +746,7 @@ class PLOTSIMRES(PLOTS):
 	def redshift_fpeak_evo(self, sim_results, ax=None, 
 		fp_true=None, fp_max=None, fp_bins=None, z_bins=None,
 		flux_frac = False, norm=mcolors.LogNorm, inc_cbar=False,
-		cmin = 1, inc_sensitivity_line = True,
+		cmin = 1, inc_sensitivity_line = False, num_t_bins = None, dt = None,
 		inc_cosmo_line=False, specfunc=None, e_min=15, e_max=350, **kwargs):
 		"""
 		Method to plot the measured peak flux of each synthetic light curve as a function redshift
@@ -768,6 +794,12 @@ class PLOTSIMRES(PLOTS):
 
 		if (inc_cosmo_line == True) and not isinstance(specfunc, SPECFUNC):
 			print("If a cosmological flux line is to be included, a spectral function of type SPECFUNC must also be given.")
+			return;
+		if (inc_sensitivity_line) and (num_t_bins is None):
+			print("If a flux sensitivity line is to be included, the number of Bayesian block measurements (i.e., time bins) must be given.")
+			return;
+		if (inc_sensitivity_line) and (dt is None):
+			print("If a flux sensitivity line is to be included, the time bin size must be given.")
 			return;
 
 		results = sim_results[sim_results['1sPeakFlux'] > 0]
@@ -836,7 +868,7 @@ class PLOTSIMRES(PLOTS):
 			for i in range(len(z_vals)):
 				t_vals[i] = np.mean(results['DURATION'][results['z']==z_vals[i]])
 
-			ax.plot(z_vals, np.log10(self._flux_sens(t_vals)), color="magenta", linewidth=2) # 5-sigma flux limit 
+			ax.plot(z_vals, np.log10(self._flux_sens(num_t_bins, dt)), color="magenta", linewidth=2) # 5-sigma flux limit 
 
 		ax.set_ylabel("log(1s Peak Flux)\n"+r"(log(cnts s$^{-1}$ det$^{-1}$))",fontsize=self.fontsize, fontweight=self.fontweight)
 		ax.set_ylim(-3)
