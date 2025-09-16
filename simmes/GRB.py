@@ -405,134 +405,143 @@ class GRB(object):
 			new_light_curve = np.zeros(shape=len(self.light_curve))
 			new_light_curve[inds] = self.light_curve[inds]
 
-		# Copy original spectrum and time-resolved spectra for k-correction calculation
-		org_spec = self.specfunc.deepcopy()
-
-		# Move spectral function to z_p frame by correcting E_peak or temperature by the redshift (if spectral function has a peak energy or temperature)
-		for i, (key, val) in enumerate(self.specfunc.params.items()):
-			if key == "ep":
-				self.specfunc.params[key] *= (1+z_o)/(1+z_p)
-			if key == "temp":
-				self.specfunc.params[key] *= (1+z_o)/(1+z_p)
-
-		# Calculate distance corrections to flux values (See Bloom, Frail, and Sari 2001 Equation 4 and Meszaros, Ripa, Ryde 2011 Equation 2)
-		dis_corr_to_z_o = 1.
-		spec_corr_z_o = 1.
-		if z_o != 0:
-			dis_corr_to_z_o = 4 * np.pi * np.power(lum_dis(z_o), 2.)
-
-			tmp_spec = org_spec.deepcopy()
-			tmp_spec.params['norm'] = 1.
-			spec_corr_z_o = integrate.quad(lambda en: tmp_spec(en), emin, emax)[0]
-
-		dis_corr_to_z_p = 1.
-		spec_corr_z_p = 1.
-		if z_p != 0:
-			dis_corr_to_z_p = 4 * np.pi * np.power(lum_dis(z_p), 2.)
-
-			tmp_spec = self.specfunc.deepcopy()
-			tmp_spec.params['norm'] = 1.
-			spec_corr_z_p = integrate.quad(lambda en: tmp_spec(en), emin, emax)[0]
-
-		# Calculate correction factors for entire interval
-		dis_corr_rat = np.power(10., np.log10(dis_corr_to_z_o) - np.log10(dis_corr_to_z_p))
-		z_corr_rat = np.power((1.+z_p) / (1.+z_o), 2.)
-		k_corr_rat = k_corr(org_spec, z_o, emin, emax) / k_corr(self.specfunc, z_p, emin, emax)
-		spec_corr_rat = spec_corr_z_o / spec_corr_z_p
-
-		# Apply total correction factor for the entire interval	
-		self.specfunc.params["norm"] *= dis_corr_rat * z_corr_rat * k_corr_rat * spec_corr_rat
-
-
-		# If there are time-resolved spectra, calculate and update the k-correction for that interval
-		if len(self.spectrafuncs) > 0:
-			kcorr_res = np.zeros(shape=len(self.spectrafuncs))
-
-			# If there are time-resolved spectra, do the same for them
-			for s in range(len(self.spectrafuncs)):
-				org_spectra = self.spectrafuncs[s]['SPECFUNC'].deepcopy()
-				for i, (key, val) in enumerate(self.spectrafuncs[s]['SPECFUNC'].params.items()):
-					if key == "ep":
-						self.spectrafuncs[s]['SPECFUNC'].params[key] *= (1+z_o)/(1+z_p)
-					if key == "temp":
-						self.spectrafuncs[s]['SPECFUNC'].params[key] *= (1+z_o)/(1+z_p)
-					if key == "norm":
-						self.spectrafuncs[s]['SPECFUNC'].params[key] *= dis_corr_to_z_o / dis_corr_to_z_p
-
-				# Apply k-correction and distance correction for this spectrum
-				self.spectrafuncs[s]['SPECFUNC'].params["norm"] *= k_corr(org_spectra, z_o, emin, emax) / k_corr(self.spectrafuncs[s]['SPECFUNC'], z_p, emin, emax)
-
-				# Find what time interval this k correction applies to
-				# ind_tstart = np.argmax(self.light_curve['TIME']>self.spectrafuncs[s]['TSTART'])
-				# ind_tend = np.argmax(self.light_curve['TIME']>self.spectrafuncs[s]['TEND'])
-
-				# self.light_curve['RATE'][ind_tstart:ind_tend] = self.light_curve['RATE'][ind_tstart:ind_tend] * kcorr_res * dis_corr_to_z_o / dis_corr_to_z_p
-				# self.light_curve['UNC'][ind_tstart:ind_tend] = self.light_curve['UNC'][ind_tstart:ind_tend] * kcorr_res * dis_corr_to_z_o / dis_corr_to_z_p
-
-		##
-		# Time-dilate Light Curve
-		## 
-
-		# Apply time-dilation to light curve (i.e., correct the time binning)
-		# Calculate the start and stop times of the flux light curve in the z_p frame.
-		tpstart = self.light_curve['TIME'][0]*(1+z_p)/(1+z_o)
-		tpend = self.light_curve['TIME'][-1]*(1+z_p)/(1+z_o)
-
-		# Bin size of the light curve curve
-		bin_size = (self.light_curve['TIME'][1] - self.light_curve['TIME'][0])
-		# Create a time axis from tpstart to tpend with proper bin size
-		tmp_time_arr = np.arange(tpstart, tpend+bin_size, bin_size)
-
-		# Create an array to store the flux light curve in the z_p frame
-		flux_lc_at_z_p = np.zeros(shape=len(tmp_time_arr), dtype=([("TIME",float), ("RATE",float)]))
-		flux_lc_at_z_p['TIME'] = tmp_time_arr
-
-		# Temporary light curve to store z_p frame light curve
-		tmp_light_curve = np.zeros(shape=len(tmp_time_arr), dtype=[("TIME",float), ("RATE",float), ("UNC",float)])
-		tmp_light_curve['TIME'] = tmp_time_arr
-
-		# We must correct for time dilation by binning the flux into z_p frame time bins
-		# For each time bin of the z_o light curve:
-		for i in range(len(self.light_curve)-1):
-			# Time bin edges, left and right, of the z_o light curve
-			t_0_l = self.light_curve['TIME'][i]
-			t_0_r = self.light_curve['TIME'][i+1]
-
-			# In the z_p frame, this interval becomes
-			t_p_l = t_0_l*(1+z_p)/(1+z_o)
-			t_p_r = t_0_r*(1+z_p)/(1+z_o)
-
-			# Find the indices where the light curve is ** fully within ** this new interval
-			argstart = np.argmax(tmp_light_curve['TIME']>=t_p_l)
-			argend = np.argmax(tmp_light_curve['TIME']>=t_p_r) - 1
-
-			# Fraction of the interval missed on the left 
-			frac_left = (tmp_light_curve['TIME'][argstart] - t_p_l) / bin_size
-			# Fraction of the interval missed on the right  
-			frac_right = (t_p_r - tmp_light_curve['TIME'][argend]) / bin_size
-
-
-			# Flux to redistribute 
-			f_0 = self.light_curve['RATE'][i]
-			f_0_unc = self.light_curve['UNC'][i]
-			# Calculaute rate per full bin in z_p frame:
-			f_p = f_0 * bin_size / (t_p_r - t_p_l)
-			f_p_unc = f_0_unc * bin_size / (t_p_r - t_p_l)
-
-			# Redistribute flux in fully covered bins
-			tmp_light_curve['RATE'][argstart:argend] += np.ones(shape=argend - argstart) * f_p
-			tmp_light_curve['UNC'][argstart:argend] += np.ones(shape=argend - argstart) * f_p_unc
-			# Redistribute flux in partial bins
-			tmp_light_curve['RATE'][argstart-1] += f_p * frac_left
-			tmp_light_curve['UNC'][argstart-1] += f_p_unc * frac_left
-			tmp_light_curve['RATE'][argend] += f_p * frac_right
-			tmp_light_curve['UNC'][argend] += f_p_unc * frac_right
-
-		# Align the time array with zero
-		argt0 = np.argmax(tmp_time_arr>0)
-		tmp_light_curve['TIME'] -= tmp_time_arr[argt0]
+		# Calculate new spectrum (i.e., shift spectral parameters and change normalization) 
+		self.specfunc = move_spectrum(self.specfunc, z_o, z_p, emin=emin, emax=emax)  
 		
-		# Set the light curve to the distance corrected light curve
-		self.light_curve = tmp_light_curve
+		# If there are time-resolved spectra
+		if len(self.spectrafuncs) > 0:
+			for s in range(len(self.spectrafuncs)):
+				self.spectrafuncs[s]['SPECFUNC'] = move_spectrum(self.spectrafuncs[s]['SPECFUNC'], z_o, z_p, emin=emin, emax=emax)  # calculate new spectrum (i.e., shift spectral parameters and change normalization) 
 
-		return;
+		# Apply time dilation to light curve
+		self.light_curve = move_light_curve(self.light_curve, z_o, z_p)  
+	
+
+def move_spectrum(specfunc, z_o, z_p, emin=gc.bol_lum[0], emax=gc.bol_lum[1]):
+	"""
+	Method to shift the GRB spectra from a frame at z_o to a frame at z_p
+
+	Attributes:
+	----------
+	z_o : float
+		Current redshift of the GRB
+	z_p : float
+		Redshift to shift the GRB to
+	emin, emax : float, float
+		Spectrum energy band minimum and maximum
+	"""
+
+	# Make a copy of the spectrum for z_o calculations
+	org_spec = specfunc.deepcopy()
+
+	# Move spectral function to z_p frame by correcting E_peak or temperature by the redshift (if spectral function has a peak energy or temperature)
+	for i, (key, val) in enumerate(specfunc.params.items()):
+		if key == "ep":
+			specfunc.params[key] *= (1+z_o)/(1+z_p)
+		if key == "temp":
+			specfunc.params[key] *= (1+z_o)/(1+z_p)
+
+	# Calculate distance corrections to flux values (See Bloom, Frail, and Sari 2001 Equation 4 and Meszaros, Ripa, Ryde 2011 Equation 2)
+	dis_corr_to_z_o = 1.
+	spec_corr_z_o = 1.
+	if z_o != 0:
+		dis_corr_to_z_o = 4 * np.pi * np.power(lum_dis(z_o), 2.)
+
+		tmp_spec = org_spec.deepcopy()
+		tmp_spec.params['norm'] = 1.
+		spec_corr_z_o = integrate.quad(lambda en: tmp_spec(en), emin, emax)[0]
+
+	dis_corr_to_z_p = 1.
+	spec_corr_z_p = 1.
+	if z_p != 0:
+		dis_corr_to_z_p = 4 * np.pi * np.power(lum_dis(z_p), 2.)
+
+		tmp_spec = specfunc.deepcopy()
+		tmp_spec.params['norm'] = 1.
+		spec_corr_z_p = integrate.quad(lambda en: tmp_spec(en), emin, emax)[0]
+
+	# Calculate correction factors for entire interval
+	dis_corr_rat = np.power(10., np.log10(dis_corr_to_z_o) - np.log10(dis_corr_to_z_p))
+	z_corr_rat = np.power((1.+z_p) / (1.+z_o), 2.)
+	k_corr_rat = k_corr(org_spec, z_o, emin, emax) / k_corr(specfunc, z_p, emin, emax)
+	spec_corr_rat = spec_corr_z_o / spec_corr_z_p
+
+	# Apply total correction factor for the entire interval	
+	specfunc.params["norm"] *= dis_corr_rat * z_corr_rat * k_corr_rat * spec_corr_rat
+
+	return specfunc;
+
+def move_light_curve(light_curve, z_o, z_p):
+	"""
+	Method to time-dilate a GRB light from a frame at z_o to a frame at z_p
+
+	Attributes:
+	----------
+	z_o : float
+		Current redshift of the GRB
+	z_p : float
+		Redshift to shift the GRB to
+	"""
+
+	# Apply time-dilation to light curve (i.e., correct the time binning)
+	# Calculate the start and stop times of the flux light curve in the z_p frame.
+	tpstart = light_curve['TIME'][0]*(1+z_p)/(1+z_o)
+	tpend = light_curve['TIME'][-1]*(1+z_p)/(1+z_o)
+
+	# Bin size of the light curve curve
+	bin_size = (light_curve['TIME'][1] - light_curve['TIME'][0])
+	# Create a time axis from tpstart to tpend with proper bin size
+	tmp_time_arr = np.arange(tpstart, tpend+bin_size, bin_size)
+
+	# Create an array to store the flux light curve in the z_p frame
+	flux_lc_at_z_p = np.zeros(shape=len(tmp_time_arr), dtype=([("TIME",float), ("RATE",float)]))
+	flux_lc_at_z_p['TIME'] = tmp_time_arr
+
+	# Temporary light curve to store z_p frame light curve
+	tmp_light_curve = np.zeros(shape=len(tmp_time_arr), dtype=[("TIME",float), ("RATE",float), ("UNC",float)])
+	tmp_light_curve['TIME'] = tmp_time_arr
+
+	# We must correct for time dilation by binning the flux into z_p frame time bins
+	# For each time bin of the z_o light curve:
+	for i in range(len(light_curve)-1):
+		# Time bin edges, left and right, of the z_o light curve
+		t_0_l = light_curve['TIME'][i]
+		t_0_r = light_curve['TIME'][i+1]
+
+		# In the z_p frame, this interval becomes
+		t_p_l = t_0_l*(1+z_p)/(1+z_o)
+		t_p_r = t_0_r*(1+z_p)/(1+z_o)
+
+		# Find the indices where the light curve is ** fully within ** this new interval
+		argstart = np.argmax(tmp_light_curve['TIME']>=t_p_l)
+		argend = np.argmax(tmp_light_curve['TIME']>=t_p_r) - 1
+
+		# Fraction of the interval missed on the left 
+		frac_left = (tmp_light_curve['TIME'][argstart] - t_p_l) / bin_size
+		# Fraction of the interval missed on the right  
+		frac_right = (t_p_r - tmp_light_curve['TIME'][argend]) / bin_size
+
+		# Flux to redistribute 
+		f_0 = light_curve['RATE'][i]
+		f_0_unc = light_curve['UNC'][i]
+		# Calculaute rate per full bin in z_p frame:
+		f_p = f_0 * bin_size / (t_p_r - t_p_l)
+		f_p_unc = f_0_unc * bin_size / (t_p_r - t_p_l)
+
+		# Redistribute flux in fully covered bins
+		tmp_light_curve['RATE'][argstart:argend] += np.ones(shape=argend - argstart) * f_p
+		tmp_light_curve['UNC'][argstart:argend] += np.ones(shape=argend - argstart) * f_p_unc
+		# Redistribute flux in partial bins
+		tmp_light_curve['RATE'][argstart-1] += f_p * frac_left
+		tmp_light_curve['UNC'][argstart-1] += f_p_unc * frac_left
+		tmp_light_curve['RATE'][argend] += f_p * frac_right
+		tmp_light_curve['UNC'][argend] += f_p_unc * frac_right
+
+	# Align the time array with zero
+	argt0 = np.argmax(tmp_time_arr>0)
+	tmp_light_curve['TIME'] -= tmp_time_arr[argt0]
+	
+	# Set the light curve to the distance corrected light curve
+	light_curve = tmp_light_curve
+
+	return light_curve;
