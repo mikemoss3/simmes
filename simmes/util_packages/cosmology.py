@@ -26,7 +26,7 @@ def lum_dis(z: float):
 	lum_dis_cm = lum_dis_Mpc * 3.086e24 # Mpc -> cm
 	return lum_dis_cm
 
-def k_corr(specfunc, z, emin, emax):
+def k_corr(specfunc, z, emin, emax, Emin=None, Emax=None):
 	""" 
 	Calculates the bolumetric k-correction using a specified function form at a particular redshft. See Bloom, Frail, and Sari 2001.
 	
@@ -39,9 +39,13 @@ def k_corr(specfunc, z, emin, emax):
 	emin, emax : float, float
 		Defines the observed energy range to calculate the k-correction between
 	""" 
+	if Emax is None:
+		Emax = gc.bol_lum[0]
+	if Emin is None:
+		Emin = gc.bol_lum[1]
 
 	# Evaluate bolometric spectrum in the rest frame of the source 
-	numerator = integrate.quad(lambda en: en*specfunc(en), gc.bol_lum[0]/(1+z),gc.bol_lum[1]/(1+z))[0]
+	numerator = integrate.quad(lambda en: en*specfunc(en), Emin/(1+z), Emax/(1+z))[0]
 	# Evaluate spectrum within the defined band pass in the observer frame
 	denominator = integrate.quad(lambda en: en*specfunc(en), emin, emax)[0]
 	
