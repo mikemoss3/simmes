@@ -493,10 +493,6 @@ def move_light_curve(light_curve, z_o, z_p):
 	# Create a time axis from tpstart to tpend with proper bin size
 	tmp_time_arr = np.arange(tpstart, tpend+bin_size, bin_size)
 
-	# Create an array to store the flux light curve in the z_p frame
-	flux_lc_at_z_p = np.zeros(shape=len(tmp_time_arr), dtype=([("TIME",float), ("RATE",float)]))
-	flux_lc_at_z_p['TIME'] = tmp_time_arr
-
 	# Temporary light curve to store z_p frame light curve
 	tmp_light_curve = np.zeros(shape=len(tmp_time_arr), dtype=[("TIME",float), ("RATE",float), ("UNC",float)])
 	tmp_light_curve['TIME'] = tmp_time_arr
@@ -538,7 +534,7 @@ def move_light_curve(light_curve, z_o, z_p):
 		tmp_light_curve['UNC'][argend] += f_p_unc * frac_right
 
 	# Align the time array with zero
-	argt0 = np.argmax(tmp_time_arr>0)
+	argt0 = np.argmax(tmp_time_arr>=0)
 	tmp_light_curve['TIME'] -= tmp_time_arr[argt0]
 	
 	# Set the light curve to the distance corrected light curve
