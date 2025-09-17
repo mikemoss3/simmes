@@ -329,7 +329,6 @@ def make_param_list(z_arr, imx_arr, imy_arr, ndets_arr):
 
 	return param_list
 
-
 def make_ave_sim_res(sim_results, omit_nondetections=True):
 	"""
 	Method to make an average sim_results array for each unique parameter combination
