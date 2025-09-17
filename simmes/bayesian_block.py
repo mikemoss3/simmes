@@ -30,9 +30,10 @@ def bayesian_t_blocks(light_curve, dur_per=90, ncp_prior=6):
 		Start time found for the event
 	"""
 
-	# custom_bb is a condensed bayesian block algorithm adapted from the astropy function. It's faster but more unsafe!
 
-	# Astropy bayesian block algorithm -- it is much safer to use since it handles exceptions better, however its an order of magnitude
+	# Astropy bayesian block algorithm -- it is much safer to use since it handles exceptions better, 
+	# however its an order of magnitude slower than custom_bb.
+	# custom_bb is a condensed bayesian block algorithm adapted from the astropy function. It's faster but more unsafe!
 	try:
 		bin_edges = bayesian_blocks(t=light_curve['TIME'], x=light_curve['RATE'], sigma=light_curve['UNC'], fitness="measures", ncp_prior=ncp_prior) # Find the T90 and the fluence 
 		# bin_edges = custom_bb(light_curve=light_curve, ncp_prior=ncp_prior)
@@ -74,8 +75,8 @@ def bayesian_t_blocks(light_curve, dur_per=90, ncp_prior=6):
 def custom_bb(light_curve, ncp_prior):
 	"""
 	A Bayesian block algorithm adapted from the astropy.bayesian_blocks function.
-	This version is faster than the astropy version because it removes some of the error safety and handling as well as only uses
-	the ncp_prior parameter for the algorithm
+	This version is faster than the astropy version because it removes some of the error safety 
+	and handling as well as only uses the ncp_prior parameter for the algorithm
 
 	Attributes:
 	--------------
