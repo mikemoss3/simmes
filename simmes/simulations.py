@@ -109,9 +109,6 @@ def simulate_observation(synth_grb, resp_mat,
 		# Modulate the light curve by the folded spectrum normalization for each energy band 
 		# Calculate the fraction of the quadrant exposure 
 
-	# Apply mask-weighting approximation to source rate signal 
-	# synth_grb.light_curve = apply_mask_weighting(synth_grb.light_curve, imx, imy, ndets) # counts / sec / on-axis fully-illuminated detector
-
 	t_bin_size = (synth_grb.light_curve['TIME'][1] - synth_grb.light_curve['TIME'][0])
 	if sim_bgd == True:
 		# Add mask-weighted background rate to either side of mask-weighted source signal
@@ -140,49 +137,6 @@ def band_rate(spectrum, emin, emax):
 	"""
 
 	return np.sum(spectrum['RATE'][np.argmax(spectrum['ENERGY']>=emin):np.argmax(spectrum['ENERGY']>=emax)])
-
-def apply_mask_weighting(light_curve, imx, imy, ndets):
-	"""
-	Method to apply mask weighting to a light curve assuming a flat background.
-	
-	Mask-weighted means:
-		1. Background subtraction
-		2. Per detector
-		3. Per illuminated detector (partial coding fraction)
-		4. Fraction of detector illuminated (mask correction)
-		5. On axis equivalent (effective area correction for off-axis bursts)
-
-	Attributes:
-	--------------
-	light_curve : np.ndarray with [("RATE", float), ("UNC", float)]
-		light curve array
-	imx, imy : float, float
-	ndets : int
-		Number of detectors enabled during the synthetic observation 
-
-	Returns:
-	--------------
-	light_curve : np.ndarray with [("RATE", float), ("UNC", float)]
-		mask-weighted light curve
-	"""
-
-	# From imx and imy, find pcode and the angle of incidence
-	pcode = find_pcode(imx, imy)
-	angle_inc = find_inc_ang(imx,imy) # rad
-
-	# Total mask-weighting correction
-	correction = np.cos(angle_inc)*pcode*ndets*fraction_correction(imx, imy) # total correction factor
-
-	if pcode == 0:
-		# Source was not in the field of view
-		light_curve['UNC'] *= 0
-		light_curve['RATE'] *= 0 # counts / sec / dets
-		return light_curve
-
-	# Calculate the mask-weighted RATE column
-	light_curve['RATE'] = light_curve["RATE"]/correction # background-subtracted counts / sec / dets
-
-	return light_curve
 
 def add_background(light_curve, bgd_size, dt):
 	"""
