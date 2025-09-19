@@ -680,7 +680,7 @@ class PLOTSIMRES(PLOTS):
 			Light curve time bin size 
 		"""
 
-		return 1.12*10**(-2)* np.sqrt(2 * np.log10(n)) * dt  # Units of counts / det
+		return 1.12*10**(-2)* np.sqrt(2 * np.log10(n)) * dt  # Units of counts / det / s
 
 	def _luminosity_distance(self, N, z, specfunc, F_true, z_min, e_min, e_max):
 		# Analytically calculate fluence or flux evolution across cosmological distances
