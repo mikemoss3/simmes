@@ -20,7 +20,7 @@ from simmes.PLOTS import PLOTGRB
 
 def simulate_observation(synth_grb, resp_mat, 
 	imx, imy, ndets, z_p=None, 
-	ndet_max=32768, band_rate_min=15, band_rate_max=350, 
+	ndet_max=32768, band_rate_min=15, band_rate_max=150, 
 	time_resolved=False, sim_triggers=False, sim_bgd=True, bgd_size = 20):
 	
 	"""
@@ -177,7 +177,7 @@ def add_background(light_curve, bgd_size, dt):
 	return bgd_lc
 
 def many_simulations(template_grb, param_list, trials, 
-	resp_mat = None, dur_per = 90, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
+	resp_mat = None, dur_per = 90, ndet_max=32768, band_rate_min=14, band_rate_max=150, 
 	time_resolved=False, sim_triggers=False, sim_bgd = True, bgd_size = 20,
 	out_file_name = None, ret_ave = False, keep_synth_grbs=False, verbose=False):
 	"""
