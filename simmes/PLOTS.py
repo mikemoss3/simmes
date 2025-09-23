@@ -359,7 +359,7 @@ class PLOTSIMRES(PLOTS):
 		self.plot_aesthetics(ax)
 
 	def redshift_duration_evo(self, sim_results, ax=None, 
-		t_true=1, t_max=None, dt = None, t_bins=None, z_bins=None, z_obs=None,
+		t_true=1, t_max=None, dt = None, t_bins=None, z_bins=None, z_true=None,
 		dur_frac=False, log=False, norm=mcolors.LogNorm, inc_cbar=False, 
 		cmin = 1, inc_cosmo_line=True, **kwargs):
 		"""
@@ -386,7 +386,7 @@ class PLOTSIMRES(PLOTS):
 			The bin specification:
 				If `int`, the number of redshift bins `(nx = z_bins)`.
 				If array-like, the bin edges for the redshift bins `(x_edges = z_bins)`.
-		z_obs : float
+		z_true : float
 			Observed redshift of the source. This should be used in cases where the minimum redshift of the 
 			simulations is greater than the observed redshift 
 		dur_frac : bool
@@ -413,15 +413,15 @@ class PLOTSIMRES(PLOTS):
 
 		z_min, z_max = np.min(sim_results['z']), np.max(sim_results['z'])
 		num_trials = len(results["DURATION"][results['z']==z_min])
-		if z_obs is None:
-			z_obs = z_min
+		if z_true is None:
+			z_true = z_min
 
 		if t_max is None:
 			t_max = np.max(sim_results['DURATION'])
 
 		z_arr = np.linspace(0, z_max*1.1)
 		def dilation_line(z):
-			return t_true*(1+z)/(1+z_obs)
+			return t_true*(1+z)/(1+z_true)
 
 		cmap = mpl.colormaps["viridis"].copy()
 		cmap.set_bad(color="w")
@@ -507,7 +507,7 @@ class PLOTSIMRES(PLOTS):
 		self.plot_aesthetics(ax)
 
 	def redshift_fluence_evo(self, sim_results, ax=None, 
-		F_true=None, F_max=None, F_min=None, f_bins=None, z_bins=None, z_obs=None,
+		F_true=None, F_max=None, F_min=None, f_bins=None, z_bins=None, z_true=None,
 		fluence_frac=False, norm=mcolors.LogNorm, inc_cbar=False, 
 		cmin = 1, inc_sensitivity_line = False, num_t_bins = None,
 		inc_cosmo_line=False, specfunc=None, e_min=15, e_max=350, **kwargs):
@@ -534,7 +534,7 @@ class PLOTSIMRES(PLOTS):
 			The bin specification:
 				If `int`, the number of redshift bins `(nx = z_bins)`.
 				If array-like, the bin edges for the redshift bins `(x_edges = z_bins)`.
-		z_obs : float
+		z_true : float
 			Observed redshift of the source. This should be used in cases where the minimum redshift of the 
 			simulations is greater than the observed redshift 
 		fluence_frac : bool
@@ -571,14 +571,14 @@ class PLOTSIMRES(PLOTS):
 
 		z_min, z_max = np.min(sim_results['z']), np.max(sim_results['z'])
 		num_trials = len(results["DURATION"][results['z']==z_min])
-		if z_obs is None:
-			z_obs = z_min
+		if z_true is None:
+			z_true = z_min
 
 		if F_max is None:
 			F_max = np.log10(np.max(sim_results['FLUENCE']))
 
 		if F_true is None:
-			F_true = np.mean(sim_results['FLUENCE'][sim_results['z']==z_obs])
+			F_true = np.mean(sim_results['FLUENCE'][sim_results['z']==z_true])
 
 		cmap = mpl.colormaps["viridis"].copy()
 		cmap.set_bad(color="w")
@@ -639,7 +639,7 @@ class PLOTSIMRES(PLOTS):
 			z_arr = np.linspace(z_min, z_max*1.1)
 			
 			ax.plot(z_arr, 
-				np.log10(self._luminosity_distance(2, z_arr, specfunc, F_true, z_obs, e_min, e_max)), 
+				np.log10(self._luminosity_distance(2, z_arr, specfunc, F_true, z_true, e_min, e_max)), 
 				color="C1", alpha=1, linewidth=3)
 
 		if inc_sensitivity_line is True:
@@ -677,7 +677,7 @@ class PLOTSIMRES(PLOTS):
 		return 1.12*10**(-2)* np.sqrt(2 * np.log10(n))* time**(1./2.)  # Units of counts / det
 
 	def redshift_fpeak_evo(self, sim_results, ax=None, 
-		fp_true=None, fp_max=None, fp_bins=None, z_bins=None, z_obs=None,
+		fp_true=None, fp_max=None, fp_bins=None, z_bins=None, z_true=None,
 		flux_frac = False, norm=mcolors.LogNorm, inc_cbar=False,
 		cmin = 1, inc_sensitivity_line = False, num_t_bins = None, dt = None,
 		inc_cosmo_line=False, specfunc=None, e_min=15, e_max=350, **kwargs):
@@ -702,8 +702,8 @@ class PLOTSIMRES(PLOTS):
 			The bin specification:
 				If `int`, the number of redshift bins `(nx = z_bins)`.
 				If array-like, the bin edges for the redshift bins `(x_edges = z_bins)`.
-		z_obs : float
-			Observed redshift of the source. This should be used in cases where the minimum redshift of the 
+		z_true : float
+			True redshift of the source. This should be used in cases where the minimum redshift of the 
 			simulations is greater than the observed redshift 
 		flux_frac : bool
 			Indicates whether the y-axis should be a fraction of the true fluence
@@ -742,8 +742,8 @@ class PLOTSIMRES(PLOTS):
 
 		z_min, z_max = np.min(sim_results['z']), np.max(sim_results['z'])
 		num_trials = len(results["DURATION"][results['z']==z_min])
-		if z_obs is None:
-			z_obs = z_min
+		if z_true is None:
+			z_true = z_min
 
 		if fp_true is None:
 			fp_true = np.mean(sim_results['1sPeakFlux'][sim_results['z']==z_min])
@@ -797,7 +797,7 @@ class PLOTSIMRES(PLOTS):
 			z_arr = np.linspace(z_min, z_max*1.1)
 			
 			ax.plot(z_arr, 
-				np.log10(self._luminosity_distance(1, z_arr, specfunc, fp_true, z_obs, e_min, e_max)), 
+				np.log10(self._luminosity_distance(1, z_arr, specfunc, fp_true, z_true, e_min, e_max)), 
 				color="C1", alpha=1, linewidth=3)
 
 		if inc_sensitivity_line is True:
