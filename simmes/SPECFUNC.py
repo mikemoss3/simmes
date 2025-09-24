@@ -7,7 +7,7 @@ Defines the all classes related to spectral functions used in this library to re
 """
 
 import numpy as np
-from scipy.integrate import romberg
+from scipy.integrate import quad
 import copy 
 
 
@@ -138,7 +138,7 @@ class SPECFUNC():
 		emin, emax : float, float
 			Defines the lower and upper bounds of the energy interval over which to evaluate the energy flux. Unit of keV)
 		"""
-		energy_flux_kev = romberg(function=lambda x: x*self.evaluate(x), a=emin, b=emax)  ## [keV/s/cm2]
+		energy_flux_kev = quad(func=lambda x: x*self.evaluate(x), a=emin, b=emax)[0]  ## [keV/s/cm2]
 
 		kev2erg = 1000*1.60217657e-12
 
@@ -169,7 +169,7 @@ class SPECFUNC():
 		emin, emax : float, float
 			Defines the lower and upper bounds of the energy interval over which to evaluate the energy flux. Unit of keV)
 		"""
-		return romberg(function=self.evaluate, a=emin, b=emax)  ## [count/s/cm2]
+		return quad(func=self.evaluate, a=emin, b=emax)[0]  ## [count/s/cm2]
 
 
 class PL(SPECFUNC):
