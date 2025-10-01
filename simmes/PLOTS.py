@@ -985,7 +985,7 @@ class PLOTSAMPLE(PLOTS):
 		ax.set_xscale("log")
 		# ax.set_yscale("log")
 
-		ax.set_xlim(0.5)
+		# ax.set_xlim(0.5)
 
 		if "label" in kwargs:
 			ax.legend()
