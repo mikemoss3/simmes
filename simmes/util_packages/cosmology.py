@@ -13,18 +13,25 @@ import scipy.integrate as integrate
 import simmes.util_packages.globalconstants as gc
 
 
-def lum_dis(z: float):
+def lum_dis(z):
 	""" 
 	Caclulate luminosity distance for redshift z
 
 	Attributes:
 	----------
-	z : float
+	z : float or array(float)
 		Redshift to calculate the luminosity distance for
 	"""
-	lum_dis_Mpc = ((1+z)*gc.c/(gc.H0) ) * integrate.quad(lambda zi: 1/np.sqrt( ((gc.omega_m*np.power(1+zi,3) )+gc.omega_lam) ),0,z)[0]
-	lum_dis_cm = lum_dis_Mpc * 3.086e24 # Mpc -> cm
-	return lum_dis_cm
+
+	zarr = np.atleast_1d(z)
+
+	lum_dis_arr = np.zeros(shape=len(zarr))
+	for i in range(len(zarr)):
+		lum_dis_arr[i] = ((1+zarr[i])*gc.c/(gc.H0) ) * integrate.quad(lambda zi: 1/np.sqrt( ((gc.omega_m*np.power(1+zi,3) )+gc.omega_lam) ), 0, zarr[i])[0]
+	
+	lum_dis_arr = lum_dis_arr * 3.086e24 # Mpc -> cm
+
+	return lum_dis_arr
 
 def k_corr(specfunc, z, emin, emax, Emin=None, Emax=None):
 	""" 
@@ -39,14 +46,20 @@ def k_corr(specfunc, z, emin, emax, Emin=None, Emax=None):
 	emin, emax : float, float
 		Defines the observed energy range to calculate the k-correction between
 	""" 
-	if Emax is None:
-		Emax = gc.bol_lum[0]
 	if Emin is None:
-		Emin = gc.bol_lum[1]
+		Emin = gc.bol_lum[0]
+	if Emax is None:
+		Emax = gc.bol_lum[1]
 
-	# Evaluate bolometric spectrum in the rest frame of the source 
-	numerator = integrate.quad(lambda en: en*specfunc(en), Emin/(1+z), Emax/(1+z))[0]
-	# Evaluate spectrum within the defined band pass in the observer frame
-	denominator = integrate.quad(lambda en: en*specfunc(en), emin, emax)[0]
+	zarr = np.atleast_1d(z)
+
+	rat = np.zeros(shape=len(zarr))
+	for i in range(len(zarr)):
+		# Evaluate bolometric spectrum in the rest frame of the source 
+		numerator = integrate.quad(lambda en: en*specfunc(en), Emin/(1+zarr[i]), Emax/(1+zarr[i]))[0]
+		# Evaluate spectrum within the defined band pass in the observer frame
+		denominator = integrate.quad(lambda en: en*specfunc(en), emin, emax)[0]
+
+		rat[i] = numerator/denominator
 	
-	return numerator/denominator
+	return rat
