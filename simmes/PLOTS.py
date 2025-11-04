@@ -16,24 +16,7 @@ from simmes.util_packages.cosmology import lum_dis, k_corr
 from simmes.RSP import RSP
 from simmes.SPECFUNC import SPECFUNC
 
-class PLOTS(object):
-	"""
-	Base class that defines methods used by other plot super classes  
-
-	Attributes:
-	----------
-	fontsize : int
-		Size of plot axis label
-	fontweight : str
-		Boldness level of the text [ 'normal' | 'bold' | 'heavy' | 'light' | 'ultrabold' | 'ultralight']
-	"""
-
-	def __init__(self, fontsize = 13, fontweight = "normal"):
-
-		self.fontsize = fontsize
-		self.fontweight = fontweight
-
-	def plot_aesthetics(self, ax, xax=True, yax=True):
+def plot_aesthetics(ax, labelsize=20, fontsize=20, fontweight="normal", xax=True, yax=True):
 		"""
 		This function is used to make bold and increase the font size of all plot tick markers
 
@@ -41,16 +24,20 @@ class PLOTS(object):
 		----------
 		ax : matplotlib.axes
 			Axis object to apply aesthetic changes to
+		labelsize : float
+			Font size of axis values
+		fontsize : float
+			Font size of axis titles
+		fontweight : 
+			Font weight of axis titles
 		xax : boolean
 			Indicates whether to apply to changes to x-axis
 		yax : boolean
 			Indicates whether to apply to changes to y-axis
 		"""
 
-		fontsize = self.fontsize
-		fontweight = self.fontweight
-
 		if xax is True:
+			ax.tick_params(axis='x', labelsize=20)
 			for tick in ax.xaxis.get_major_ticks():
 				tick.label1.set_fontsize(fontsize=fontsize)
 				tick.label1.set_fontweight(fontweight)
@@ -68,6 +55,7 @@ class PLOTS(object):
 			ax.xaxis.set_visible(False)
 
 		if yax is True:
+			ax.tick_params(axis='y', labelsize=20)
 			for tick in ax.yaxis.get_major_ticks():
 				tick.label1.set_fontsize(fontsize=fontsize)
 				tick.label1.set_fontweight(fontweight)
@@ -84,11 +72,53 @@ class PLOTS(object):
 			# ax.set_ylabel()
 			ax.yaxis.set_visible(False)
 			
-		ax.tick_params(direction="in",which="both")
-		ax.margins(x=0,y=0)
+		ax.tick_params(direction="in", which="both")
+		ax.margins(x=0, y=0)
 
 		# Make the cursor x, y coordinates display in matplotlib window
 		ax.format_coord = lambda x, y: 'x={:g}, y={:g}'.format(x, y)
+
+	return ax
+
+class PLOTS(object):
+	"""
+	Base class that defines methods used by other plot super classes  
+
+	Attributes:
+	----------
+	fontsize : int
+		Size of plot axis label
+	fontweight : str
+		Boldness level of the text [ 'normal' | 'bold' | 'heavy' | 'light' | 'ultrabold' | 'ultralight']
+	"""
+
+	def __init__(self, ticksize=20, fontsize = 20, fontweight = "normal"):
+
+		self.ticksize = ticksize
+		self.fontsize = fontsize
+		self.fontweight = fontweight
+
+	def plot_aesthetics(self, ax, xax=True, yax=True):
+		"""
+		This function is used to make bold and increase the font size of all plot tick markers
+
+		Attributes:
+		----------
+		ax : matplotlib.axes
+			Axis object to apply aesthetic changes to
+		labelsize : float
+			Font size of axis values
+		fontsize : float
+			Font size of axis titles
+		fontweight : 
+			Font weight of axis titles
+		xax : boolean
+			Indicates whether to apply to changes to x-axis
+		yax : boolean
+			Indicates whether to apply to changes to y-axis
+		"""
+
+		plot_aesthetics(ax=ax, fontsize=fontsize, ticksize=ticksize, fontweight=fontweight, xax=xax, yax=yax)
 
 	def show(self):
 		plt.show()
