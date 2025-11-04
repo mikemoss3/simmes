@@ -16,7 +16,7 @@ from simmes.util_packages.cosmology import lum_dis, k_corr
 from simmes.RSP import RSP
 from simmes.SPECFUNC import SPECFUNC
 
-def plot_aesthetics(ax, labelsize=20, fontsize=20, fontweight="normal", xax=True, yax=True):
+def plot_aesthetics(ax, labelsize=20, titlesize=20, xax=True, yax=True):
 	"""
 	This function is used to make bold and increase the font size of all plot tick markers
 
@@ -26,10 +26,8 @@ def plot_aesthetics(ax, labelsize=20, fontsize=20, fontweight="normal", xax=True
 		Axis object to apply aesthetic changes to
 	labelsize : float
 		Font size of axis values
-	fontsize : float
+	titlesize : float
 		Font size of axis titles
-	fontweight : 
-		Font weight of axis titles
 	xax : boolean
 		Indicates whether to apply to changes to x-axis
 	yax : boolean
@@ -37,36 +35,21 @@ def plot_aesthetics(ax, labelsize=20, fontsize=20, fontweight="normal", xax=True
 	"""
 
 	if xax is True:
-		ax.tick_params(axis='x', labelsize=20)
+		ax.xaxis.get_label().set_fontsize(titlesize)
 		for tick in ax.xaxis.get_major_ticks():
-			tick.label1.set_fontsize(fontsize=fontsize)
-			tick.label1.set_fontweight(fontweight)
+			tick.label1.set_fontsize(fontsize=labelsize)
 
-			tick.label2.set_fontsize(fontsize=fontsize)
-			tick.label2.set_fontweight(fontweight)
-
-		for tick in ax.xaxis.get_minor_ticks():
-			tick.label1.set_fontweight(fontweight)
-
-			tick.label2.set_fontweight(fontweight)
+			tick.label2.set_fontsize(fontsize=labelsize)
 	else:
 		ax.set_xticklabels([])
 		# ax.set_xlabel()
 		ax.xaxis.set_visible(False)
 
 	if yax is True:
-		ax.tick_params(axis='y', labelsize=20)
+		ax.yaxis.get_label().set_fontsize(titlesize)
 		for tick in ax.yaxis.get_major_ticks():
-			tick.label1.set_fontsize(fontsize=fontsize)
-			tick.label1.set_fontweight(fontweight)
-
-			tick.label2.set_fontsize(fontsize=fontsize)
-			tick.label2.set_fontweight(fontweight)
-
-		for tick in ax.yaxis.get_minor_ticks():
-			tick.label1.set_fontweight(fontweight)
-
-			tick.label2.set_fontweight(fontweight)
+			tick.label1.set_fontsize(fontsize=labelsize)
+			tick.label2.set_fontsize(fontsize=labelsize)
 	else:
 		ax.set_yticklabels([])
 		# ax.set_ylabel()
@@ -92,13 +75,12 @@ class PLOTS(object):
 		Boldness level of the text [ 'normal' | 'bold' | 'heavy' | 'light' | 'ultrabold' | 'ultralight']
 	"""
 
-	def __init__(self, ticksize=20, fontsize = 20, fontweight = "normal"):
+	def __init__(self, fontsize = 20, titlesize=20):
 
-		self.ticksize = ticksize
 		self.fontsize = fontsize
-		self.fontweight = fontweight
+		self.titlesize = titlesize
 
-	def plot_aesthetics(self, ax, xax=True, yax=True):
+	def plot_aesthetics(self, ax, labelsize=20, titlesize=20, xax=True, yax=True):
 		"""
 		This function is used to make bold and increase the font size of all plot tick markers
 
@@ -118,7 +100,7 @@ class PLOTS(object):
 			Indicates whether to apply to changes to y-axis
 		"""
 
-		plot_aesthetics(ax=ax, fontsize=fontsize, ticksize=ticksize, fontweight=fontweight, xax=xax, yax=yax)
+		plot_aesthetics(ax=ax, labelsize=labelsize, titlesize=titlesize, xax=xax, yax=yax)
 
 	def show(self):
 		plt.show()
@@ -176,14 +158,14 @@ class PLOTGRB(PLOTS):
 				fmt="", drawstyle="steps-mid", alpha=alpha, 
 				label=labels, **kwargs)
 
-		ax.set_xlabel("Time (sec)", fontsize=self.fontsize, fontweight=self.fontweight)
-		ax.set_ylabel("Rate (counts/sec)", fontsize=self.fontsize, fontweight=self.fontweight)
+		ax.set_xlabel("Time (sec)")
+		ax.set_ylabel("Rate (counts/sec)")
 
 		if t_window is not None:
 			ax.set_xlim(t_window)
 
 		if labels is not None:
-			ax.legend(fontsize=self.fontsize-2)
+			ax.legend(fontsize=self.labelsize-2)
 
 		self.plot_aesthetics(ax)
 
@@ -229,8 +211,8 @@ class PLOTGRB(PLOTS):
 		ax.set_xscale('log')
 		ax.set_yscale('log')
 
-		ax.set_xlabel("Time (sec)", fontsize=self.fontsize, fontweight=self.fontweight)
-		ax.set_ylabel("Rate (counts/sec)", fontsize=self.fontsize, fontweight=self.fontweight)
+		ax.set_xlabel("Time (sec)")
+		ax.set_ylabel("Rate (counts/sec)")
 
 		self.plot_aesthetics(ax)
 		ax.margins(y=0.1)
@@ -281,8 +263,8 @@ class PLOTSIMRES(PLOTS):
 				xmin=sorted_sim_results[i]['TSTART'], xmax=(sorted_sim_results[i]['TSTART']+sorted_sim_results[i]['DURATION']), 
 				color="C1", alpha=0.7)
 
-		ax.set_xlabel("Time (sec)", fontsize=self.fontsize, fontweight=self.fontweight)
-		ax.set_ylabel("Rate (counts/sec)", fontsize=self.fontsize, fontweight=self.fontweight)
+		ax.set_xlabel("Time (sec)")
+		ax.set_ylabel("Rate (counts/sec)")
 
 		self.plot_aesthetics(ax)
 
@@ -318,8 +300,8 @@ class PLOTSIMRES(PLOTS):
 		else:
 			line, = ax.scatter(sim_results[obs_param], sim_results['DURATION'],marker=marker, **kwargs)
 
-		ax.set_xlabel("{}".format(obs_param), fontsize=self.fontsize, fontweight=self.fontweight)
-		ax.set_ylabel("Duration (sec)", fontsize=self.fontsize, fontweight=self.fontweight)
+		ax.set_xlabel("{}".format(obs_param))
+		ax.set_ylabel("Duration (sec)")
 
 		if "label" in kwargs:
 			ax.legend()
@@ -378,10 +360,10 @@ class PLOTSIMRES(PLOTS):
 		ax.set_xlim(-imx_max,imx_max)
 		ax.set_ylim(-imy_max,imy_max)
 
-		ax.set_xlabel("IMX",fontsize=self.fontsize,fontweight=self.fontweight)
-		ax.set_ylabel("IMY",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_xlabel("IMX")
+		ax.set_ylabel("IMY")
 
-		cbar.set_label("Duration (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
+		cbar.set_label("Duration (sec)")
 		cbar.ax.axhline(2, c='w')
 			
 
@@ -518,17 +500,17 @@ class PLOTSIMRES(PLOTS):
 		# ax.axvline(x=z_max, color="C1", linewidth=2, label="Max. Simulated Redshift")
 		# ax.axhline(y=2,color="w",linestyle="dashed",alpha=0.5)
 
-		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_xlabel("Redshift")
 		if log is False:
 			if inc_cosmo_line is True:
 				ax.plot(z_arr, dilation_line(z_arr), color="C1", alpha=1, linewidth=3)
-			ax.set_ylabel("Duration (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
+			ax.set_ylabel("Duration (sec)")
 			ax.set_ylim(0)
 
 		else:
 			if inc_cosmo_line is True:
 				ax.plot(z_arr, np.log10(dilation_line(z_arr)), color="C1", alpha=1, linewidth=3)
-			ax.set_ylabel("log(Duration)",fontsize=self.fontsize,fontweight=self.fontweight)
+			ax.set_ylabel("log(Duration)")
 			ax.set_ylim(-1)
 
 		ax.set_xlim(0, z_max)
@@ -663,7 +645,7 @@ class PLOTSIMRES(PLOTS):
 		ax.axvline(x=z_min,color="k",linewidth=2, linestyle="dotted", label="Measured Redshift")
 		# ax.axvline(x=z_max,color="C1",linewidth=2, label="Max. Simulated Redshift")
 
-		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_xlabel("Redshift")
 
 		if inc_cosmo_line is True:
 			z_arr = np.linspace(z_min, z_max*1.1)
@@ -680,12 +662,12 @@ class PLOTSIMRES(PLOTS):
 
 			ax.plot(z_vals, np.log10(self._fluence_sens(num_t_bins, t_vals)), color="magenta", linewidth=2) # 5-sigma fluence limit 
 
-		ax.set_ylabel("log(Photon Fluence)\n"+r"(log(cnts det$^{-1}$))",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_ylabel("log(Photon Fluence)\n"+r"(log(cnts det$^{-1}$))")
 		ax.set_ylim(F_min)
 
 		ax.set_xlim(0, z_max)
 
-		# cbar.set_label("Frequency",fontsize=self.fontsize,fontweight=self.fontweight)
+		# cbar.set_label("Frequency")
 
 		self.tight_layout()
 		self.plot_aesthetics(ax)
@@ -821,7 +803,7 @@ class PLOTSIMRES(PLOTS):
 		ax.axvline(x=z_min,color="k",linewidth=2, linestyle="dotted", label="Measured Redshift")
 		# ax.axvline(x=z_max,color="C1",linewidth=2, label="Max. Simulated Redshift")
 
-		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_xlabel("Redshift")
 
 		if inc_cosmo_line is True:
 			z_arr = np.linspace(z_min, z_max*1.1)
@@ -836,12 +818,12 @@ class PLOTSIMRES(PLOTS):
 
 			ax.plot(z_vals, np.ones(shape=len(z_vals)) * np.log10(self._flux_sens(num_t_bins, dt)), color="magenta", linewidth=2) # 5-sigma flux limit 
 
-		ax.set_ylabel("log(1s Peak Flux)\n"+r"(log(cnts s$^{-1}$ det$^{-1}$))",fontsize=self.fontsize, fontweight=self.fontweight)
+		ax.set_ylabel("log(1s Peak Flux)\n"+r"(log(cnts s$^{-1}$ det$^{-1}$))")
 		ax.set_ylim(-3)
 
 		ax.set_xlim(0, z_max)
 
-		# cbar.set_label("Frequency",fontsize=self.fontsize,fontweight=self.fontweight)
+		# cbar.set_label("Frequency")
 
 		self.tight_layout()
 		self.plot_aesthetics(ax)
@@ -916,8 +898,8 @@ class PLOTSIMRES(PLOTS):
 		ax.step(zs, perc, where=step, **kwargs)
 
 
-		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
-		ax.set_ylabel("Detection Fraction",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_xlabel("Redshift")
+		ax.set_ylabel("Detection Fraction")
 
 		self.tight_layout()
 		self.plot_aesthetics(ax)
@@ -973,9 +955,9 @@ class PLOTSAMPLE(PLOTS):
 		if "label" in kwargs:
 			ax.legend()
 
-		ax.set_xlabel(r"T$_{90}$ (sec)", fontsize=14)
-		ax.set_ylabel("Cumulative Histogram", fontsize=14)
-		# ax.set_title("T90 Distrubtions", fontsize=14)
+		ax.set_xlabel(r"T$_{90}$ (sec)")
+		ax.set_ylabel("Cumulative Histogram")
+		# ax.set_title("T90 Distrubtions")
 
 		self.plot_aesthetics(ax)
 
@@ -1020,9 +1002,9 @@ class PLOTSAMPLE(PLOTS):
 		if "label" in kwargs:
 			ax.legend()
 
-		ax.set_xlabel("Fluence (cnts/det)", fontsize=self.fontsize)
-		ax.set_ylabel("Cumulative Histogram", fontsize=self.fontsize)
-		# ax.set_title("Fluence Distrubtion", fontsize=self.fontsize)
+		ax.set_xlabel("Fluence (cnts/det)")
+		ax.set_ylabel("Cumulative Histogram")
+		# ax.set_title("Fluence Distrubtion")
 
 		self.plot_aesthetics(ax)
 
@@ -1065,9 +1047,9 @@ class PLOTSAMPLE(PLOTS):
 		if "label" in kwargs:
 			ax.legend()
 
-		ax.set_xlabel("1s Peak Flux (counts/sec/det)", fontsize=self.fontsize)
-		ax.set_ylabel("Normalied Histogram (arb units)", fontsize=self.fontsize)
-		# ax.set_title("1s Peak Flux Distrubtion", fontsize=self.fontsize)
+		ax.set_xlabel("1s Peak Flux (counts/sec/det)")
+		ax.set_ylabel("Normalied Histogram (arb units)")
+		# ax.set_title("1s Peak Flux Distrubtion")
 
 		self.plot_aesthetics(ax)
 
