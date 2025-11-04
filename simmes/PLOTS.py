@@ -17,66 +17,66 @@ from simmes.RSP import RSP
 from simmes.SPECFUNC import SPECFUNC
 
 def plot_aesthetics(ax, labelsize=20, fontsize=20, fontweight="normal", xax=True, yax=True):
-		"""
-		This function is used to make bold and increase the font size of all plot tick markers
+	"""
+	This function is used to make bold and increase the font size of all plot tick markers
 
-		Attributes:
-		----------
-		ax : matplotlib.axes
-			Axis object to apply aesthetic changes to
-		labelsize : float
-			Font size of axis values
-		fontsize : float
-			Font size of axis titles
-		fontweight : 
-			Font weight of axis titles
-		xax : boolean
-			Indicates whether to apply to changes to x-axis
-		yax : boolean
-			Indicates whether to apply to changes to y-axis
-		"""
+	Attributes:
+	----------
+	ax : matplotlib.axes
+		Axis object to apply aesthetic changes to
+	labelsize : float
+		Font size of axis values
+	fontsize : float
+		Font size of axis titles
+	fontweight : 
+		Font weight of axis titles
+	xax : boolean
+		Indicates whether to apply to changes to x-axis
+	yax : boolean
+		Indicates whether to apply to changes to y-axis
+	"""
 
-		if xax is True:
-			ax.tick_params(axis='x', labelsize=20)
-			for tick in ax.xaxis.get_major_ticks():
-				tick.label1.set_fontsize(fontsize=fontsize)
-				tick.label1.set_fontweight(fontweight)
+	if xax is True:
+		ax.tick_params(axis='x', labelsize=20)
+		for tick in ax.xaxis.get_major_ticks():
+			tick.label1.set_fontsize(fontsize=fontsize)
+			tick.label1.set_fontweight(fontweight)
 
-				tick.label2.set_fontsize(fontsize=fontsize)
-				tick.label2.set_fontweight(fontweight)
+			tick.label2.set_fontsize(fontsize=fontsize)
+			tick.label2.set_fontweight(fontweight)
 
-			for tick in ax.xaxis.get_minor_ticks():
-				tick.label1.set_fontweight(fontweight)
+		for tick in ax.xaxis.get_minor_ticks():
+			tick.label1.set_fontweight(fontweight)
 
-				tick.label2.set_fontweight(fontweight)
-		else:
-			ax.set_xticklabels([])
-			# ax.set_xlabel()
-			ax.xaxis.set_visible(False)
+			tick.label2.set_fontweight(fontweight)
+	else:
+		ax.set_xticklabels([])
+		# ax.set_xlabel()
+		ax.xaxis.set_visible(False)
 
-		if yax is True:
-			ax.tick_params(axis='y', labelsize=20)
-			for tick in ax.yaxis.get_major_ticks():
-				tick.label1.set_fontsize(fontsize=fontsize)
-				tick.label1.set_fontweight(fontweight)
+	if yax is True:
+		ax.tick_params(axis='y', labelsize=20)
+		for tick in ax.yaxis.get_major_ticks():
+			tick.label1.set_fontsize(fontsize=fontsize)
+			tick.label1.set_fontweight(fontweight)
 
-				tick.label2.set_fontsize(fontsize=fontsize)
-				tick.label2.set_fontweight(fontweight)
+			tick.label2.set_fontsize(fontsize=fontsize)
+			tick.label2.set_fontweight(fontweight)
 
-			for tick in ax.yaxis.get_minor_ticks():
-				tick.label1.set_fontweight(fontweight)
+		for tick in ax.yaxis.get_minor_ticks():
+			tick.label1.set_fontweight(fontweight)
 
-				tick.label2.set_fontweight(fontweight)
-		else:
-			ax.set_yticklabels([])
-			# ax.set_ylabel()
-			ax.yaxis.set_visible(False)
-			
-		ax.tick_params(direction="in", which="both")
-		ax.margins(x=0, y=0)
+			tick.label2.set_fontweight(fontweight)
+	else:
+		ax.set_yticklabels([])
+		# ax.set_ylabel()
+		ax.yaxis.set_visible(False)
+		
+	ax.tick_params(direction="in", which="both")
+	ax.margins(x=0, y=0)
 
-		# Make the cursor x, y coordinates display in matplotlib window
-		ax.format_coord = lambda x, y: 'x={:g}, y={:g}'.format(x, y)
+	# Make the cursor x, y coordinates display in matplotlib window
+	ax.format_coord = lambda x, y: 'x={:g}, y={:g}'.format(x, y)
 
 	return ax
 
