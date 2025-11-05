@@ -1048,7 +1048,7 @@ class PLOTSAMPLE(PLOTS):
 			ax.legend()
 
 		ax.set_xlabel("1s Peak Flux (counts/sec/det)")
-		ax.set_ylabel("Normalied Histogram (arb units)")
+		ax.set_ylabel("Cumulative Histogram")
 		# ax.set_title("1s Peak Flux Distrubtion")
 
 		self.plot_aesthetics(ax)
