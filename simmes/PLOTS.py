@@ -510,7 +510,7 @@ class PLOTSIMRES(PLOTS):
 		else:
 			if inc_cosmo_line is True:
 				ax.plot(z_arr, np.log10(dilation_line(z_arr)), color="C1", alpha=1, linewidth=3)
-			ax.set_ylabel("log(Duration)")
+			ax.set_ylabel("log(Duration / 1 sec)")
 			ax.set_ylim(-1)
 
 		ax.set_xlim(0, z_max)
@@ -662,7 +662,7 @@ class PLOTSIMRES(PLOTS):
 
 			ax.plot(z_vals, np.log10(self._fluence_sens(num_t_bins, t_vals)), color="magenta", linewidth=2) # 5-sigma fluence limit 
 
-		ax.set_ylabel("log(Photon Fluence)\n"+r"(log(cnts det$^{-1}$))")
+		ax.set_ylabel(r"log(Photon Fluence / \n (cnts det$^{-1}$))")
 		ax.set_ylim(F_min)
 
 		ax.set_xlim(0, z_max)
@@ -818,7 +818,7 @@ class PLOTSIMRES(PLOTS):
 
 			ax.plot(z_vals, np.ones(shape=len(z_vals)) * np.log10(self._flux_sens(num_t_bins, dt)), color="magenta", linewidth=2) # 5-sigma flux limit 
 
-		ax.set_ylabel("log(1s Peak Flux)\n"+r"(log(cnts s$^{-1}$ det$^{-1}$))")
+		ax.set_ylabel(r"log(1s Peak Flux / \n (cnts s$^{-1}$ det$^{-1}$))")
 		ax.set_ylim(-3)
 
 		ax.set_xlim(0, z_max)
@@ -956,7 +956,7 @@ class PLOTSAMPLE(PLOTS):
 			ax.legend()
 
 		ax.set_xlabel(r"T$_{90}$ (sec)")
-		ax.set_ylabel("Cumulative Histogram")
+		ax.set_ylabel("Cumulative Probability")
 		# ax.set_title("T90 Distrubtions")
 
 		self.plot_aesthetics(ax)
@@ -1003,7 +1003,7 @@ class PLOTSAMPLE(PLOTS):
 			ax.legend()
 
 		ax.set_xlabel("Fluence (cnts/det)")
-		ax.set_ylabel("Cumulative Histogram")
+		ax.set_ylabel("Cumulative Probability")
 		# ax.set_title("Fluence Distrubtion")
 
 		self.plot_aesthetics(ax)
@@ -1048,7 +1048,7 @@ class PLOTSAMPLE(PLOTS):
 			ax.legend()
 
 		ax.set_xlabel("1s Peak Flux (counts/sec/det)")
-		ax.set_ylabel("Cumulative Histogram")
+		ax.set_ylabel("Cumulative Probability")
 		# ax.set_title("1s Peak Flux Distrubtion")
 
 		self.plot_aesthetics(ax)
