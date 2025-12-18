@@ -662,7 +662,7 @@ class PLOTSIMRES(PLOTS):
 
 			ax.plot(z_vals, np.log10(self._fluence_sens(num_t_bins, t_vals)), color="magenta", linewidth=2) # 5-sigma fluence limit 
 
-		ax.set_ylabel(r"log(Photon Fluence / \n (cnts det$^{-1}$))")
+		ax.set_ylabel("log(Photon Fluence /"+"\n"+r"(cnts det$^{-1}$))")
 		ax.set_ylim(F_min)
 
 		ax.set_xlim(0, z_max)
@@ -818,7 +818,7 @@ class PLOTSIMRES(PLOTS):
 
 			ax.plot(z_vals, np.ones(shape=len(z_vals)) * np.log10(self._flux_sens(num_t_bins, dt)), color="magenta", linewidth=2) # 5-sigma flux limit 
 
-		ax.set_ylabel(r"log(1s Peak Flux / \n (cnts s$^{-1}$ det$^{-1}$))")
+		ax.set_ylabel("log(1s Peak Flux /"+"\n"+"(cnts s$^{-1}$ det$^{-1}$))")
 		ax.set_ylim(-3)
 
 		ax.set_xlim(0, z_max)
