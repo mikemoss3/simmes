@@ -6,7 +6,7 @@ Defines the main class this code uses to store response matrices and the associa
 """
 
 import numpy as np
-from astropy.io import fits
+# from astropy.io import fits
 import fitsio
 from scipy.stats import norm
 import copy 
@@ -215,7 +215,7 @@ class RSP(object):
 			return 1;
 
 		for i in range(self.num_phot_bins):
-			self.MATRIX[j, i] = 1
+			self.MATRIX[i, i] = 1
 
 	def overDeltaE(self, alpha=2):
 		"""
