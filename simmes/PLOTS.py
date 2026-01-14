@@ -165,7 +165,7 @@ class PLOTGRB(PLOTS):
 			ax.set_xlim(t_window)
 
 		if labels is not None:
-			ax.legend(fontsize=self.labelsize-2)
+			ax.legend(fontsize=self.fontsize-2)
 
 		self.plot_aesthetics(ax)
 
