@@ -71,6 +71,10 @@ def simulate_observation(synth_grb, resp_mat,
 		return 0;
 	# Else, z_p is None and we assume z_p = z_o (i.e., no redshift change)
 
+	# Correct flux light curve by cos(theta)
+	theta = find_inc_ang(imx, imy)
+	synth_grb.light_curve['RATE'] *= np.cos(theta)
+
 	# Calculate the fraction of the detectors currently enabled 
 	det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
 
