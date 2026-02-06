@@ -124,7 +124,7 @@ class PARAMS:
 		return ret
 
 def sample_detectoin_rate_curve(grb, trials,
-	imx, imy, ndets, 
+	imx, imy, ndets, z_max = 15,
 	num_samples = 15,
 	bgd_size = 20, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
 	multiproc=True, workers = mp.cpu_count(),
@@ -144,6 +144,10 @@ def sample_detectoin_rate_curve(grb, trials,
 		The x and y position of the GRB on the detector plane
 	ndets : int
 		Number of detectors enabled during the synthetic observation 
+	z_max : float 
+		Maximum redshift to test out to 
+	num_samples : int
+		Number of redshifts between z and z_max to test the detectio rate at 
 	bgd_size : float
 		Background amount to add when adding in a background (in seconds)
 	ndet_max : int
@@ -173,7 +177,7 @@ def sample_detectoin_rate_curve(grb, trials,
 	"""
 
 	# Redshift values to evaluate detection rates at
-	z_vals = np.linspace(grb.z, 15, num=num_samples)
+	z_vals = np.linspace(grb.z, z_max, num=num_samples)
 
 	# Array to store detections rates.
 	detection_rates = np.zeros(shape=num_samples)
