@@ -156,8 +156,6 @@ def sample_detectoin_rate_curve(grb, trials,
 		Minimum and maximum of the energy band over which to calculate source photon flux
 	multiproc : boolean
 		Indicates if multiprocessing should be used
-	searches : int
-		Number of searches for the threshold redshift to be performed
 	workers : int 
 		Number of workers to use to use during a multiprocessing run
 	time_resolved : boolean
