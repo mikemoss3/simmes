@@ -21,7 +21,7 @@ from simmes.PLOTS import PLOTGRB
 def simulate_observation(synth_grb, resp_mat, 
 	imx, imy, ndets, z_p=None, 
 	ndet_max=32768, band_rate_min=15, band_rate_max=150, 
-	time_resolved=False, sim_triggers=False, sim_bgd=True, bgd_size = 20):
+	time_resolved=False, sim_triggers=False, sim_bgd=True, sim_var = True, bgd_size = 20):
 	
 	"""
 	Method to complete a simulation of a synthetic observation based on the input source frame GRB template 
@@ -50,6 +50,8 @@ def simulate_observation(synth_grb, resp_mat,
 		Whether or not to simulate the Swift/BAT trigger algorithms or not
 	sim_bgd : boolean
 		Whether or not a background variance should be added to light curves during simulations
+	sim_var : boolean
+		Whether or not to include noise fluctuations (e.g., if you want to test things)
 	bgd_size : float
 		Background amount to add when adding in a background (in seconds)
 
@@ -119,7 +121,8 @@ def simulate_observation(synth_grb, resp_mat,
 		synth_grb.light_curve = add_background(synth_grb.light_curve, bgd_size=bgd_size, dt = t_bin_size) # counts / sec / on-axis fully-illuminated detector
 
 	# Add variations
-	synth_grb.light_curve = add_light_curve_flucations(synth_grb.light_curve, t_bin_size)
+	if sim_var == True:
+		synth_grb.light_curve = add_light_curve_flucations(synth_grb.light_curve, t_bin_size)
 
 	return synth_grb
 
@@ -182,7 +185,7 @@ def add_background(light_curve, bgd_size, dt):
 
 def many_simulations(template_grb, param_list, trials, 
 	resp_mat = None, dur_per = 90, ndet_max=32768, band_rate_min=14, band_rate_max=150, 
-	time_resolved=False, sim_triggers=False, sim_bgd = True, bgd_size = 20,
+	time_resolved=False, sim_triggers=False, sim_bgd = True, sim_var=True, bgd_size = 20,
 	out_file_name = None, ret_ave = False, keep_synth_grbs=False, verbose=False):
 	"""
 	Method to perform multiple simulations for each combination of input parameters 
@@ -207,6 +210,8 @@ def many_simulations(template_grb, param_list, trials,
 		Whether or not to simulate the Swift/BAT trigger algorithms or not
 	sim_bgd : boolean
 		Whether or not a background variance should be added to light curves during simulations
+	sim_var : boolean
+		Whether or not to include noise fluctuations (e.g., if you want to test things)
 	out_file_name : string
 		If given, a file will with a file-path name "out_file_name" be written that will contain the simulation the results. 
 	ret_ave : boolean
@@ -275,7 +280,7 @@ def many_simulations(template_grb, param_list, trials,
 			simulate_observation(synth_grb = synth_grb, resp_mat=resp_mat, z_p=param_list[i][0], 
 								imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], 
 								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
-								time_resolved = time_resolved, sim_triggers=sim_triggers, sim_bgd=sim_bgd, bgd_size=bgd_size)
+								time_resolved = time_resolved, sim_triggers=sim_triggers, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
 
 			sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
 		
