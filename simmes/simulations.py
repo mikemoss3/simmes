@@ -77,13 +77,10 @@ def simulate_observation(synth_grb, resp_mat,
 	# theta = find_inc_ang(imx, imy)
 	# synth_grb.light_curve['RATE'] *= np.cos(theta)
 
-	# Calculate the fraction of the detectors currently enabled 
-	det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
-
 	if time_resolved == False:
 		# Fold spectrum through instrument response and calculate the count rate in the observation band
 		folded_spec = resp_mat.fold_spec(synth_grb.specfunc, add_fluc=False)  # Counts / sec / keV / on-axis fully-illuminated detector
-		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * 2. * det_frac  # Counts / sec / on-axis fully-illuminated detector
+		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * 2.  # Counts / sec / on-axis fully-illuminated detector
 
 		# Using the total count rate from the spectrum and 
 		# the relative flux level of the normalized synthetic light curve, make a mock light curve
@@ -92,7 +89,7 @@ def simulate_observation(synth_grb, resp_mat,
 		# Time-resolved analysis is True
 		# If there is any interval of the light curve that is not covered by the time resolved spectra, use time-integrated spectrum
 		folded_spec = resp_mat.fold_spec(synth_grb.specfunc)  # Counts / sec / keV / on-axis fully-illuminated detector
-		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * 2. * det_frac # counts / sec / on-axis fully-illuminated detector
+		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * 2. # counts / sec / on-axis fully-illuminated detector
 		
 		arg_t_start = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[0]['TSTART'])
 		if arg_t_start > 0: 
@@ -105,7 +102,7 @@ def simulate_observation(synth_grb, resp_mat,
 		# Fold time-resolved spectrum
 		for i in range(len(synth_grb.spectrafuncs)):
 			folded_spec = resp_mat.fold_spec(synth_grb.spectrafuncs[i]['SPECFUNC'])  # Counts / sec / keV / on-axis fully-illuminated detector
-			rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * 2. * det_frac  # Counts / sec /  on-axis fully-illuminated detector
+			rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * 2.  # Counts / sec /  on-axis fully-illuminated detector
 
 			arg_t_start = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[i]['TSTART'])
 			arg_t_end = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[i]['TEND'])
