@@ -395,14 +395,23 @@ class RSP(object):
 						closest_imx_ind, closest_imy_ind = i, j
 
 			# Sign for imx
-			try:
-				xsign = int((imx - imx_arr[closest_imx_ind])/np.abs(imx - imx_arr[closest_imx_ind]))
-			except:
+			if imx == imx_arr[closest_imx_ind]:
 				xsign = 1
-			try:
-				ysign = int((imy - imy_arr[closest_imy_ind])/np.abs(imy - imy_arr[closest_imy_ind]))
-			except:
+			else:
+				xsign = int((imx - imx_arr[closest_imx_ind])/np.abs(imx - imx_arr[closest_imx_ind]))
+			if imy == imy_arr[closest_imy_ind]:
 				ysign = 1
+			else:
+				ysign = int((imy - imy_arr[closest_imy_ind])/np.abs(imy - imy_arr[closest_imy_ind]))
+
+			# try:
+			# 	xsign = int((imx - imx_arr[closest_imx_ind])/np.abs(imx - imx_arr[closest_imx_ind]))
+			# except:
+			# 	xsign = 1
+			# try:
+			# 	ysign = int((imy - imy_arr[closest_imy_ind])/np.abs(imy - imy_arr[closest_imy_ind]))
+			# except:
+			# 	ysign = 1
 
 			grid_ids_inds = np.array([
 				(closest_imx_ind, closest_imy_ind),
