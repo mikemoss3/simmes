@@ -109,13 +109,13 @@ def add_light_curve_flucations(light_curve, t_bin_size, pcode=None):
 	"""
 
 	if pcode is None:
-		parameters = [0.04305558, 0.06859141, 9.92930295, 3.06620674]
-	elif pcode >= 0.7:
-		parameters = [0.08091, 0.06524, 10.00000, 7.64134]
-	elif (pcode < 0.7) and (pcode > 0.4):
-		parameters = [0.05819, 0.08701, 9.41549, 7.49832]
+		parameters = [0.04307288, 0.06860655, 9.91359742, 3.07086311]
 	elif pcode<=0.4:
-		parameters = [0.02928, 0.11582, 10.00000, 3.16394]
+		parameters = [0.02928293, 0.11582132, 10.00000000, 3.16393803]
+	elif (pcode < 0.7) and (pcode > 0.4):
+		parameters = [0.05819361, 0.08701445, 9.41549472, 7.49832431]
+	elif pcode >= 0.7:
+		parameters = [0.08090673, 0.06523750, 10.00000000, 7.64133533]
 
 	# Pull a random background variance from the distribution created from observed values
 	variance = rand_variance(fm = parameters[0], tm = parameters[1] , r = parameters[2], d = parameters[3],
