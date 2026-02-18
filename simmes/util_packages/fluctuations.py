@@ -70,7 +70,7 @@ def rand_variance(fm, tm, r, d, cut_min, cut_max, size=1):
 
 	return variance
 
-def add_light_curve_flucations(light_curve, t_bin_size):
+def add_light_curve_flucations(light_curve, t_bin_size, pcode=None):
 	"""
 	Method to add a randomly variance to a Swift/BAT mask-weighted light curve. 
 	The variance is take from a distribution created from the 
@@ -82,6 +82,8 @@ def add_light_curve_flucations(light_curve, t_bin_size):
 		Light curve array
 	t_bin_size : float
 		Time bin size (in seconds)
+	pcode : float
+		Partial coding fraction of the observation
 
 	Returns:
 	--------------
@@ -93,16 +95,27 @@ def add_light_curve_flucations(light_curve, t_bin_size):
 	cut_min = 0.02
 	cut_max = 0.25
 
-	parameters = [0.04305558, 0.06859141, 9.92930295, 3.06620674]
 	"""
-	These parameter values were found in a separate fit.
+	The following PDF parameter values were found in a separate fit.
 	
 	Parameters:
 	fm = flux at peak of the pulse (fm = F(tm))
 	tm = t_max or the peak time of the pulse 
 	r = rise constant
 	d = decay constant
+
+	The distribution depends on where on partial coding fraction of the observation, so 
+	separate PDFs can be sampled if a partial coding value is given. 
 	"""
+
+	if pcode is None:
+		parameters = [0.04305558, 0.06859141, 9.92930295, 3.06620674]
+	elif pcode >= 0.7:
+		parameters = [0.08091, 0.06524, 10.00000, 7.64134]
+	elif (pcode < 0.7) and (pcode > 0.4):
+		parameters = [0.05819, 0.08701, 9.41549, 7.49832]
+	elif pcode<=0.4:
+		parameters = [0.02928, 0.11582, 10.00000, 3.16394]
 
 	# Pull a random background variance from the distribution created from observed values
 	variance = rand_variance(fm = parameters[0], tm = parameters[1] , r = parameters[2], d = parameters[3],
