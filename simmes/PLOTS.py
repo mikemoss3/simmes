@@ -16,53 +16,6 @@ from simmes.util_packages.cosmology import lum_dis, k_corr
 from simmes.RSP import RSP
 from simmes.SPECFUNC import SPECFUNC
 
-def plot_aesthetics(ax, labelsize=20, titlesize=20, xax=True, yax=True):
-	"""
-	This function is used to make bold and increase the font size of all plot tick markers
-
-	Attributes:
-	----------
-	ax : matplotlib.axes
-		Axis object to apply aesthetic changes to
-	labelsize : float
-		Font size of axis values
-	titlesize : float
-		Font size of axis titles
-	xax : boolean
-		Indicates whether to apply to changes to x-axis
-	yax : boolean
-		Indicates whether to apply to changes to y-axis
-	"""
-
-	if xax is True:
-		ax.xaxis.get_label().set_fontsize(titlesize)
-		for tick in ax.xaxis.get_major_ticks():
-			tick.label1.set_fontsize(fontsize=labelsize)
-
-			tick.label2.set_fontsize(fontsize=labelsize)
-	else:
-		ax.set_xticklabels([])
-		# ax.set_xlabel()
-		ax.xaxis.set_visible(False)
-
-	if yax is True:
-		ax.yaxis.get_label().set_fontsize(titlesize)
-		for tick in ax.yaxis.get_major_ticks():
-			tick.label1.set_fontsize(fontsize=labelsize)
-			tick.label2.set_fontsize(fontsize=labelsize)
-	else:
-		ax.set_yticklabels([])
-		# ax.set_ylabel()
-		ax.yaxis.set_visible(False)
-		
-	ax.tick_params(direction="in", which="both")
-	ax.margins(x=0, y=0)
-
-	# Make the cursor x, y coordinates display in matplotlib window
-	ax.format_coord = lambda x, y: 'x={:g}, y={:g}'.format(x, y)
-
-	return ax
-
 class PLOTS(object):
 	"""
 	Base class that defines methods used by other plot super classes  
@@ -80,33 +33,8 @@ class PLOTS(object):
 		self.fontsize = fontsize
 		self.titlesize = titlesize
 
-	def plot_aesthetics(self, ax, labelsize=20, titlesize=20, xax=True, yax=True):
-		"""
-		This function is used to make bold and increase the font size of all plot tick markers
-
-		Attributes:
-		----------
-		ax : matplotlib.axes
-			Axis object to apply aesthetic changes to
-		labelsize : float
-			Font size of axis values
-		fontsize : float
-			Font size of axis titles
-		fontweight : 
-			Font weight of axis titles
-		xax : boolean
-			Indicates whether to apply to changes to x-axis
-		yax : boolean
-			Indicates whether to apply to changes to y-axis
-		"""
-
-		plot_aesthetics(ax=ax, labelsize=labelsize, titlesize=titlesize, xax=xax, yax=yax)
-
 	def show(self):
 		plt.show()
-
-	def tight_layout(self):
-		plt.tight_layout()
 
 	def close(self):
 		plt.close()
@@ -167,8 +95,6 @@ class PLOTGRB(PLOTS):
 		if labels is not None:
 			ax.legend(fontsize=self.fontsize-2)
 
-		self.plot_aesthetics(ax)
-
 	def plot_spectrum(self, grb, e_window, time_resolved = False, bins = None, folded=False, rsp = None, ax=None, alpha=0.8, norm=1, cmap='Blues', **kwargs):
 		"""
 		Method to plot the average duration percentage as a function of the position on the detector plane
@@ -213,9 +139,6 @@ class PLOTGRB(PLOTS):
 
 		ax.set_xlabel("Time (sec)")
 		ax.set_ylabel("Rate (counts/sec)")
-
-		self.plot_aesthetics(ax)
-		ax.margins(y=0.1)
 
 
 class PLOTSIMRES(PLOTS):
@@ -266,8 +189,6 @@ class PLOTSIMRES(PLOTS):
 		ax.set_xlabel("Time (sec)")
 		ax.set_ylabel("Rate (counts/sec)")
 
-		self.plot_aesthetics(ax)
-
 	def dur_vs_param(self, sim_results, obs_param, dur_frac=False, t_true=None, ax=None, marker=".", joined=False, **kwargs):
 		"""
 		Method to plot duration vs observing parameter (e.g., redshift, pcode, ndets)
@@ -305,9 +226,6 @@ class PLOTSIMRES(PLOTS):
 
 		if "label" in kwargs:
 			ax.legend()
-
-		self.plot_aesthetics(ax)
-		ax.margins(x=0.1,y=0.05)
 
 		return line
 
@@ -366,10 +284,6 @@ class PLOTSIMRES(PLOTS):
 		cbar.set_label("Duration (sec)")
 		cbar.ax.axhline(2, c='w')
 			
-
-		self.tight_layout()
-		self.plot_aesthetics(ax)
-
 	def redshift_duration_evo(self, sim_results, ax=None, 
 		t_true=1, t_max=None, dt = None, t_bins=None, z_bins=None, z_true=None,
 		dur_frac=False, log=False, norm=mcolors.LogNorm, inc_cbar=False, 
@@ -514,9 +428,6 @@ class PLOTSIMRES(PLOTS):
 			ax.set_ylim(-1)
 
 		ax.set_xlim(0, z_max)
-
-		self.tight_layout()
-		self.plot_aesthetics(ax)
 
 	def redshift_fluence_evo(self, sim_results, ax=None, 
 		F_true=None, F_max=None, F_min=None, f_bins=None, z_bins=None, z_true=None,
@@ -668,9 +579,6 @@ class PLOTSIMRES(PLOTS):
 		ax.set_xlim(0, z_max)
 
 		# cbar.set_label("Frequency")
-
-		self.tight_layout()
-		self.plot_aesthetics(ax)
 
 
 	def _fluence_sens(self, n, time):
@@ -825,8 +733,6 @@ class PLOTSIMRES(PLOTS):
 
 		# cbar.set_label("Frequency")
 
-		self.tight_layout()
-		self.plot_aesthetics(ax)
 
 	def _flux_sens(self, n, dt):
 		"""
@@ -901,9 +807,6 @@ class PLOTSIMRES(PLOTS):
 		ax.set_xlabel("Redshift")
 		ax.set_ylabel("Detection Fraction")
 
-		self.tight_layout()
-		self.plot_aesthetics(ax)
-		ax.set_ylim(0, 1)
 
 class PLOTSAMPLE(PLOTS):
 	def __init__(self):
@@ -959,7 +862,6 @@ class PLOTSAMPLE(PLOTS):
 		ax.set_ylabel("Cumulative Probability")
 		# ax.set_title("T90 Distrubtions")
 
-		self.plot_aesthetics(ax)
 
 	def cumulative_fluence(self, data, ax = None, bins = None, bin_min=None, bin_max=None, **kwargs):
 		"""
@@ -1006,7 +908,6 @@ class PLOTSAMPLE(PLOTS):
 		ax.set_ylabel("Cumulative Probability")
 		# ax.set_title("Fluence Distrubtion")
 
-		self.plot_aesthetics(ax)
 
 	def cumulative_peak_flux(self, data, ax = None, bins = None, bin_min=None, bin_max=None, **kwargs):
 		"""
@@ -1050,8 +951,6 @@ class PLOTSAMPLE(PLOTS):
 		ax.set_xlabel("1s Peak Flux (counts/sec/det)")
 		ax.set_ylabel("Cumulative Probability")
 		# ax.set_title("1s Peak Flux Distrubtion")
-
-		self.plot_aesthetics(ax)
 
 	def _make_cumu_plot(self, values, bins, ax, **kwargs):
 
@@ -1112,7 +1011,6 @@ class PLOTRSP(PLOTS):
 		cbar = fig.colorbar(im)
 		cbar.ax.set_ylabel('Probability', rotation=270, labelpad=15)
 
-		self.plot_aesthetics(ax)
 
 
 	def plot_effarea(self, RSP, ax=None, det_area=1, E_phot_bounds=None, norm=1, **kwargs):
@@ -1158,5 +1056,3 @@ class PLOTRSP(PLOTS):
 
 		ax.set_xlabel('Incident Photon Energy (keV)')
 		ax.set_ylabel(r'Effective Area (cm$^2$)')
-
-		self.plot_aesthetics(ax)
