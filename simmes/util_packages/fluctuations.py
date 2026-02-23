@@ -8,9 +8,137 @@ This file defines functions that deal with adding fluctuations/variations to syn
 """
 
 import numpy as np
-from scipy.stats import rv_discrete
 from pathlib import Path
+import pickle
+from scipy.stats import rv_discrete
 path_here = Path(__file__).parent
+
+################################################
+# Random Light Curve Variance Methods
+################################################
+
+def rand_draw(PCODE, NDETS, dr_max=0.05, pcode_max = 1.05, ndet_max = 32768):
+	"""
+	Randomly selects a PCODE and NDETS from a circular region around the center 
+	given by (x, y) = (PCODE, NDETS).
+	
+	Attributes:
+	--------------
+	PCODE : float 
+		Partial coding fraction of the observation. 
+	NDETS : int 
+		Number of detector on the detector plane enabled during observations
+	dr_max : float
+		Percentage max away from highest possible evaluation 
+	pcode_max : float 
+		Maximum possible partial coding
+	ndets_max : int 
+		Maximum possible number of enabled detectors
+
+	Returns:
+	--------------
+	variance : float
+		Randomly selected background variance. Units counts / sec / cm^2.
+	"""
+
+	theta_i = np.random.randint(low=0, high=360)
+	dr_i = np.random.uniform(low=0, high=dr_max)
+
+	dpcode = np.cos(theta_i)*dr_i
+	dndet = np.sin(theta_i)*dr_i
+
+	pcode_i = PCODE + pcode_max*dpcode
+	pcode_i = np.min([ pcode_i, pcode_max ])
+	pcode_i = np.max([ pcode_i, 0. ])
+
+	ndets_i = NDETS + ndet_max*dndet
+	ndets_i = np.min([ ndets_i, ndet_max])
+	ndets_i = np.max([ ndets_i, 0. ])
+
+	return pcode_i, ndets_i 
+
+def rand_lc_variance(PCODE, NDETS, size=1, dr_max=0.05, pcode_max = 1.05, ndet_max = 32768):
+	"""
+	Randomly selects a standard deviation value from a 2D PDF created from Swift/BAT observations.
+	
+	Attributes:
+	--------------
+	PCODE : float 
+		Partial coding fraction of the observation. 
+	NDETS : int 
+		Number of detector on the detector plane enabled during observations 
+	size : int
+		Number of backgrounds to sample
+	dr_max : float
+		Percentage max away from highest possible evaluation 
+	pcode_max : float 
+		Maximum possible partial coding
+	ndets_max : int 
+		Maximum possible number of enabled detectors
+
+	Returns:
+	--------------
+	variance : float
+		Randomly selected background variance. Units counts / sec / cm^2.
+	"""
+
+	variance = np.zeros(shape=size)
+
+	# Load interpolated background variances
+	with open(path_here.joinpath("files-det-ang-dependence/pickled_interpolator.pck"), 'rb') as file_handle:
+		f_inter = pickle.load(file_handle)
+
+	for i in range(size):
+		rand_pcode, rand_ndets = rand_draw(pcode=PCODE, ndets=NDETS, dr_max=dr_max, pcode_max=pcode_max, ndet_max=ndet_max)
+		variance[i] = f_inter(rand_pcode, rand_ndets)
+
+	return variance
+
+def add_light_curve_flucations(light_curve, t_bin_size, PCODE, NDETS, dr_max=0.05, pcode_max = 1.05, ndet_max = 32768):
+	"""
+	Method to add a randomly variance to a Swift/BAT mask-weighted light curve. 
+	The variance is take from a 2D distribution created from the 
+	measured light curve background variances observed by Swift/BAT.
+
+	Attributes:
+	--------------
+	light_curve : np.ndarray with [("RATE", float), ("UNC", float)]
+		Light curve array
+	t_bin_size : float
+		Time bin size (in seconds)
+	PCODE : float
+		Partial coding fraction of the observation
+	NDETS : int
+		Number of detectors enabled on the detector plane
+	dr_max : float
+		Percentage max away from highest possible evaluation 
+	pcode_max : float 
+		Maximum possible partial coding
+	ndets_max : int 
+		Maximum possible number of enabled detectors
+
+	Returns:
+	--------------
+	light_curve : np.ndarray with [("RATE", float), ("UNC", float)]
+		Light curve array
+	"""
+
+	variance = rand_lc_variance(PCODE, NDETS, size=1, dr_max=dr_max, pcode_max=pcode_max, ndet_max=ndet_max)  # counts / sec / cm^2
+	
+	variance *= 0.16  # counts / sec / det
+	variance /= np.sqrt(t_bin_size) # scale for time-bin size
+
+	# Fluctuate the background according to a Normal distribution around 0 with a standard variation equal to the background variance
+	light_curve['RATE'] += np.random.normal( loc=np.zeros(shape=len(light_curve)), scale=variance)
+	# Set the uncertainty of the count rate to the variance. 
+	light_curve['UNC'] = np.ones(shape=len(light_curve))*variance
+
+	return light_curve
+
+
+################################################
+# Random Spectrum Variance Methods
+################################################
 
 def fred_function(t, fm, tm, r, d):
 	"""
@@ -35,7 +163,7 @@ def fred_function(t, fm, tm, r, d):
 	return flux
 
 
-def rand_variance(fm, tm, r, d, cut_min, cut_max, size=1):
+def rand_spec_variance(fm, tm, r, d, cut_min, cut_max, size=1):
 	"""
 	Randomly selects a value a PDF based on a FRED function described in Kocevski et al 2003. 
 	
@@ -70,66 +198,6 @@ def rand_variance(fm, tm, r, d, cut_min, cut_max, size=1):
 
 	return variance
 
-def add_light_curve_flucations(light_curve, t_bin_size, pcode=None):
-	"""
-	Method to add a randomly variance to a Swift/BAT mask-weighted light curve. 
-	The variance is take from a distribution created from the 
-	measured light curve background variances observed by Swift/BAT.
-
-	Attributes:
-	--------------
-	light_curve : np.ndarray with [("RATE", float), ("UNC", float)]
-		Light curve array
-	t_bin_size : float
-		Time bin size (in seconds)
-	pcode : float
-		Partial coding fraction of the observation
-
-	Returns:
-	--------------
-	light_curve : np.ndarray with [("RATE", float), ("UNC", float)]
-		Light curve array
-	"""
-
-	# There are only anomolous variances found outside of these cuts
-	cut_min = 0.02
-	cut_max = 0.25
-
-	"""
-	The following PDF parameter values were found in a separate fit.
-	
-	Parameters:
-	fm = flux at peak of the pulse (fm = F(tm))
-	tm = t_max or the peak time of the pulse 
-	r = rise constant
-	d = decay constant
-
-	The distribution depends on where on partial coding fraction of the observation, so 
-	separate PDFs can be sampled if a partial coding value is given. 
-	"""
-
-	if pcode is None:
-		parameters = [0.04307288, 0.06860655, 9.91359742, 3.07086311]
-	elif pcode<=0.4:
-		parameters = [0.02928293, 0.11582132, 10.00000000, 3.16393803]
-	elif (pcode < 0.7) and (pcode > 0.4):
-		parameters = [0.05819361, 0.08701445, 9.41549472, 7.49832431]
-	elif pcode >= 0.7:
-		parameters = [0.08090673, 0.06523750, 10.00000000, 7.64133533]
-
-	# Pull a random background variance from the distribution created from observed values
-	variance = rand_variance(fm = parameters[0], tm = parameters[1] , r = parameters[2], d = parameters[3],
-											cut_min = cut_min, cut_max = cut_max)  # counts / sec / cm^2
-	
-	variance *= 0.16  # counts / sec / det
-	variance /= np.sqrt(t_bin_size) # scale for time-bin size
-
-	# Fluctuate the background according to a Normal distribution around 0 with a standard variation equal to the background variance
-	light_curve['RATE'] += np.random.normal( loc=np.zeros(shape=len(light_curve)), scale=variance)
-	# Set the uncertainty of the count rate to the variance. 
-	light_curve['UNC'] = np.ones(shape=len(light_curve))*variance
-
-	return light_curve
 
 def add_spec_fluctuations(spectrum):
 	"""
@@ -161,7 +229,7 @@ def add_spec_fluctuations(spectrum):
 	variances = np.zeros(shape=len(spectrum))
 	for i in range(len(spectrum)):
 		# Grab statistical error PDF for this channel
-		variances[i] = rand_variance(fm = stat_errors["FM"][i], 
+		variances[i] = rand_spec_variance(fm = stat_errors["FM"][i], 
 								tm = stat_errors["TM"][i], 
 								r = stat_errors["R"][i], 
 								d = stat_errors["D"][i],
