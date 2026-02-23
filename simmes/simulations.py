@@ -73,10 +73,6 @@ def simulate_observation(synth_grb, resp_mat,
 		return 0;
 	# Else, z_p is None and we assume z_p = z_o (i.e., no redshift change)
 
-	# Correct flux light curve by cos(theta)
-	# theta = find_inc_ang(imx, imy)
-	# synth_grb.light_curve['RATE'] *= np.cos(theta)
-
 	if time_resolved == False:
 		# Fold spectrum through instrument response and calculate the count rate in the observation band
 		folded_spec = resp_mat.fold_spec(synth_grb.specfunc, add_fluc=False)  # Counts / sec / keV / on-axis fully-illuminated detector
