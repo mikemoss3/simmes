@@ -4,6 +4,9 @@ import subprocess
 from subprocess import STDOUT
 from astropy.io import fits
 
+from pathlib import Path
+path_here = Path(__file__).parent
+
 from simmes.simulations import band_rate
 
 # Load trigger algorithms from .dat files
@@ -265,7 +268,9 @@ def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy, det_frac
 	quad_lc['RATE'] = light_curve['RATE'] * band_rate(folded_spec, 15., 350.) * 2. * det_frac
 
 	# Create source mask from sample DPI 
-	maskwt_res = hsp.batmaskwtimg(outfile='src.mask', attitude="NONE", ra=imx, dec=imy, coord_type='tanxy', clobber='yes', infile='sample.dpi')
+	maskwt_res = hsp.batmaskwtimg(outfile='src.mask', attitude="NONE", 
+									ra=imx, dec=imy, coord_type='tanxy', clobber='yes', 
+									infile=path_here.joinpath("util_packages/files-swift-trigger-algs/sample.dpi"))
 	if maskwt_res.returncode != 0:
 		print("Wrong! Failed to created src.mask, return code: {}\nPerhaps initialize Heasoft and CALDB?\n".format(maskwt_res.returncode))
 		return maskwt_res.returncode
