@@ -119,7 +119,7 @@ def simulate_observation(synth_grb, resp_mat,
 
 	# Add variations
 	if sim_var == True:
-		synth_grb.light_curve = add_light_curve_flucations(synth_grb.light_curve, t_bin_size, find_pcode(imx, imy))
+		synth_grb.light_curve = add_light_curve_flucations(synth_grb.light_curve, t_bin_size, PCODE=find_pcode(imx, imy), NDETS=ndets)
 
 	return synth_grb
 
