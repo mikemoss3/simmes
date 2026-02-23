@@ -89,7 +89,7 @@ def rand_lc_variance(PCODE, NDETS, size=1, dr_max=0.05, pcode_max = 1.05, ndet_m
 		f_inter = pickle.load(file_handle)
 
 	for i in range(size):
-		rand_pcode, rand_ndets = rand_draw(pcode=PCODE, ndets=NDETS, dr_max=dr_max, pcode_max=pcode_max, ndet_max=ndet_max)
+		rand_pcode, rand_ndets = rand_draw(PCODE=PCODE, NDETS=NDETS, dr_max=dr_max, pcode_max=pcode_max, ndet_max=ndet_max)
 		variance[i] = f_inter(rand_pcode, rand_ndets)
 
 	return variance
