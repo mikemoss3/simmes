@@ -15,7 +15,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from simmes.util_packages.cosmology import lum_dis, k_corr
 from simmes.SPECFUNC import SPECFUNC
 
-class PLOTS(object):
+class PLOTS(mpl.axes.Axes):
 	"""
 	Base class that defines methods used by other plot super classes  
 
@@ -31,15 +31,6 @@ class PLOTS(object):
 
 		self.fontsize = fontsize
 		self.titlesize = titlesize
-
-	def show(self):
-		plt.show()
-
-	def close(self):
-		plt.close()
-
-	def savefig(self, fname, dpi=400):
-		plt.savefig(fname, dpi = dpi)
 
 
 
