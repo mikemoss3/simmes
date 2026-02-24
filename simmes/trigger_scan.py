@@ -78,7 +78,7 @@ def scan_BAT_trigalgs(quad_band_light_curve):
 	# Apply each trigger algorithm to light curve
 	for i in range(len(trigalg_list)):
 		# print("Testing algorithm # {}".format(trigalg_list[i]['criterion']))
-		tmp_trigger, tmp_snr, tmp_trig_time_start = test_trigger_alg(quad_band_light_curve, *[*trigalg_list[i]][1:-1])
+		tmp_trigger, tmp_snr, tmp_trig_time_start = test_trigger_alg(quad_band_light_curve, *[*trigalg_list[i]][1:-1], verbose=False)
 
 		if tmp_snr > SNR_max:
 			trigger = tmp_trigger
