@@ -292,13 +292,13 @@ def many_simulations(template_grb, param_list, trials,
 										ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 										time_resolved = time_resolved, sim_triggers=sim_triggers, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
 			else: 
-				trigger = True
+				trigger.flag = True
 				simulate_observation(synth_grb = synth_grb, resp_mat=resp_mat, z_p=param_list[i][0], 
 										imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], 
 										ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 										time_resolved = time_resolved, sim_triggers=sim_triggers, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
 
-			if trigger is True:
+			if trigger.flag is True:
 				sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
 
 				if sim_results['DURATION'][sim_result_ind] > 0:	
