@@ -8,6 +8,9 @@ from pathlib import Path
 path_here = Path(__file__).parent
 
 from simmes.simulations import band_rate
+from simmes.util_packages.fluctuations import rand_lc_variance
+from simmes.util_packages.det_ang_dependence import find_pcode
+import simmes.util_packages.datatypes as dt
 
 # Load trigger algorithms from .dat files
 trigalg_dtype = np.dtype([('criterion', int), ('bg1dur', float), ('fgdur', float), ('bg2dur', float), 
@@ -62,6 +65,8 @@ def scan_BAT_trigalgs(quad_band_light_curve):
 		Max signal-to-noise (SNR) ratio obtained during scan (defaults to -1e20 if no trigger)
 	trig_time_start : float
 		Time at which max SNR trigger occurs (defaults to -1e20 if no trigger)
+	trigalg : int 
+		Criterion number of successful trigger
 	"""
 
 	trigger = False
@@ -226,7 +231,7 @@ def calc_SNR(Nbk1, tbk1, Nfg, tfg, Nbk2, tbk2, verbose=True):
 
 	return snr
 
-def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy):
+def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy, sim_var=True, variance=None):
 	"""
 	Method that takes in a BAT light curve and splits it into four 
 	quadrant light curve components based on the location of the source on the detector plane. 
@@ -239,6 +244,13 @@ def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy):
 		Observed spectrum (i.e., source spectrum already folded through instrument response matrix)
 	imx, imy : float, float
 		Source position on the BAT detector plane
+	ndets : int
+		Number of detectors enabled during the synthetic observation 
+	sim_var : boolean
+		Whether or not to include noise fluctuations (e.g., for when you want to test things without variations)
+	variance : float 
+		Variance level (in counts / sec / on-axis fully-illuminated detector)
+
 
 	Returns:
 	--------------
@@ -252,18 +264,16 @@ def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy):
 						)
 		Array storing the four quadrant four energy band light curves
 	"""
-	quad_dtype = np.dtype(
-						[("TIME", float),
-						("RATE", float),
-						("1525", [("q0", float), ("q1", float), ("q2", float), ("q3", float)]), 
-						("1550", [("q0", float), ("q1", float), ("q2", float), ("q3", float)]), 
-						("25100", [("q0", float), ("q1", float), ("q2", float), ("q3", float)]), 
-						("50350", [("q0", float), ("q1", float), ("q2", float), ("q3", float)])]
-						)
-	quad_lc = np.zeros(shape=len(light_curve), dtype=quad_dtype)
+	if (sim_var is True) and (variance is None):
+		print("Wrong! If sim_var is True, a variance level must be given.")
+		return 1
+
+
+	quad_lc = np.zeros(shape=len(light_curve), dtype=dt.quad_lc_dtype)
 	
 	quad_lc['TIME'] = light_curve['TIME']
 	quad_lc['RATE'] = light_curve['RATE'] * band_rate(folded_spec, 15., 350.) * 2.
+
 
 	# Create source mask from sample DPI 
 	maskwt_res = hsp.batmaskwtimg(outfile='src.mask', attitude="NONE", 
@@ -295,6 +305,9 @@ def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy):
 	for i in range(4):
 		for j in range(4):
 			quad_lc[en_ranges[i]][quads[j]] = light_curve['RATE'] * rates_in_bands[i] * elem_fracs[j]
+			
+			if sim_var is True:
+				quad_lc[en_ranges[i]][quads[j]] += np.random.normal( loc=np.zeros(shape=len(light_curve)), scale=variance) * rates_in_bands[i] * elem_fracs[j]
 
 	subprocess.run(["rm src.mask"], shell=True, stderr=STDOUT)
 
