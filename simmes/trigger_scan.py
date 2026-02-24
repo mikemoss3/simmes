@@ -226,7 +226,7 @@ def calc_SNR(Nbk1, tbk1, Nfg, tfg, Nbk2, tbk2, verbose=True):
 
 	return snr
 
-def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy, det_frac):
+def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy):
 	"""
 	Method that takes in a BAT light curve and splits it into four 
 	quadrant light curve components based on the location of the source on the detector plane. 
@@ -239,8 +239,6 @@ def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy, det_frac
 		Observed spectrum (i.e., source spectrum already folded through instrument response matrix)
 	imx, imy : float, float
 		Source position on the BAT detector plane
-	det_frac : float
-		Fraction of total detectors currently active/enabled 
 
 	Returns:
 	--------------
@@ -265,7 +263,7 @@ def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy, det_frac
 	quad_lc = np.zeros(shape=len(light_curve), dtype=quad_dtype)
 	
 	quad_lc['TIME'] = light_curve['TIME']
-	quad_lc['RATE'] = light_curve['RATE'] * band_rate(folded_spec, 15., 350.) * 2. * det_frac
+	quad_lc['RATE'] = light_curve['RATE'] * band_rate(folded_spec, 15., 350.) * 2.
 
 	# Create source mask from sample DPI 
 	maskwt_res = hsp.batmaskwtimg(outfile='src.mask', attitude="NONE", 
@@ -287,10 +285,10 @@ def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy, det_frac
 	elem_fracs[3] = np.sum(mask[ :87, 144:] !=0) / tot_num_elems #  q3
 
 	rates_in_bands = np.zeros(shape=4)
-	rates_in_bands[0] = band_rate(folded_spec, 15, 25) * 2. * det_frac
-	rates_in_bands[1] = band_rate(folded_spec, 15, 50) * 2. * det_frac
-	rates_in_bands[2] = band_rate(folded_spec, 25, 100) * 2. * det_frac
-	rates_in_bands[3] = band_rate(folded_spec, 50, 350) * 2. * det_frac
+	rates_in_bands[0] = band_rate(folded_spec, 15, 25) * 2.
+	rates_in_bands[1] = band_rate(folded_spec, 15, 50) * 2.
+	rates_in_bands[2] = band_rate(folded_spec, 25, 100) * 2.
+	rates_in_bands[3] = band_rate(folded_spec, 50, 350) * 2.
 
 	en_ranges = ["1525", "1550", "25100", "50350"]
 	quads = ["q0", "q1", "q2", "q3"]
