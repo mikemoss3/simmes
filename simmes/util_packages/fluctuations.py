@@ -94,7 +94,7 @@ def rand_lc_variance(PCODE, NDETS, size=1, dr_max=0.05, pcode_max = 1.05, ndet_m
 
 	return variance
 
-def add_light_curve_flucations(light_curve, t_bin_size, PCODE, NDETS, dr_max=0.05, pcode_max = 1.05, ndet_max = 32768):
+def add_light_curve_flucations(light_curve, t_bin_size, PCODE, NDETS, dr_max=0.05, pcode_max = 1.05, ndet_max = 32768, ret_var=False):
 	"""
 	Method to add a randomly variance to a Swift/BAT mask-weighted light curve. 
 	The variance is take from a 2D distribution created from the 
@@ -116,6 +116,8 @@ def add_light_curve_flucations(light_curve, t_bin_size, PCODE, NDETS, dr_max=0.0
 		Maximum possible partial coding
 	ndets_max : int 
 		Maximum possible number of enabled detectors
+	ret_var : boolean
+		Indicates whether to also return the variance value
 
 	Returns:
 	--------------
@@ -133,7 +135,10 @@ def add_light_curve_flucations(light_curve, t_bin_size, PCODE, NDETS, dr_max=0.0
 	# Set the uncertainty of the count rate to the variance. 
 	light_curve['UNC'] = np.ones(shape=len(light_curve))*variance
 
-	return light_curve
+	if ret_var is True:
+		return light_curve, variance
+	else: 
+		return light_curve
 
 
 ################################################
