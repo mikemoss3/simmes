@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "simmes"
-version = "0.4.0"
+version = "0.4.1"
 requires-python = ">=3.8"
 dependencies = [
 	'Numpy >= 1.26.4, < 2',
