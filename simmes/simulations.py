@@ -291,8 +291,11 @@ def many_simulations(template_grb, param_list, trials,
 										imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], 
 										ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 										time_resolved = time_resolved, sim_triggers=sim_triggers, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
+
+				trigger_flag = trigger.flag
+
 			else: 
-				trigger.flag = True
+				trigger_flag = True
 				simulate_observation(synth_grb = synth_grb, resp_mat=resp_mat, z_p=param_list[i][0], 
 										imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], 
 										ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
