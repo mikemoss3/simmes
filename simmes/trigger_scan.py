@@ -15,6 +15,13 @@ import simmes.util_packages.datatypes as datatypes
 # Load trigger algorithms from .dat files
 all_trigalgs = np.genfromtxt(path_here.joinpath('util_packages/files-swift-trigger-algs/trigger_info_list.dat'), dtype = datatypes.trigalg_dtype)
 
+class Trigger:
+	flag = False
+	SNR_max = -1e20
+	start_time = -1e20
+	criterion = None
+
+
 def get_trig_alg_params(trigalg_crit):
 	"""
 	Method to grab trigger algorithm parameters
@@ -55,20 +62,11 @@ def scan_BAT_trigalgs(quad_band_light_curve):
 
 	Returns:
 	--------------
-	trigger : boolean
-		Indicates if the one of the trigger algorithms realized a successful trigger on the source light curve
-	snr_max : float
-		Max signal-to-noise (SNR) ratio obtained during scan (defaults to -1e20 if no trigger)
-	trig_time_start : float
-		Time at which max SNR trigger occurs (defaults to -1e20 if no trigger)
-	trigalg : int 
-		Criterion number of successful trigger
+	curr_trig : Trigger
+		Object storing the trigger information
 	"""
 
-	trigger = False
-	trigalg = 000
-	SNR_max = -1e10
-	trig_time_start = -1e10
+	curr_trig = Trigger()
 
 	# Time bin size
 	tbin_size = (quad_band_light_curve['TIME'][1] - quad_band_light_curve['TIME'][0])
@@ -78,15 +76,15 @@ def scan_BAT_trigalgs(quad_band_light_curve):
 	# Apply each trigger algorithm to light curve
 	for i in range(len(trigalg_list)):
 		# print("Testing algorithm # {}".format(trigalg_list[i]['criterion']))
-		tmp_trigger, tmp_snr, tmp_trig_time_start = test_trigger_alg(quad_band_light_curve, *[*trigalg_list[i]][1:-1], verbose=False)
+		tmp_flag, tmp_snr, tmp_trig_time_start = test_trigger_alg(quad_band_light_curve, *[*trigalg_list[i]][1:-1], verbose=False)
 
-		if tmp_snr > SNR_max:
-			trigger = tmp_trigger
-			SNR_max = tmp_snr
-			trig_time_start = tmp_trig_time_start
-			trigalg = trigalg_list[i]['criterion']
+		if tmp_snr > curr_trig.SNR_max:
+			curr_trig.flag = tmp_flag
+			curr_trig.SNR_max = tmp_snr
+			curr_trig.start_time = tmp_trig_time_start
+			curr_trig.criterion = trigalg_list[i]['criterion']
 
-	return trigger, SNR_max, trig_time_start, trigalg
+	return curr_trig
 
 def test_trigger_alg(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0, q1, q2, q3, enband, sigmasquare, tskip, dt=None, verbose=True):
 	"""

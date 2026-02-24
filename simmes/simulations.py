@@ -55,6 +55,8 @@ def simulate_observation(synth_grb, resp_mat,
 	--------------
 	synth_grb : GRB
 		GRB object containing simulated data 
+	trigger : Trigger
+		Trigger object containing trigger information (if sim_triggers is True)
 	"""
 
 	# Initialize synthetic GRB
@@ -126,7 +128,7 @@ def simulate_observation(synth_grb, resp_mat,
 		quad_lc = make_BAT_quad_band_light_curves(light_curve=normalized_light_curve, folded_spec=folded_spec, imx=imx, imy=imy, sim_var=sim_var, variance=variance)
 
 		# Scan trigger algorithms 
-		trigger, SNR_max, trig_time_start, trigalg = scan_BAT_trigalgs(quad_band_light_curve=quad_lc)
+		trigger = scan_BAT_trigalgs(quad_band_light_curve=quad_lc)
 
 		return synth_grb, trigger
 
