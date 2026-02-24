@@ -13,7 +13,7 @@ from simmes.util_packages.det_ang_dependence import find_pcode
 import simmes.util_packages.datatypes as datatypes
 
 # Load trigger algorithms from .dat files
-all_trigalgs = np.genfromtxt('util_packages/files-swift-trigger-algs/trigger_info_list.dat', dtype = datatypes.trigalg_dtype)
+all_trigalgs = np.genfromtxt(path_here.joinpath('util_packages/files-swift-trigger-algs/trigger_info_list.dat'), dtype = datatypes.trigalg_dtype)
 
 def get_trig_alg_params(trigalg_crit):
 	"""
