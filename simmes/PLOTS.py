@@ -6,16 +6,10 @@ Defines the base class and methods used for plotting within the simmes package.
 
 """
 
-
-import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from simmes.util_packages.cosmology import lum_dis, k_corr
-from simmes.SPECFUNC import SPECFUNC
 
-class PLOTS(mpl.axes.Axes):
+class PLOTS(object):
 	"""
 	Base class that defines methods used by other plot super classes  
 
@@ -31,6 +25,15 @@ class PLOTS(mpl.axes.Axes):
 
 		self.fontsize = fontsize
 		self.titlesize = titlesize
+
+	def show(self):
+		plt.show()
+
+	def close(self):
+		plt.close()
+
+	def savefig(self, fname, dpi=400):
+		plt.savefig(fname, dpi = dpi)
 
 
 
