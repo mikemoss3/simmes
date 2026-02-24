@@ -11,10 +11,9 @@ from simmes.GRB import GRB
 from simmes.RSP import RSP
 from simmes.bayesian_block import bayesian_t_blocks
 from simmes.fluence import calc_fluence
-from simmes.util_packages.datatypes import dt_sim_res
 from simmes.util_packages.det_ang_dependence import find_pcode, find_inc_ang, fraction_correction
 from simmes.util_packages.fluctuations import add_light_curve_flucations
-import simmes.util_packages.datatypes as dt
+import simmes.util_packages.datatypes as datatypes
 
 def simulate_observation(synth_grb, resp_mat, 
 	imx, imy, ndets, z_p=None, 
@@ -176,7 +175,7 @@ def add_background(light_curve, bgd_size, dt):
 	sim_lc_length = int( (2*bgd_size/dt) + len(light_curve) ) # Length of the new light curve
 
 	# Initialize an empty background light curve 
-	bgd_lc = np.zeros(shape=sim_lc_length, dtype=dt.lc_type)
+	bgd_lc = np.zeros(shape=sim_lc_length, dtype=datatypes.lc_type)
 
 	# Fill the time axis from synth_grb-bgd_size to synth_grb+bgd_size with correct time bin sizes 
 	bgd_lc['TIME'] = np.arange(
@@ -238,7 +237,7 @@ def many_simulations(template_grb, param_list, trials,
 	"""
 
 	# Make a list to hold the simulation results
-	sim_results = np.zeros(shape=int(len(param_list)*trials), dtype=dt_sim_res)
+	sim_results = np.zeros(shape=int(len(param_list)*trials), dtype=datatypes.dt_sim_res)
 	sim_result_ind = 0
 
 	if keep_synth_grbs is True:
@@ -375,7 +374,7 @@ def make_ave_sim_res(sim_results, omit_nondetections=True):
 
 	unique_rows = np.unique(sim_results[["z","imx","imy","ndets"]])
 
-	ave_sim_results = np.zeros(shape=len(unique_rows),dtype=dt_sim_res)
+	ave_sim_results = np.zeros(shape=len(unique_rows),dtype=datatypes.dt_sim_res)
 
 	ave_sim_results[["z","imx","imy","ndets"]] = unique_rows
 

@@ -27,3 +27,9 @@ quad_lc_dtype = np.dtype(
 					("25100", [("q0", float), ("q1", float), ("q2", float), ("q3", float)]), 
 					("50350", [("q0", float), ("q1", float), ("q2", float), ("q3", float)])]
 					)
+
+# Trigger algorithm data type
+trigalg_dtype = np.dtype([('criterion', int), ('bg1dur', float), ('fgdur', float), ('bg2dur', float), 
+						('elapsedur', float), 
+						('q0', int), ('q1', int), ('q2', int), ('q3', int), 
+						('enband', int), ("sigmasquare", float), ("tskip", float), ("flag", bool)])

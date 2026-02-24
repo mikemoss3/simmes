@@ -10,14 +10,10 @@ path_here = Path(__file__).parent
 from simmes.simulations import band_rate
 from simmes.util_packages.fluctuations import rand_lc_variance
 from simmes.util_packages.det_ang_dependence import find_pcode
-import simmes.util_packages.datatypes as dt
+import simmes.util_packages.datatypes as datatypes
 
 # Load trigger algorithms from .dat files
-trigalg_dtype = np.dtype([('criterion', int), ('bg1dur', float), ('fgdur', float), ('bg2dur', float), 
-						('elapsedur', float), 
-						('q0', int), ('q1', int), ('q2', int), ('q3', int), 
-						('enband', int), ("sigmasquare", float), ("tskip", float), ("flag", bool)])
-all_trigalgs = np.genfromtxt('util_packages/files-swift-trigger-algs/trigger_info_list.dat', dtype = trigalg_dtype)
+all_trigalgs = np.genfromtxt('util_packages/files-swift-trigger-algs/trigger_info_list.dat', dtype = datatypes.trigalg_dtype)
 
 def get_trig_alg_params(trigalg_crit):
 	"""
@@ -269,7 +265,7 @@ def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy, sim_var=
 		return 1
 
 
-	quad_lc = np.zeros(shape=len(light_curve), dtype=dt.quad_lc_dtype)
+	quad_lc = np.zeros(shape=len(light_curve), dtype=datatypes.quad_lc_dtype)
 	
 	quad_lc['TIME'] = light_curve['TIME']
 	quad_lc['RATE'] = light_curve['RATE'] * band_rate(folded_spec, 15., 350.) * 2.
