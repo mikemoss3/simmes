@@ -16,9 +16,6 @@ from simmes.util_packages.det_ang_dependence import find_pcode, find_inc_ang, fr
 from simmes.util_packages.fluctuations import add_light_curve_flucations
 import simmes.util_packages.datatypes as dt
 
-import matplotlib.pyplot as plt
-from simmes.PLOTS import PLOTGRB
-
 def simulate_observation(synth_grb, resp_mat, 
 	imx, imy, ndets, z_p=None, 
 	ndet_max=32768, band_rate_min=15, band_rate_max=150, 
