@@ -22,7 +22,6 @@ def simulate_observation(synth_grb, resp_mat,
 	imx, imy, ndets, z_p=None, 
 	ndet_max=32768, band_rate_min=15, band_rate_max=150, 
 	time_resolved=False, sim_triggers=False, sim_bgd=True, sim_var = True, bgd_size = 20):
-	
 	"""
 	Method to complete a simulation of a synthetic observation based on the input source frame GRB template 
 	and the desired observing conditions
@@ -105,8 +104,6 @@ def simulate_observation(synth_grb, resp_mat,
 			synth_grb.light_curve[arg_t_start:arg_t_end]['RATE'] *= rate_in_band  # counts / sec / on-axis fully-illuminated detector
 
 	# If we are testing the trigger algorithm:
-		# Modulate the light curve by the folded spectrum normalization for each energy band 
-		# Calculate the fraction of the quadrant exposure 
 
 	t_bin_size = (synth_grb.light_curve['TIME'][1] - synth_grb.light_curve['TIME'][0])
 	if sim_bgd == True:
@@ -274,6 +271,7 @@ def many_simulations(template_grb, param_list, trials,
 								imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], 
 								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 								time_resolved = time_resolved, sim_triggers=sim_triggers, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
+			
 
 			sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
 		
