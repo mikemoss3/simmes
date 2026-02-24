@@ -14,6 +14,7 @@ from simmes.fluence import calc_fluence
 from simmes.util_packages.datatypes import dt_sim_res
 from simmes.util_packages.det_ang_dependence import find_pcode, find_inc_ang, fraction_correction
 from simmes.util_packages.fluctuations import add_light_curve_flucations
+import simmes.util_packages.datatypes as dt
 
 import matplotlib.pyplot as plt
 from simmes.PLOTS import PLOTGRB
@@ -50,7 +51,7 @@ def simulate_observation(synth_grb, resp_mat,
 	sim_bgd : boolean
 		Whether or not a background variance should be added to light curves during simulations
 	sim_var : boolean
-		Whether or not to include noise fluctuations (e.g., if you want to test things)
+		Whether or not to include noise fluctuations (e.g., for when you want to test things without variations)
 	bgd_size : float
 		Background amount to add when adding in a background (in seconds)
 
@@ -71,6 +72,15 @@ def simulate_observation(synth_grb, resp_mat,
 		print("GRBs can only be moved to higher redshifts.")
 		return 0;
 	# Else, z_p is None and we assume z_p = z_o (i.e., no redshift change)
+
+	t_bin_size = (synth_grb.light_curve['TIME'][1] - synth_grb.light_curve['TIME'][0])
+	if sim_bgd == True:
+		# Add mask-weighted background rate to either side of mask-weighted source signal
+		synth_grb.light_curve = add_background(synth_grb.light_curve, bgd_size=bgd_size, dt = t_bin_size) # counts / sec / on-axis fully-illuminated detector
+
+	# Keep copy of normalized light curve if triggers are to be simulated
+	if sim_triggers is True:
+		normalized_light_curve = np.copy(synth_grb.light_curve)
 
 	if time_resolved == False:
 		# Fold spectrum through instrument response and calculate the count rate in the observation band
@@ -103,18 +113,29 @@ def simulate_observation(synth_grb, resp_mat,
 			arg_t_end = np.argmax(synth_grb.light_curve['TIME']>=synth_grb.spectrafuncs[i]['TEND'])
 			synth_grb.light_curve[arg_t_start:arg_t_end]['RATE'] *= rate_in_band  # counts / sec / on-axis fully-illuminated detector
 
-	# If we are testing the trigger algorithm:
-
-	t_bin_size = (synth_grb.light_curve['TIME'][1] - synth_grb.light_curve['TIME'][0])
-	if sim_bgd == True:
-		# Add mask-weighted background rate to either side of mask-weighted source signal
-		synth_grb.light_curve = add_background(synth_grb.light_curve, bgd_size=bgd_size, dt = t_bin_size) # counts / sec / on-axis fully-illuminated detector
-
 	# Add variations
 	if sim_var == True:
-		synth_grb.light_curve = add_light_curve_flucations(synth_grb.light_curve, t_bin_size, PCODE=find_pcode(imx, imy), NDETS=ndets)
+		synth_grb.light_curve, variance = add_light_curve_flucations(synth_grb.light_curve, t_bin_size, PCODE=find_pcode(imx, imy), NDETS=ndets, ret_var=True)
 
-	return synth_grb
+	# If we are testing the trigger algorithm:
+	if sim_triggers is True:
+		# Import here because heasoftpy takes a second to import.
+		from simmes.trigger_scan import make_BAT_quad_band_light_curves, scan_BAT_trigalgs
+		
+		# Make folded spectrum 
+		folded_spec = resp_mat.fold_spec(synth_grb.specfunc, add_fluc=False)
+		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * 2.
+
+		# Make quad-band light curves
+		quad_lc = make_BAT_quad_band_light_curves(light_curve=normalized_light_curve, folded_spec=folded_spec, imx=imx, imy=imy, sim_var=sim_var, variance=variance)
+
+		# Scan trigger algorithms 
+		trigger, SNR_max, trig_time_start, trigalg = scan_BAT_trigalgs(quad_band_light_curve=quad_lc)
+
+		return synth_grb, trigger
+
+	else:
+		return synth_grb
 
 def band_rate(spectrum, emin, emax):
 	"""
@@ -158,7 +179,7 @@ def add_background(light_curve, bgd_size, dt):
 	sim_lc_length = int( (2*bgd_size/dt) + len(light_curve) ) # Length of the new light curve
 
 	# Initialize an empty background light curve 
-	bgd_lc = np.zeros(shape=sim_lc_length, dtype=[('TIME', float), ('RATE',float), ('UNC',float)])
+	bgd_lc = np.zeros(shape=sim_lc_length, dtype=dt.lc_type)
 
 	# Fill the time axis from synth_grb-bgd_size to synth_grb+bgd_size with correct time bin sizes 
 	bgd_lc['TIME'] = np.arange(
@@ -267,26 +288,33 @@ def many_simulations(template_grb, param_list, trials,
 
 			sim_results[["z", "imx", "imy", "ndets"]][sim_result_ind] = (param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3])
 
-			simulate_observation(synth_grb = synth_grb, resp_mat=resp_mat, z_p=param_list[i][0], 
-								imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], 
-								ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
-								time_resolved = time_resolved, sim_triggers=sim_triggers, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
-			
+			if sim_triggers is True:
+				synth_grb, trigger = simulate_observation(synth_grb = synth_grb, resp_mat=resp_mat, z_p=param_list[i][0], 
+										imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], 
+										ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
+										time_resolved = time_resolved, sim_triggers=sim_triggers, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
+			else: 
+				trigger = True
+				simulate_observation(synth_grb = synth_grb, resp_mat=resp_mat, z_p=param_list[i][0], 
+										imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], 
+										ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
+										time_resolved = time_resolved, sim_triggers=sim_triggers, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
 
-			sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
-		
-			if sim_results['DURATION'][sim_result_ind] > 0:	
+			if trigger is True:
+				sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
 
-				sim_results[["FLUENCE", "1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["DURATION"][sim_result_ind], 
-																						sim_results['TSTART'][sim_result_ind])
+				if sim_results['DURATION'][sim_result_ind] > 0:	
 
-				if sim_results['FLUENCE'][sim_result_ind] < 0:
-					sim_results[["DURATION", "TSTART", "FLUENCE", "1sPeakFlux"]][sim_result_ind] = 0., 0., 0., 0.
-				else:
-					sim_results[["T100DURATION", "T100START"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=99) # Find the Duration and the fluence 
-									
-					sim_results[["T100FLUENCE", "1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["T100DURATION"][sim_result_ind], 
-																								sim_results['T100START'][sim_result_ind])
+					sim_results[["FLUENCE", "1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["DURATION"][sim_result_ind], 
+																							sim_results['TSTART'][sim_result_ind])
+
+					if sim_results['FLUENCE'][sim_result_ind] < 0:
+						sim_results[["DURATION", "TSTART", "FLUENCE", "1sPeakFlux"]][sim_result_ind] = 0., 0., 0., 0.
+					else:
+						sim_results[["T100DURATION", "T100START"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=99) # Find the Duration and the fluence 
+										
+						sim_results[["T100FLUENCE", "1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["T100DURATION"][sim_result_ind], 
+																									sim_results['T100START'][sim_result_ind])
 
 			# Increase simulation index
 			sim_result_ind +=1
