@@ -11,6 +11,7 @@ import numpy as np
 from pathlib import Path
 import pickle
 from scipy.stats import rv_discrete
+import scipy
 path_here = Path(__file__).parent
 
 ################################################
