@@ -275,10 +275,10 @@ def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy, sim_var=
 									ra=imx, dec=imy, coord_type='tanxy', clobber='yes', 
 									infile=path_here.joinpath("util_packages/files-swift-trigger-algs/sample.dpi"))
 	if maskwt_res.returncode != 0:
-		print("Wrong! Failed to created src.mask, return code: {}\nPerhaps initialize Heasoft and CALDB?\n".format(maskwt_res.returncode))
+		print("Wrong! Failed to created src.mask.{}, return code: {}\nPerhaps initialize Heasoft and CALDB?\n".format(rand_int, maskwt_res.returncode))
 		return maskwt_res.returncode
 
-	mask = fits.getdata("src.mask")
+	mask = fits.getdata("src.mask.{}".format(rand_int))
 	mask = np.flip(mask, axis=0)
 	# For Swift BAT: mask.shape = (173, 286)
 
