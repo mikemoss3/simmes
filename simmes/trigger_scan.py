@@ -43,7 +43,7 @@ def get_trig_alg_params(trigalg_crit):
 	trig_alg_params = all_trigalgs[all_trigalgs["criterion"] == trigalg_crit]
 	return trig_alg_params
 
-def scan_BAT_trigalgs(quad_band_light_curve):
+def scan_BAT_trigalgs(quad_band_light_curve, quick=False):
 	"""
 	Method that takes in a BAT light curve and tests if any BAT trigger algorithms successfully trigger 
 
@@ -59,6 +59,9 @@ def scan_BAT_trigalgs(quad_band_light_curve):
 						)
 		Quad band light curve that stores the four-quadrant, four-energy channel light curve required to test 
 		Swift/BAT trigger algorithms
+
+	quick : boolean 
+		If true, the scan will cease as soon as a successful trigger is made.
 
 	Returns:
 	--------------
@@ -83,6 +86,9 @@ def scan_BAT_trigalgs(quad_band_light_curve):
 			curr_trig.SNR_max = tmp_snr
 			curr_trig.start_time = tmp_trig_time_start
 			curr_trig.criterion = trigalg_list[i]['criterion']
+
+			if (quick is True) and (curr_trig.flag == True):
+				return curr_trig
 
 	return curr_trig
 
