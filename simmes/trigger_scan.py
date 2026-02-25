@@ -61,7 +61,8 @@ def scan_BAT_trigalgs(quad_band_light_curve, quick=False):
 		Swift/BAT trigger algorithms
 
 	quick : boolean 
-		If true, the scan will cease as soon as a successful trigger is made.
+		If true, the scan will cease as soon as a successful trigger is made. If false, all trigger
+		algorithms will be scanned.
 
 	Returns:
 	--------------

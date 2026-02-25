@@ -18,7 +18,7 @@ import simmes.util_packages.datatypes as datatypes
 def simulate_observation(synth_grb, resp_mat, 
 	imx, imy, ndets, z_p=None, 
 	ndet_max=32768, band_rate_min=15, band_rate_max=150, 
-	time_resolved=False, sim_triggers=False, sim_bgd=True, sim_var = True, bgd_size = 20):
+	time_resolved=False, sim_triggers=False, quick=False, sim_bgd=True, sim_var = True, bgd_size = 20):
 	"""
 	Method to complete a simulation of a synthetic observation based on the input source frame GRB template 
 	and the desired observing conditions
@@ -44,6 +44,9 @@ def simulate_observation(synth_grb, resp_mat,
 		Whether or not to use time resolved spectra (held by the GRB object)
 	sim_triggers : boolean
 		Whether or not to simulate the Swift/BAT trigger algorithms or not
+	quick : boolean 
+		If true, the scan will cease as soon as a successful trigger is made. If false, all trigger
+		algorithms will be scanned.
 	sim_bgd : boolean
 		Whether or not a background variance should be added to light curves during simulations
 	sim_var : boolean
@@ -128,7 +131,7 @@ def simulate_observation(synth_grb, resp_mat,
 		quad_lc = make_BAT_quad_band_light_curves(light_curve=normalized_light_curve, folded_spec=folded_spec, imx=imx, imy=imy, sim_var=sim_var, variance=variance)
 
 		# Scan trigger algorithms 
-		trigger = scan_BAT_trigalgs(quad_band_light_curve=quad_lc)
+		trigger = scan_BAT_trigalgs(quad_band_light_curve=quad_lc, quick=quick)
 
 		return synth_grb, trigger
 
@@ -194,7 +197,7 @@ def add_background(light_curve, bgd_size, dt):
 
 def many_simulations(template_grb, param_list, trials, 
 	resp_mat = None, dur_per = 90, ndet_max=32768, band_rate_min=15, band_rate_max=150, 
-	time_resolved=False, sim_triggers=False, sim_bgd = True, sim_var=True, bgd_size = 20,
+	time_resolved=False, sim_triggers=False, sim_bgd = True, quick=False, sim_var=True, bgd_size = 20,
 	out_file_name = None, ret_ave = False, keep_synth_grbs=False, verbose=False):
 	"""
 	Method to perform multiple simulations for each combination of input parameters 
@@ -217,6 +220,9 @@ def many_simulations(template_grb, param_list, trials,
 		Whether or not to use time resolved spectra (held by the GRB object)
 	sim_triggers : boolean
 		Whether or not to simulate the Swift/BAT trigger algorithms or not
+	quick : boolean 
+		If true, the scan will cease as soon as a successful trigger is made. If false, all trigger
+		algorithms will be scanned.
 	sim_bgd : boolean
 		Whether or not a background variance should be added to light curves during simulations
 	sim_var : boolean
@@ -290,7 +296,7 @@ def many_simulations(template_grb, param_list, trials,
 				synth_grb, trigger = simulate_observation(synth_grb = synth_grb, resp_mat=resp_mat, z_p=param_list[i][0], 
 										imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], 
 										ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
-										time_resolved = time_resolved, sim_triggers=sim_triggers, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
+										time_resolved = time_resolved, sim_triggers=sim_triggers, quick=quick, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
 
 				trigger_flag = trigger.flag
 
@@ -299,7 +305,7 @@ def many_simulations(template_grb, param_list, trials,
 				simulate_observation(synth_grb = synth_grb, resp_mat=resp_mat, z_p=param_list[i][0], 
 										imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], 
 										ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
-										time_resolved = time_resolved, sim_triggers=sim_triggers, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
+										time_resolved = time_resolved, sim_triggers=sim_triggers, quick=quick, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
 
 			if trigger_flag is True:
 				sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
