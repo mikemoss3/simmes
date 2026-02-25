@@ -268,9 +268,10 @@ def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy, sim_var=
 	quad_lc['TIME'] = light_curve['TIME']
 	quad_lc['RATE'] = light_curve['RATE'] * band_rate(folded_spec, 15., 350.) * 2.
 
+	rand_int = np.random.randint(low=0, high=1e3) # use random interger for file creation, mostly to avoid multiprocessing error
 
 	# Create source mask from sample DPI 
-	maskwt_res = hsp.batmaskwtimg(outfile='src.mask', attitude="NONE", 
+	maskwt_res = hsp.batmaskwtimg(outfile="src.mask.{}".format(rand_int), attitude="NONE", 
 									ra=imx, dec=imy, coord_type='tanxy', clobber='yes', 
 									infile=path_here.joinpath("util_packages/files-swift-trigger-algs/sample.dpi"))
 	if maskwt_res.returncode != 0:
@@ -303,6 +304,6 @@ def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy, sim_var=
 			if sim_var is True:
 				quad_lc[en_ranges[i]][quads[j]] += np.random.normal( loc=np.zeros(shape=len(light_curve)), scale=variance) * rates_in_bands[i] * elem_fracs[j]
 
-	subprocess.run(["rm src.mask"], shell=True, stderr=STDOUT)
+	subprocess.run(["rm src.mask.{}".format(rand_int)], shell=True, stderr=STDOUT)
 
 	return quad_lc
