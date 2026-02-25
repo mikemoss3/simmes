@@ -193,9 +193,9 @@ def sample_detectoin_rate_curve(grb, trials,
 								time_resolved=time_resolved, sim_triggers=sim_triggers, verbose=False)
 
 		# Set up a pool of workers
-		with mp.Pool(processes=workers, initializer=_init_process_seed) as pool:
-			# Run threshold searches
-			results = pool.starmap(parfunc, list(zip(template_grbs, z_vals)))
+		pool = mp.Pool(processes=workers, initializer=_init_process_seed)
+		# Run threshold searches
+		results = pool.starmap(parfunc, list(zip(template_grbs, z_vals)))
 
 		# Place all result arrays into single structured array with format [("zth", float), ("ztrack", float)]
 		detection_rates = np.hstack(results)
