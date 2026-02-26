@@ -228,6 +228,10 @@ def calc_SNR(Nbk1, tbk1, Nfg, tfg, Nbk2, tbk2, verbose=True):
 		print("Wrong! Both background intervals have zero durations.")
 		return -1e20
 
+	# Avoid divide by zero results. 
+	if beta == 0:
+		beta = 1
+
 	snr = np.sqrt((Nfg - beta)**2 / np.abs(beta))
 
 	return snr
