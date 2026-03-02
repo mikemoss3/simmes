@@ -123,6 +123,26 @@ class PARAMS:
 
 		return ret
 
+	def save_params(self, fn):
+		"""
+		Method to save the parameter values to a file with the defined file path
+
+		Attributes:
+		------------------------
+		fn = str
+			File name
+		"""
+
+		out_arr = np.array([
+			
+			], dtype=float)
+		with open(fn, "w") as f:
+			f.write("A\tK\tB\tC\tQ\tM\tnu\n")
+			f.write("{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}".format(self.get("A"), self.get("K"), 
+																					self.get("B"), self.get("C"), 
+																					self.get("Q"), self.get("M"), 
+																					self.get("nu")))
+
 def sample_detectoin_rate_curve(grb, trials,
 	imx, imy, ndets, z_max = 15,
 	num_samples = 15,
@@ -188,7 +208,7 @@ def sample_detectoin_rate_curve(grb, trials,
 
 		# Set up partial function with positional arguments 
 		parfunc = partial(_calc_det_rat, trials = trials,
-								imx=imx, imy=imx, ndets=ndets,
+								imx=imx, imy=imy, ndets=ndets,
 								bgd_size = bgd_size, ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 								time_resolved=time_resolved, sim_triggers=sim_triggers, verbose=False)
 
@@ -202,7 +222,7 @@ def sample_detectoin_rate_curve(grb, trials,
 	else:
 		for i in range(len(z_vals)):
 			detection_rates[i] = _calc_det_rat(grb, z=z_vals[i], trials = trials,
-									imx=imx, imy=imx, ndets=ndets,
+									imx=imx, imy=imy, ndets=ndets,
 									bgd_size = bgd_size, ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 									time_resolved=time_resolved, sim_triggers=sim_triggers, verbose=verbose)
 
