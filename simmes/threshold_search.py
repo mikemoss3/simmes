@@ -167,14 +167,14 @@ class PARAMS:
 		params.nu = params[8]
 		params.uncnu = params[9]
 
-def save_det_curve_samples(fn, z_vals, detection_rates):
+def _save_det_curve_samples(fn_prefix, z_vals, detection_rates):
 	"""
 	Method to save the parameter values to a file with the defined file path
 
 	Attributes:
 	------------------------
-	fn = str
-		File name and path
+	fn_prefix = str
+		File name prefix (and path) to save file to
 	z_vals : np.ndarray([floats])
 		Array of sampled redshift values 
 	detection_rates : np.ndarray([floats])
@@ -182,14 +182,14 @@ def save_det_curve_samples(fn, z_vals, detection_rates):
 	"""
 
 	combined_data = list(zip(z_vals, detection_rates))
-	np.savetxt(fname=fn, X=combined_data, fmt="%.3f %.3f")
+	np.savetxt(fname=fn_prefix+"_det_curves_samples.txt", X=combined_data, fmt="%.3f %.3f")
 
 def sample_detectoin_rate_curve(grb, trials,
 	imx, imy, ndets, z_max = 15,
 	num_samples = 15,
 	bgd_size = 20, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
 	multiproc=True, workers = mp.cpu_count(),
-	time_resolved=False, sim_triggers=False, verbose = False, save_samples_fn=None):
+	time_resolved=False, sim_triggers=False, verbose = False, fn_prefix=None):
 	"""
 	Method used to estimate the highest redshift a given GRB could be observed
 	with a detection rate equal to `threshold` (within a given tolerance).
@@ -267,8 +267,8 @@ def sample_detectoin_rate_curve(grb, trials,
 									bgd_size = bgd_size, ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 									time_resolved=time_resolved, sim_triggers=sim_triggers, verbose=verbose)
 
-	if save_samples_fn is not None:
-		save_det_curve_samples(fn=save_samples_fn, z_vals=z_vals, detection_rates=detection_rates)
+	if fn_prefix is not None:
+		_save_det_curve_samples(fn_prefix=fn_prefix, z_vals=z_vals, detection_rates=detection_rates)
 
 	return z_vals, detection_rates
 
