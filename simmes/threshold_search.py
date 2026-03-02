@@ -90,7 +90,7 @@ class PARAMS:
 		names = ["B", "C", "Q", "M", "nu"]
 		fields = [self.B, self.C, self.Q, self.M, self.nu]
 
-		return '\n'.join("{} = {}".format(names[i], fields[i]) for i in range(len(names)))
+		return '\n'.join("{} = {:.3e}".format(names[i], fields[i]) for i in range(len(names)))
 
 	def get(self, var):
 		"""
