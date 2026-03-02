@@ -27,8 +27,8 @@ class PARAMS:
 	"""
 
 	# Set initial parameter values
-	A : float = 1.
-	K : float = 0.
+	A : float = 1. # Fixed value
+	K : float = 0. # Fixed value
 
 	B : float = 1.
 	C : float = 1.
@@ -130,25 +130,66 @@ class PARAMS:
 		Attributes:
 		------------------------
 		fn = str
-			File name
+			File name and path
 		"""
 
 		out_arr = np.array([
 			
 			], dtype=float)
 		with open(fn, "w") as f:
-			f.write("A\tK\tB\tC\tQ\tM\tnu\n")
-			f.write("{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}".format(self.get("A"), self.get("K"), 
-																					self.get("B"), self.get("C"), 
-																					self.get("Q"), self.get("M"), 
-																					self.get("nu")))
+			f.write("# A\tUncA\tK\tUncK\tB\tUncB\tC\tUncC\tQ\tUncQ\tM\tUncM\tnu\tUncnu\n")
+			f.write("{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}\t{:.3f}".format(self.get("B")[0], self.get("B")[1], 
+																																			self.get("C")[0], self.get("C")[1], 
+																																			self.get("Q")[0], self.get("Q")[1], 
+																																			self.get("M")[0], self.get("M")[1], 
+																																			self.get("nu")[0], self.get("nu")[1]))
+
+	def load_params_from_file(self, fn):
+		"""
+		Method to load parameter values from a file with the defined file path
+
+		Attributes:
+		------------------------
+		fn = str
+			File name and path
+		"""
+
+		params = np.genfromtxt(fname=fn)
+
+		params.B = params[0]
+		params.uncB = params[1]
+		params.C = params[2]
+		params.uncC = params[3]
+		params.Q = params[4]
+		params.uncQ = params[5]
+		params.M = params[6]
+		params.uncM = params[7]
+		params.nu = params[8]
+		params.uncnu = params[9]
+
+def save_det_curve_samples(fn, z_vals, detection_rates):
+	"""
+	Method to save the parameter values to a file with the defined file path
+
+	Attributes:
+	------------------------
+	fn = str
+		File name and path
+	z_vals : np.ndarray([floats])
+		Array of sampled redshift values 
+	detection_rates : np.ndarray([floats])
+		Array of sampled detection rates at the given redshift values
+	"""
+
+	combined_data = list(zip(z_vals, detection_rates))
+	np.savetxt(fname=fn, X=combined_data, fmt="%.3f %.3f")
 
 def sample_detectoin_rate_curve(grb, trials,
 	imx, imy, ndets, z_max = 15,
 	num_samples = 15,
 	bgd_size = 20, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
 	multiproc=True, workers = mp.cpu_count(),
-	time_resolved=False, sim_triggers=False, verbose = False):
+	time_resolved=False, sim_triggers=False, verbose = False, save_samples_fn=None):
 	"""
 	Method used to estimate the highest redshift a given GRB could be observed
 	with a detection rate equal to `threshold` (within a given tolerance).
@@ -225,6 +266,9 @@ def sample_detectoin_rate_curve(grb, trials,
 									imx=imx, imy=imy, ndets=ndets,
 									bgd_size = bgd_size, ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 									time_resolved=time_resolved, sim_triggers=sim_triggers, verbose=verbose)
+
+	if save_samples_fn is not None:
+		save_det_curve_samples(fn=save_samples_fn, z_vals=z_vals, detection_rates=detection_rates)
 
 	return z_vals, detection_rates
 
