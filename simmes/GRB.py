@@ -108,8 +108,7 @@ class GRB(object):
 		"""
 
 		self.make_template_grb(grbp.name, grbp.z, grbp.fn, 
-								t_cut_min=grbp.t_cut_min, t_cut_min=grbp.t_cut_max, t_start=grbp.t_start,
-								fn_time_resolved_spec = fn_time_resolved_spec,
+								t_cut_min=grbp.t_cut_min, t_cut_max=grbp.t_cut_max, t_start=grbp.t_start,
 								specfunc = grbp.specfunc(alpha= grbp.alpha, ep=grbp.ep, norm=grbp.norm))
 		self.imx, self.imy = grbp.imx, grbp.imy 
 		
