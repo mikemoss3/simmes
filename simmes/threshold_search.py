@@ -185,8 +185,8 @@ def _save_det_curve_samples(fn_prefix, z_vals, detection_rates):
 	np.savetxt(fname=fn_prefix+"_det_curves_samples.txt", X=combined_data, fmt="%.3f %.3f", header="z\tDet Frac.")
 
 def sample_detectoin_rate_curve(grb, trials,
-	imx, imy, ndets, z_max = 15,
-	num_samples = 15,
+	imx, imy, ndets, 
+	z_vals = None, z_max = 15, num_samples = 15,
 	bgd_size = 20, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
 	multiproc=True, workers = mp.cpu_count(),
 	time_resolved=False, sim_triggers=False, verbose = False, fn_prefix=None):
@@ -205,6 +205,9 @@ def sample_detectoin_rate_curve(grb, trials,
 		The x and y position of the GRB on the detector plane
 	ndets : int
 		Number of detectors enabled during the synthetic observation 
+	z_vals : np.1darray of floats
+		Array of redshift values to calculate the detection fraction. If None is given
+		z_max and num_samples will be used to generate a z_vals array.
 	z_max : float 
 		Maximum redshift to test out to 
 	num_samples : int
@@ -236,7 +239,8 @@ def sample_detectoin_rate_curve(grb, trials,
 	"""
 
 	# Redshift values to evaluate detection rates at
-	z_vals = np.linspace(grb.z, z_max, num=num_samples)
+	if z_vals is None:
+		z_vals = np.linspace(grb.z, z_max, num=num_samples)
 
 	# Array to store detections rates.
 	detection_rates = np.zeros(shape=num_samples)
