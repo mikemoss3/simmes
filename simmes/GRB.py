@@ -81,6 +81,20 @@ class GRB(object):
 	def deepcopy(self):
 		return copy.deepcopy(self)
 
+	def make_template_grb(self, name, z, lc_fn, 
+		rm_trigtime=True, norm=True,
+		t_cut_min = None, t_cut_max=None, t_start=0., 
+		specfunc=None):
+
+		self.name = name
+		self.z = z
+		self.load_light_curve(lc_fn, rm_trigtime=True, norm=True)
+		self.cut_light_curve(tmin=t_cut_min, tmax=t_cut_max)
+		self.t_start = t_start
+
+		if specfunc is not None:
+			self.load_specfunc(specfunc)
+
 	def make_BAT_template(self, grbp, fn_time_resolved_spec=None):
 		"""
 		Method to set the duration information of the burst manually
@@ -91,18 +105,14 @@ class GRB(object):
 			Module with loaded GRB parameters
 		fn_time_resolved_spec : str 
 			File path to the text file containing the time-resolved spectral parameters for this burst
-		
 		"""
-		self.name = grbp.name
-		self.z = grbp.z
-		# Load light curve 
-		self.load_light_curve(grbp.fn, rm_trigtime=True, norm=True)
-		self.cut_light_curve(tmin=grbp.t_cut_min, tmax=grbp.t_cut_max)
-		self.t_start = grbp.t_start
 
-		# Load spectrum
-		self.load_specfunc(CPLSwift(alpha= grbp.alpha, ep=grbp.ep, norm=grbp.norm))
-
+		self.make_template_grb(grbp.name, grbp.z, grbp.fn, 
+								t_cut_min=grbp.t_cut_min, t_cut_min=grbp.t_cut_max, t_start=grbp.t_start,
+								fn_time_resolved_spec = fn_time_resolved_spec,
+								specfunc = grbp.specfunc(alpha= grbp.alpha, ep=grbp.ep, norm=grbp.norm))
+		self.imx, self.imy = grbp.imx, grbp.imy 
+		
 		if fn_time_resolved_spec is not None:
 			specfits = np.genfromtxt(fn_time_resolved_spec, dtype=[("tstart", float), ("tstop", float), ("K", float), ("index", float), ("xc", float)])
 
