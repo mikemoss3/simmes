@@ -324,7 +324,7 @@ def _calc_det_rat(grb, z, trials,
 	sim_results = many_simulations(grb, param_list, trials, resp_mat=resp_mat, 
 									ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max,
 									bgd_size=bgd_size,
-									time_resolved=time_resolved, sim_triggers=sim_triggers, verbose=verbose)  # Perform simulations of burst at this redshift
+									time_resolved=time_resolved, sim_triggers=sim_triggers, quick=True, verbose=verbose)  # Perform simulations of burst at this redshift
 
 	detection_rate = len( sim_results[ sim_results['DURATION']>0 ] ) / trials  # Calculate ratio of successful detections
 
