@@ -182,7 +182,7 @@ def _save_det_curve_samples(fn_prefix, z_vals, detection_rates):
 	"""
 
 	combined_data = list(zip(z_vals, detection_rates))
-	np.savetxt(fname=fn_prefix+"_det_curves_samples.txt", X=combined_data, fmt="%.3f %.3f")
+	np.savetxt(fname=fn_prefix+"_det_curves_samples.txt", X=combined_data, fmt="%.3f %.3f", header="z\tDet Frac.")
 
 def sample_detectoin_rate_curve(grb, trials,
 	imx, imy, ndets, z_max = 15,
