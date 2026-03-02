@@ -198,7 +198,7 @@ def add_background(light_curve, bgd_size, dt):
 def many_simulations(template_grb, param_list, trials, 
 	resp_mat = None, dur_per = 90, ndet_max=32768, band_rate_min=15, band_rate_max=150, 
 	time_resolved=False, sim_triggers=False, sim_bgd = True, quick=False, sim_var=True, bgd_size = 20,
-	out_file_name = None, ret_ave = False, keep_synth_grbs=False, verbose=False):
+	measure_durs=True, out_file_name = None, ret_ave = False, keep_synth_grbs=False, verbose=False):
 	"""
 	Method to perform multiple simulations for each combination of input parameters 
 
@@ -227,6 +227,10 @@ def many_simulations(template_grb, param_list, trials,
 		Whether or not a background variance should be added to light curves during simulations
 	sim_var : boolean
 		Whether or not to include noise fluctuations (e.g., if you want to test things)
+	bgd_size : float
+		Size of the background interval to add onto each side of the simulated light curve 
+	measure_durs : boolean
+		Indicates whether to use Bayesian blocks to measure the duration of the simulated light curve or not
 	out_file_name : string
 		If given, a file will with a file-path name "out_file_name" be written that will contain the simulation the results. 
 	ret_ave : boolean
@@ -307,7 +311,7 @@ def many_simulations(template_grb, param_list, trials,
 										ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 										time_resolved = time_resolved, sim_triggers=sim_triggers, quick=quick, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
 
-			if trigger_flag is True:
+			if (trigger_flag is True) and (measure_durs is True):
 				sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
 
 				if sim_results['DURATION'][sim_result_ind] > 0:	
