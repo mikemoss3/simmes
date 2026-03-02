@@ -11,7 +11,7 @@ from astropy.io import fits
 import copy
 import scipy.integrate as integrate 
 
-from simmes.SPECFUNC import SPECFUNC
+from simmes.SPECFUNC import SPECFUNC, CPLSwift
 from simmes.bayesian_block import bayesian_t_blocks
 from simmes.util_packages.cosmology import lum_dis, k_corr
 import simmes.util_packages.globalconstants as gc
@@ -80,6 +80,39 @@ class GRB(object):
 
 	def deepcopy(self):
 		return copy.deepcopy(self)
+
+	def make_BAT_template(self, grbp, fn_time_resolved_spec=None):
+		"""
+		Method to set the duration information of the burst manually
+
+		Attributes:
+		----------
+		grbp : <class 'module'>
+			Module with loaded GRB parameters
+		fn_time_resolved_spec : str 
+			File path to the text file containing the time-resolved spectral parameters for this burst
+		
+		"""
+		self.name = grbp.name
+		self.z = grbp.z
+		# Load light curve 
+		self.load_light_curve(grbp.fn, rm_trigtime=True, norm=True)
+		self.cut_light_curve(tmin=grbp.t_cut_min, tmax=grbp.t_cut_max)
+		self.t_start = grbp.t_start
+
+		# Load spectrum
+		self.load_specfunc(CPLSwift(alpha= grbp.alpha, ep=grbp.ep, norm=grbp.norm))
+
+		if fn_time_resolved_spec is not None:
+			specfits = np.genfromtxt(fn_time_resolved_spec, dtype=[("tstart", float), ("tstop", float), ("K", float), ("index", float), ("xc", float)])
+
+			list_spec = []
+			int_list = []
+			for i in range(len(specfits)):
+				list_spec.append(CPLSwift(alpha=specfits[i]['index'], ep=specfits[i]['xc'], norm=specfits[i]['K'], enorm=1))
+				int_list.append((specfits[i]['tstart'], specfits[i]['tstop']))
+
+			self.load_specfunc(specfunc=list_spec, intervals=int_list)
 
 	def set_duration(self, duration, t_start, phot_fluence=None, dur_per=None, ncp_prior=None):
 		"""
