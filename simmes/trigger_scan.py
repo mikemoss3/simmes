@@ -80,7 +80,8 @@ def scan_BAT_trigalgs(quad_band_light_curve, quick=False):
 	# Apply each trigger algorithm to light curve
 	for i in range(len(trigalg_list)):
 		# print("Testing algorithm # {}".format(trigalg_list[i]['criterion']))
-		tmp_flag, tmp_snr, tmp_trig_time_start = test_trigger_alg(quad_band_light_curve, *[*trigalg_list[i]][1:-1], verbose=False)
+		# tmp_flag, tmp_snr, tmp_trig_time_start = test_trigger_alg(quad_band_light_curve, *[*trigalg_list[i]][1:-1], verbose=False)
+		tmp_flag, tmp_snr, tmp_trig_time_start = test_trigger_alg_opt(quad_band_light_curve, *[*trigalg_list[i]][1:-1], verbose=False)
 
 		if tmp_snr > curr_trig.SNR_max:
 			curr_trig.flag = tmp_flag
@@ -189,7 +190,107 @@ def test_trigger_alg(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0
 	else: 
 		return image_threshold_flag, -1e20, -1e20 
 
-def calc_SNR(Nbk1, tbk1, Nfg, tfg, Nbk2, tbk2, verbose=True):
+def test_trigger_alg_opt(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0, q1, q2, q3, enband, sigmasquare, tskip, dt=None, verbose=True):
+	"""
+
+	Attributes:
+	--------------
+	quad_band_light_curve : 
+
+	bg1dur : float
+		First background interval (in units of seconds)
+	fgdur : float
+		Foreground interval (in units of seconds)
+	bg2dur : float
+		Second background interval (in units of seconds)
+	elapsedur : float
+		Interval between the background intervals and 
+		the foreground interval (in units of seconds)
+	q0, q1, q2, q3 : 0 or 1
+		Indicates which of the quadrants are relevant to this trigger algorithm
+	en_band : 0, 1, 2, 3
+		Indicates which energy band to consider for this trigger algorithm
+	dt : float
+		Time bin size (if left as None, dt will be calculated from the light curve)
+	verbose : bool
+		Whether to print error messages handled in this function or not
+
+	Returns:
+	--------------
+	image_threshold_flag : bool
+		Indicates whether there was a successful trigger or not
+	snr_max : float
+		Max signal-to-noise (SNR) ratio obtained during scan (defaults to -1e20 if no trigger)
+	trig_time_start : float
+		Time at which max SNR trigger occurs (defaults to -1e20 if no trigger)
+	"""
+
+	# For rate trigger testing, combine the counts in the energy band and quadrant relevant to this trigger
+	enband_str_list = ["1525", "1550", "25100", "50350"]
+	enband_str = enband_str_list[enband]
+	comb_quad_light_curve = quad_band_light_curve[enband_str]["q0"] * q0 + quad_band_light_curve[enband_str]["q1"] * q1 + quad_band_light_curve[enband_str]["q2"] * q2 + quad_band_light_curve[enband_str]["q3"] * q3
+
+	snr_max = -1e20
+	trig_time_start = -1e20
+
+	rate_threshold_flag = False
+	image_threshold_flag = False
+	tot_interval = bg1dur + elapsedur + fgdur + elapsedur + bg2dur
+	if dt is None:
+		dt = quad_band_light_curve['TIME'][2] - quad_band_light_curve['TIME'][1]
+
+	bg1size = int(np.floor(bg1dur / dt))
+	fgsize = int(np.floor(fgdur / dt))
+	bg2size = int(np.floor(bg2dur / dt))
+	elapsesize = int(np.floor(elapsedur / dt))
+
+	lc_duration = quad_band_light_curve['TIME'][-1] - quad_band_light_curve['TIME'][0]
+	if (lc_duration < tot_interval) and (verbose==True):
+		print("Wrong! Light curve is shorter than the trigger time bracket! Algorithm skipped.")
+		return False, 1e-20, 1e-20
+	if (fgsize == 0) and (verbose==True):
+		print("Wrong! Foreground size cannot be zero. Algorithm skipped.")
+		return False, 1e-20, 1e-20
+
+	summed_lc = np.sum(comb_quad_light_curve)
+
+	bg1cnts_list = summed_lc[bg1size:-(elapsesize+fgsize+elapsesize+bg2size)] - summed_lc[:-bg1size - (elapsesize+fgsize+elapsesize+bg2size)]
+	fgcnts_list = summed_lc[bg1size+elapsesize+fgsize:-(elapsesize+bg2size)] - summed_lc[:-(bg1size+elapsesize+fgsize)-(elapsesize+bg2size)]
+	bg2cnts_list = summed_lc[bg1size+elapsesize+fgsize+elapsesize+bg2size:] - summed_lc[:-(bg1size+elapsesize+fgsize+elapsesize+bg2size)] 
+
+	snr_vals = calc_SNR(Nbk1=bg1cnts_list, tbk1=bg1dur, 
+						Nfg=fgcnts_list, tfg=fgdur, 
+						Nbk2=bg2cnts_list, tbk2=bg2dur)
+
+	# Is any snr_val > np.sqrt(sigmasquare)? 
+	snr_thresh = np.sqrt(sigmasquare)
+	if any(x > snr_thresh for x in snr_vals):
+		# If yes, calculate SNR for image triggers (i.e., using full quad rates)
+
+		quad_summed_lc = np.sum(quad_band_light_curve['RATE'])
+		quad_bg1cnts_list = quad_summed_lc[bg1size:-(elapsesize+fgsize+elapsesize+bg2size)] - quad_summed_lc[:-bg1size - (elapsesize+fgsize+elapsesize+bg2size)]
+		quad_fgcnts_list = quad_summed_lc[bg1size+elapsesize+fgsize:-(elapsesize+bg2size)] - quad_summed_lc[:-(bg1size+elapsesize+fgsize)-(elapsesize+bg2size)]
+		quad_bg2cnts_list = quad_summed_lc[bg1size+elapsesize+fgsize+elapsesize+bg2size:] - quad_summed_lc[:-(bg1size+elapsesize+fgsize+elapsesize+bg2size)] 
+
+		snr_vals_img = calc_SNR(Nbk1=quad_bg1cnts_list, tbk1=bg1dur, 
+								Nfg=quad_fgcnts_list, tfg=fgdur, 
+								Nbk2=quad_bg2cnts_list, tbk2=bg2dur)
+
+		# If any snr_vals_img are > 7 
+		if any(x > 7 for x in snr_vals):
+			image_threshold_flag = True
+
+			snr_max = np.max(snr_vals)
+			index = np.where(snr_vals==snr_max)[0][0]
+			trig_time_start = quad_band_light_curve['TIME'][index] + bg1dur + elapsedur
+
+	if image_threshold_flag:
+		return image_threshold_flag, snr_max, trig_time_start
+	else: 
+		return image_threshold_flag, -1e20, -1e20 
+
+
+def calc_SNR(Nbk1, tbk1, Nfg, tfg, Nbk2, tbk2):
 	"""
 	Method to calculate signal score for input trigger algorithm parameters. This 
 	method reduces to Fenimore et al. 2003 (Eq. 1) when a single background interval is used.
@@ -208,8 +309,6 @@ def calc_SNR(Nbk1, tbk1, Nfg, tfg, Nbk2, tbk2, verbose=True):
 		Counts in the Second background interval
 	tbk2 : float
 		Duration of the Second background interval
-	verbose : bool
-		Whether to print error messages handled in this function or not
 
 	Returns:
 	--------------
@@ -228,9 +327,9 @@ def calc_SNR(Nbk1, tbk1, Nfg, tfg, Nbk2, tbk2, verbose=True):
 		print("Wrong! Both background intervals have zero durations.")
 		return -1e20
 
-	# Avoid divide by zero results. 
-	if beta == 0:
-		beta = 1
+	# Avoid divide by zero results.
+	beta = np.asarray(beta)
+	beta[beta==0] = 1
 
 	snr = np.sqrt((Nfg - beta)**2 / np.abs(beta))
 
