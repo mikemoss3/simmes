@@ -111,6 +111,7 @@ class GRB(object):
 								t_cut_min=grbp.t_cut_min, t_cut_max=grbp.t_cut_max, t_start=grbp.t_start,
 								specfunc = grbp.specfunc(alpha= grbp.alpha, ep=grbp.ep, norm=grbp.norm))
 		self.imx, self.imy = grbp.imx, grbp.imy 
+		self.ndets = grbp.ndets
 		
 		if fn_time_resolved_spec is not None:
 			specfits = np.genfromtxt(fn_time_resolved_spec, dtype=[("tstart", float), ("tstop", float), ("K", float), ("index", float), ("xc", float)])
