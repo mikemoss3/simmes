@@ -80,8 +80,7 @@ def scan_BAT_trigalgs(quad_band_light_curve, quick=False):
 	# Apply each trigger algorithm to light curve
 	for i in range(len(trigalg_list)):
 		# print("Testing algorithm # {}".format(trigalg_list[i]['criterion']))
-		# tmp_flag, tmp_snr, tmp_trig_time_start = test_trigger_alg(quad_band_light_curve, *[*trigalg_list[i]][1:-1], verbose=False)
-		tmp_flag, tmp_snr, tmp_trig_time_start = test_trigger_alg_opt(quad_band_light_curve, *[*trigalg_list[i]][1:-1], verbose=False)
+		tmp_flag, tmp_snr, tmp_trig_time_start = test_trigger_alg(quad_band_light_curve, *[*trigalg_list[i]][1:-1], verbose=False)
 
 		if tmp_snr > curr_trig.SNR_max:
 			curr_trig.flag = tmp_flag
@@ -156,118 +155,28 @@ def test_trigger_alg(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0
 		print("Wrong! Foreground size cannot be zero. Algorithm skipped.")
 		return False, 1e-20, 1e-20
 
-	# Step through light curve to test for trigger
-	for i in range(len(quad_band_light_curve)-(bg1size+elapsesize+fgsize+elapsesize+bg2size)):
-		# Using the quad band light curves relevant to this trigger, 
-		# calculate the counts in first background, foreground, and second background 
-		bg1cnts = np.sum(comb_quad_light_curve[ i:i+bg1size])
-		fgcnts = np.sum(comb_quad_light_curve[ i+bg1size+elapsesize : i+bg1size+elapsesize+fgsize ])
-		bg2cnts = np.sum(comb_quad_light_curve[ i+bg1size+elapsesize+fgsize+elapsesize : i+bg1size+elapsesize+fgsize+elapsesize+bg2size ])
-		
-		# Which method to use to calculate the signal-to-noise ratio (SNR) depends on the type of trigger being used
-		snr_rate = calc_SNR(Nbk1=bg1cnts, tbk1=bg1dur, Nfg=fgcnts, tfg=fgdur, Nbk2=bg2cnts, tbk2=bg2dur, verbose=verbose)
+	# Use the prefix sum algorithm (a.k.a. use the cumulative sum)
+	summed_lc = np.cumsum(comb_quad_light_curve)
+	summed_lc = np.concatenate([[0.0], summed_lc]) # Necessary for correct indexing
 
-		# Check for trigger
-		if snr_rate > np.sqrt(sigmasquare):
-			rate_threshold_flag = True
-			# Rate trigger was passed, now check for image trigger.
-			# Total Counts in first background, foreground, and second background 
-			bg1cnts = np.sum(quad_band_light_curve['RATE'][ i:i+bg1size])
-			fgcnts = np.sum(quad_band_light_curve['RATE'][ i+bg1size+elapsesize : i+bg1size+elapsesize+fgsize ])
-			bg2cnts = np.sum(quad_band_light_curve['RATE'][ i+bg1size+elapsesize+fgsize+elapsesize : i+bg1size+elapsesize+fgsize+elapsesize+bg2size ])
-
-			snr_img = calc_SNR(Nbk1=bg1cnts, tbk1=bg1dur, Nfg=fgcnts, tfg=fgdur, Nbk2=bg2cnts, tbk2=bg2dur, verbose=verbose)
-
-			if snr_img > 7:
-				image_threshold_flag = True
-
-				if snr_rate > snr_max:
-					snr_max = snr_rate
-					trig_time_start = quad_band_light_curve['TIME'][i+bg1size+elapsesize]
-
-	if image_threshold_flag:
-		return image_threshold_flag, snr_max, trig_time_start
-	else: 
-		return image_threshold_flag, -1e20, -1e20 
-
-def test_trigger_alg_opt(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0, q1, q2, q3, enband, sigmasquare, tskip, dt=None, verbose=True):
-	"""
-
-	Attributes:
-	--------------
-	quad_band_light_curve : 
-
-	bg1dur : float
-		First background interval (in units of seconds)
-	fgdur : float
-		Foreground interval (in units of seconds)
-	bg2dur : float
-		Second background interval (in units of seconds)
-	elapsedur : float
-		Interval between the background intervals and 
-		the foreground interval (in units of seconds)
-	q0, q1, q2, q3 : 0 or 1
-		Indicates which of the quadrants are relevant to this trigger algorithm
-	en_band : 0, 1, 2, 3
-		Indicates which energy band to consider for this trigger algorithm
-	dt : float
-		Time bin size (if left as None, dt will be calculated from the light curve)
-	verbose : bool
-		Whether to print error messages handled in this function or not
-
-	Returns:
-	--------------
-	image_threshold_flag : bool
-		Indicates whether there was a successful trigger or not
-	snr_max : float
-		Max signal-to-noise (SNR) ratio obtained during scan (defaults to -1e20 if no trigger)
-	trig_time_start : float
-		Time at which max SNR trigger occurs (defaults to -1e20 if no trigger)
-	"""
-
-	# For rate trigger testing, combine the counts in the energy band and quadrant relevant to this trigger
-	enband_str_list = ["1525", "1550", "25100", "50350"]
-	enband_str = enband_str_list[enband]
-	comb_quad_light_curve = quad_band_light_curve[enband_str]["q0"] * q0 + quad_band_light_curve[enband_str]["q1"] * q1 + quad_band_light_curve[enband_str]["q2"] * q2 + quad_band_light_curve[enband_str]["q3"] * q3
-
-	snr_max = -1e20
-	trig_time_start = -1e20
-
-	rate_threshold_flag = False
-	image_threshold_flag = False
-	tot_interval = bg1dur + elapsedur + fgdur + elapsedur + bg2dur
-	if dt is None:
-		dt = quad_band_light_curve['TIME'][2] - quad_band_light_curve['TIME'][1]
-
-	bg1size = int(np.floor(bg1dur / dt))
-	fgsize = int(np.floor(fgdur / dt))
-	bg2size = int(np.floor(bg2dur / dt))
-	elapsesize = int(np.floor(elapsedur / dt))
-
-	lc_duration = quad_band_light_curve['TIME'][-1] - quad_band_light_curve['TIME'][0]
-	if (lc_duration < tot_interval) and (verbose==True):
-		print("Wrong! Light curve is shorter than the trigger time bracket! Algorithm skipped.")
-		return False, 1e-20, 1e-20
-	if (fgsize == 0) and (verbose==True):
-		print("Wrong! Foreground size cannot be zero. Algorithm skipped.")
-		return False, 1e-20, 1e-20
-
-	summed_lc = np.sum(comb_quad_light_curve)
-
+	# Calculate summations for each interval by taking the difference of the cumulative sum curve at different offsets. 
 	bg1cnts_list = summed_lc[bg1size:-(elapsesize+fgsize+elapsesize+bg2size)] - summed_lc[:-bg1size - (elapsesize+fgsize+elapsesize+bg2size)]
 	fgcnts_list = summed_lc[bg1size+elapsesize+fgsize:-(elapsesize+bg2size)] - summed_lc[:-(bg1size+elapsesize+fgsize)-(elapsesize+bg2size)]
 	bg2cnts_list = summed_lc[bg1size+elapsesize+fgsize+elapsesize+bg2size:] - summed_lc[:-(bg1size+elapsesize+fgsize+elapsesize+bg2size)] 
 
+	# Calculate SNR for all summation combinations.
 	snr_vals = calc_SNR(Nbk1=bg1cnts_list, tbk1=bg1dur, 
 						Nfg=fgcnts_list, tfg=fgdur, 
 						Nbk2=bg2cnts_list, tbk2=bg2dur)
 
-	# Is any snr_val > np.sqrt(sigmasquare)? 
+	# Is any snr value > np.sqrt(sigmasquare)? 
 	snr_thresh = np.sqrt(sigmasquare)
 	if any(x > snr_thresh for x in snr_vals):
 		# If yes, calculate SNR for image triggers (i.e., using full quad rates)
 
-		quad_summed_lc = np.sum(quad_band_light_curve['RATE'])
+		# Use same algorithm
+		quad_summed_lc = np.cumsum(quad_band_light_curve['RATE'])
+		quad_summed_lc = np.concatenate([[0.0], quad_summed_lc])
 		quad_bg1cnts_list = quad_summed_lc[bg1size:-(elapsesize+fgsize+elapsesize+bg2size)] - quad_summed_lc[:-bg1size - (elapsesize+fgsize+elapsesize+bg2size)]
 		quad_fgcnts_list = quad_summed_lc[bg1size+elapsesize+fgsize:-(elapsesize+bg2size)] - quad_summed_lc[:-(bg1size+elapsesize+fgsize)-(elapsesize+bg2size)]
 		quad_bg2cnts_list = quad_summed_lc[bg1size+elapsesize+fgsize+elapsesize+bg2size:] - quad_summed_lc[:-(bg1size+elapsesize+fgsize+elapsesize+bg2size)] 
@@ -276,8 +185,9 @@ def test_trigger_alg_opt(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur
 								Nfg=quad_fgcnts_list, tfg=fgdur, 
 								Nbk2=quad_bg2cnts_list, tbk2=bg2dur)
 
-		# If any snr_vals_img are > 7 
+		# If any snr_vals_img are > 7, 
 		if any(x > 7 for x in snr_vals):
+			# Then we have a successful trigger 
 			image_threshold_flag = True
 
 			snr_max = np.max(snr_vals)
