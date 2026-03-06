@@ -64,11 +64,14 @@ def simulate_observation(synth_grb, resp_mat,
 
 	# Initialize synthetic GRB
 	synth_grb.imx, synth_grb.imy = imx, imy
+	synth_grb.ndets = ndets
 
 	if (z_p is not None) and (z_p > synth_grb.z):
 		z_o = synth_grb.z
 		# Apply distance corrections to GRB light curve and spectrum
-		synth_grb.move_to_new_frame(z_o=z_o, z_p=z_p, emin = band_rate_min, emax=band_rate_max)
+		synth_grb.move_to_new_frame(z_o=z_o, z_p=z_p, emin = band_rate_min, emax=band_rate_max)	
+
+		synth_grb.z = z_p
 	elif (z_p is not None) and (z_p < synth_grb.z):
 		print("GRBs can only be moved to higher redshifts.")
 		return 0;
