@@ -88,7 +88,7 @@ class GRB(object):
 
 		self.name = name
 		self.z = z
-		self.load_light_curve(lc_fn, rm_trigtime=True, norm=True)
+		self.load_light_curve(lc_fn, rm_trigtime=rm_trigtime, norm=norm)
 		self.cut_light_curve(tmin=t_cut_min, tmax=t_cut_max)
 		self.t_start = t_start
 
