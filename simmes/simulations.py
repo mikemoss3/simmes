@@ -80,7 +80,7 @@ def simulate_observation(synth_grb, resp_mat,
 	t_bin_size = (synth_grb.light_curve['TIME'][1] - synth_grb.light_curve['TIME'][0])
 	if sim_bgd == True:
 		# Add mask-weighted background rate to either side of mask-weighted source signal
-		synth_grb.light_curve = add_background(synth_grb.light_curve, bgd_size=bgd_size, dt = t_bin_size) # counts / sec / on-axis fully-illuminated detector
+		synth_grb.light_curve = add_background_buff(synth_grb.light_curve, bgd_size=bgd_size, dt = t_bin_size) # counts / sec / on-axis fully-illuminated detector
 
 	# Keep copy of normalized light curve if triggers are to be simulated
 	if sim_triggers is True:
@@ -160,7 +160,7 @@ def band_rate(spectrum, emin, emax):
 
 	return np.sum(spectrum['RATE'][np.argmax(spectrum['ENERGY']>=emin):np.argmax(spectrum['ENERGY']>=emax)])
 
-def add_background(light_curve, bgd_size, dt):
+def add_background_buff(light_curve, bgd_size, dt):
 	"""
 	Method that adds a background interval before and after the source signal 
 
