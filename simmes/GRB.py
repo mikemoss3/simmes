@@ -109,7 +109,7 @@ class GRB(object):
 
 		self.make_template_grb(grbp.name, grbp.z, grbp.fn, 
 								t_cut_min=grbp.t_cut_min, t_cut_max=grbp.t_cut_max, t_start=grbp.t_start,
-								specfunc = grbp.specfunc(alpha= grbp.alpha, ep=grbp.ep, norm=grbp.norm))
+								specfunc = grbp.specfunc(alpha= grbp.alpha, ep=grbp.ep, norm=grbp.norm, enorm=grbp.enorm))
 		self.imx, self.imy = grbp.imx, grbp.imy 
 		self.ndets = grbp.ndets
 		
