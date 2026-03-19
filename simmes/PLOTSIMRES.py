@@ -11,6 +11,9 @@ import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 
 from simmes.PLOTS import PLOTS
+from simmes.SPECFUNC import SPECFUNC
+from simmes.util_packages.cosmology import k_corr, lum_dis
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 class PLOTSIMRES(PLOTS):
