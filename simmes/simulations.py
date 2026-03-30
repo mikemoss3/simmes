@@ -306,30 +306,26 @@ def many_simulations(template_grb, param_list, trials,
 										time_resolved = time_resolved, sim_triggers=sim_triggers, quick=quick, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
 
 				trigger_flag = trigger.flag
+				sim_results['Triggered'][sim_result_ind] = trigger_flag
+
+				if (trigger_flag is True) and (measure_durs is True):
+					sim_results = _measure_durations(sim_results, sim_result_ind, synth_grb, dur_per)
 
 			else: 
-				trigger_flag = True
 				simulate_observation(synth_grb = synth_grb, resp_mat=resp_mat, z_p=param_list[i][0], 
 										imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], 
 										ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 										time_resolved = time_resolved, sim_triggers=sim_triggers, quick=quick, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
 
-			sim_results['Triggered'] = trigger_flag
-			if (trigger_flag is True) and (measure_durs is True):
-				sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
+				if measure_durs is True:
+					sim_results = _measure_durations(sim_results, sim_result_ind, synth_grb, dur_per)
 
-				if sim_results['DURATION'][sim_result_ind] > 0:	
+				if sim_results["DURATION"][sim_result_ind] > 0:
+					sim_results['Triggered'][sim_result_ind] = True
+				else:
+					sim_results['Triggered'][sim_result_ind] = False
 
-					sim_results[["FLUENCE", "1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["DURATION"][sim_result_ind], 
-																							sim_results['TSTART'][sim_result_ind])
 
-					if sim_results['FLUENCE'][sim_result_ind] < 0:
-						sim_results[["DURATION", "TSTART", "FLUENCE", "1sPeakFlux"]][sim_result_ind] = 0., 0., 0., 0.
-					else:
-						sim_results[["T100DURATION", "T100START"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=99) # Find the Duration and the fluence 
-										
-						sim_results[["T100FLUENCE", "1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["T100DURATION"][sim_result_ind], 
-																									sim_results['T100START'][sim_result_ind])
 
 			# Increase simulation index
 			sim_result_ind +=1
@@ -347,6 +343,45 @@ def many_simulations(template_grb, param_list, trials,
 		return sim_results, synth_grb_arr
 	else:
 		return sim_results
+
+def _measure_durations(sim_results, sim_result_ind, synth_grb, dur_per):
+	"""
+	Method to measured duration and fluence of simulated burst 
+
+	Attributes:
+	--------------
+	sim_results : dt_sim_res
+		Array of simulation results for the given parameter list
+	sim_results_ind : int
+		Current index of the simulations
+	synth_grb : GRB
+		GRB object storing simulated burst 
+	dur_per : float 
+		Percentage of the fluence to encompass within duration measure
+
+
+	Returns:
+	--------------
+	sim_results : dt_sim_res
+		Array of simulation results for the given parameter list
+
+	"""
+	sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
+
+	if sim_results['DURATION'][sim_result_ind] > 0:	
+
+		sim_results[["FLUENCE", "1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["DURATION"][sim_result_ind], 
+																				sim_results['TSTART'][sim_result_ind])
+
+		if sim_results['FLUENCE'][sim_result_ind] < 0:
+			sim_results[["DURATION", "TSTART", "FLUENCE", "1sPeakFlux"]][sim_result_ind] = 0., 0., 0., 0.
+		else:
+			sim_results[["T100DURATION", "T100START"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=99) # Find the Duration and the fluence 
+							
+			sim_results[["T100FLUENCE", "1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["T100DURATION"][sim_result_ind], 
+																						sim_results['T100START'][sim_result_ind])
+
+	return sim_results
 
 def make_param_list(z_arr, imx_arr, imy_arr, ndets_arr):
 	"""
