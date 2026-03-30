@@ -305,10 +305,9 @@ def many_simulations(template_grb, param_list, trials,
 										ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 										time_resolved = time_resolved, sim_triggers=sim_triggers, quick=quick, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
 
-				trigger_flag = trigger.flag
-				sim_results['Triggered'][sim_result_ind] = trigger_flag
+				sim_results['Triggered'][sim_result_ind] = trigger.flag
 
-				if (trigger_flag is True) and (measure_durs is True):
+				if (trigger.flag is True) and (measure_durs is True):
 					sim_results[["DURATION", "TSTART", "FLUENCE", "1sPeakFlux", 
 								"T100DURATION", "T100START", "T100FLUENCE"]][sim_result_ind] = _measure_lc(synth_grb, dur_per)
 
