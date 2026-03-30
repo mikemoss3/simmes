@@ -346,7 +346,7 @@ def many_simulations(template_grb, param_list, trials,
 	else:
 		return sim_results
 
-def _measure_lc(sim_results, sim_result_ind, synth_grb, dur_per):
+def _measure_lc(synth_grb, dur_per):
 	"""
 	Method to measured duration and fluence of simulated burst 
 
