@@ -309,7 +309,8 @@ def many_simulations(template_grb, param_list, trials,
 				sim_results['Triggered'][sim_result_ind] = trigger_flag
 
 				if (trigger_flag is True) and (measure_durs is True):
-					sim_results[sim_result_ind] = _measure_lc(synth_grb, dur_per)
+					sim_results[["DURATION", "TSTART", "FLUENCE", "1sPeakFlux", 
+								"T100DURATION", "T100START", "T100FLUENCE"]][sim_result_ind] = _measure_lc(synth_grb, dur_per)
 
 			else: 
 				simulate_observation(synth_grb = synth_grb, resp_mat=resp_mat, z_p=param_list[i][0], 
@@ -318,7 +319,8 @@ def many_simulations(template_grb, param_list, trials,
 										time_resolved = time_resolved, sim_triggers=sim_triggers, quick=quick, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
 
 				if measure_durs is True:
-					sim_results[sim_result_ind] = _measure_lc(synth_grb, dur_per)
+					sim_results[["DURATION", "TSTART", "FLUENCE", "1sPeakFlux", 
+								"T100DURATION", "T100START", "T100FLUENCE"]][sim_result_ind] = _measure_lc(synth_grb, dur_per)
 
 				if sim_results["DURATION"][sim_result_ind] > 0:
 					sim_results['Triggered'][sim_result_ind] = True
@@ -332,8 +334,6 @@ def many_simulations(template_grb, param_list, trials,
 		
 		if keep_synth_grbs is True:
 			synth_grb_arr[i] = synth_grb.copy()
-
-	print(sim_results['DURATION'])
 
 	if out_file_name is not None:
 		np.save(out_file_name, sim_results)
@@ -386,7 +386,7 @@ def _measure_lc(synth_grb, dur_per):
 			meas_result[["T100FLUENCE", "1sPeakFlux"]] = calc_fluence(synth_grb.light_curve, meas_result["T100DURATION"], 
 																						meas_result['T100START'])
 
-	return meas_result
+	return meas_result[["DURATION", "TSTART", "FLUENCE", "1sPeakFlux", "T100DURATION", "T100START", "T100FLUENCE"]]
 
 def make_param_list(z_arr, imx_arr, imy_arr, ndets_arr):
 	"""
