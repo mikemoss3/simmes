@@ -190,7 +190,7 @@ def sample_detectoin_rate_curve(grb, trials,
 	z_vals = None, z_max = 15, num_samples = 15,
 	bgd_size = 20, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
 	multiproc=True, workers = mp.cpu_count(),
-	time_resolved=False, sim_triggers=False, verbose = False, fn_prefix=None):
+	time_resolved=False, measure_durs=False, sim_triggers=True, verbose = False, fn_prefix=None):
 	"""
 	Method used to estimate the highest redshift a given GRB could be observed
 	with a detection rate equal to `threshold` (within a given tolerance).
@@ -225,6 +225,8 @@ def sample_detectoin_rate_curve(grb, trials,
 		Number of workers to use to use during a multiprocessing run
 	time_resolved : boolean
 		Whether or not time-resolved spectra (held by the GRB object) will be used for the simulations 
+	measure_durs : boolean
+		Indicates whether to use Bayesian blocks to measure the duration of the simulated light curve or not
 	sim_triggers : boolean
 		Whether or not to simulate the Swift/BAT trigger algorithms or not
 	verbose : boolean
@@ -291,7 +293,7 @@ def _init_process_seed():
 def _calc_det_rat(grb, z, trials,
 	imx, imy, ndets, 
 	bgd_size = 20, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
-	time_resolved=False, sim_triggers=False, verbose=False):
+	time_resolved=False, measure_durs=False, sim_triggers=True, verbose=False):
 	"""
 	Calculates the ratio of successful detections vs the number of simulations performed, i.e., the detection ratio
 
@@ -315,8 +317,12 @@ def _calc_det_rat(grb, z, trials,
 		Minimum and maximum of the energy band over which to calculate source photon flux
 	time_resolved : boolean
 		Whether or not time-resolved spectra (held by the GRB object) will be used for the simulations 
+	measure_durs : boolean
+		Indicates whether to use Bayesian blocks to measure the duration of the simulated light curve or not
 	sim_triggers : boolean
 		Whether or not to simulate the Swift/BAT trigger algorithms or not
+	verbose : boolean
+		Whether or not to print code activity.
 
 	Returns:
 	------------------------
@@ -330,7 +336,7 @@ def _calc_det_rat(grb, z, trials,
 	
 	sim_results = many_simulations(grb, param_list, trials, resp_mat=resp_mat, 
 									ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max,
-									bgd_size=bgd_size, measure_durs=False, quick=True,
+									bgd_size=bgd_size, measure_durs=measure_durs, quick=True,
 									time_resolved=time_resolved, sim_triggers=sim_triggers, verbose=verbose)  # Perform simulations of burst at this redshift
 
 	detection_rate = len( sim_results[ sim_results['Triggered']>0 ] ) / trials  # Calculate ratio of successful detections
