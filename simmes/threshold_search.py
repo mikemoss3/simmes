@@ -10,6 +10,7 @@ from numpy.random import seed
 import multiprocessing as mp
 from functools import partial
 from scipy.optimize import curve_fit
+import warnings 
 
 from simmes.simulations import many_simulations
 from simmes.RSP import RSP
@@ -241,6 +242,8 @@ def sample_detectoin_rate_curve(grb, trials,
 	# Redshift values to evaluate detection rates at
 	if z_vals is None:
 		z_vals = np.linspace(grb.z, z_max, num=num_samples)
+	else:
+		num_samples = len(z_vals)
 
 	# Array to store detections rates.
 	detection_rates = np.zeros(shape=num_samples)
@@ -262,6 +265,7 @@ def sample_detectoin_rate_curve(grb, trials,
 		# # Run threshold searches
 		# results = pool.starmap(parfunc, list(zip(template_grbs, z_vals)))
 
+		warnings.filterwarnings("ignore")
 		with mp.Pool(processes=workers, initializer=_init_process_seed) as pool:
 			results = pool.starmap(parfunc, list(zip(template_grbs, z_vals)))
 
@@ -329,7 +333,7 @@ def _calc_det_rat(grb, z, trials,
 									bgd_size=bgd_size, measure_durs=False, quick=True,
 									time_resolved=time_resolved, sim_triggers=sim_triggers, verbose=verbose)  # Perform simulations of burst at this redshift
 
-	detection_rate = len( sim_results[ sim_results['DURATION']>0 ] ) / trials  # Calculate ratio of successful detections
+	detection_rate = len( sim_results[ sim_results['Triggered']>0 ] ) / trials  # Calculate ratio of successful detections
 
 	return detection_rate
 
