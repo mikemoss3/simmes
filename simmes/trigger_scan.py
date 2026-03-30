@@ -160,9 +160,21 @@ def test_trigger_alg(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0
 	summed_lc = np.concatenate([[0.0], summed_lc]) # Necessary for correct indexing
 
 	# Calculate summations for each interval by taking the difference of the cumulative sum curve at different offsets. 
-	bg1cnts_list = summed_lc[bg1size:-(elapsesize+fgsize+elapsesize+bg2size)] - summed_lc[:-bg1size - (elapsesize+fgsize+elapsesize+bg2size)]
-	fgcnts_list = summed_lc[bg1size+elapsesize+fgsize:-(elapsesize+bg2size)] - summed_lc[:-(bg1size+elapsesize+fgsize)-(elapsesize+bg2size)]
-	bg2cnts_list = summed_lc[bg1size+elapsesize+fgsize+elapsesize+bg2size:] - summed_lc[:-(bg1size+elapsesize+fgsize+elapsesize+bg2size)] 
+	# bg1cnts_list = summed_lc[bg1size:-(elapsesize+fgsize+elapsesize+bg2size)] - summed_lc[:-bg1size - (elapsesize+fgsize+elapsesize+bg2size)]
+	# fgcnts_list = summed_lc[bg1size+elapsesize+fgsize:-(elapsesize+bg2size)] - summed_lc[:-(bg1size+elapsesize+fgsize)-(elapsesize+bg2size)]
+	# bg2cnts_list = summed_lc[bg1size+elapsesize+fgsize+elapsesize+bg2size:] - summed_lc[:-(bg1size+elapsesize+fgsize+elapsesize+bg2size)] 
+
+	fgcnts_list = summed_lc[bg1size+elapsesize+fgsize : -(elapsesize+bg2size)] - summed_lc[bg1size+elapsesize: -fgsize - (elapsesize+bg2size)]
+
+	if bg1size != 0:
+		bg1cnts_list = summed_lc[bg1size : -(elapsesize+fgsize+elapsesize+bg2size)] - summed_lc[: -bg1size - (elapsesize+fgsize+elapsesize+bg2size)]
+	else: 
+		bg1cnts_list = np.zeros(shape=len(fgcnts_list))
+
+	if bg2size != 0:
+		bg2cnts_list = summed_lc[bg1size+elapsesize+fgsize+elapsesize+bg2size:] - summed_lc[bg1size+elapsesize+fgsize+elapsesize: -bg2size] 
+	else:
+		bg2cnts_list = np.zeros(shape=len(fgcnts_list))
 
 	# Calculate SNR for all summation combinations.
 	snr_vals = calc_SNR(Nbk1=bg1cnts_list, tbk1=bg1dur, 
@@ -177,9 +189,18 @@ def test_trigger_alg(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0
 		# Use same algorithm
 		quad_summed_lc = np.cumsum(quad_band_light_curve['RATE'])
 		quad_summed_lc = np.concatenate([[0.0], quad_summed_lc])
-		quad_bg1cnts_list = quad_summed_lc[bg1size:-(elapsesize+fgsize+elapsesize+bg2size)] - quad_summed_lc[:-bg1size - (elapsesize+fgsize+elapsesize+bg2size)]
-		quad_fgcnts_list = quad_summed_lc[bg1size+elapsesize+fgsize:-(elapsesize+bg2size)] - quad_summed_lc[:-(bg1size+elapsesize+fgsize)-(elapsesize+bg2size)]
-		quad_bg2cnts_list = quad_summed_lc[bg1size+elapsesize+fgsize+elapsesize+bg2size:] - quad_summed_lc[:-(bg1size+elapsesize+fgsize+elapsesize+bg2size)] 
+
+		quad_fgcnts_list = quad_summed_lc[bg1size+elapsesize+fgsize : -(elapsesize+bg2size)] - quad_summed_lc[bg1size+elapsesize: -fgsize - (elapsesize+bg2size)]
+
+		if bg1size != 0:
+			quad_bg1cnts_list = quad_summed_lc[bg1size : -(elapsesize+fgsize+elapsesize+bg2size)] - quad_summed_lc[: -bg1size - (elapsesize+fgsize+elapsesize+bg2size)]
+		else: 
+			quad_bg1cnts_list = np.zeros(shape=len(quad_fgcnts_list))
+
+		if bg2size != 0:
+			quad_bg2cnts_list = quad_summed_lc[bg1size+elapsesize+fgsize+elapsesize+bg2size:] - quad_summed_lc[bg1size+elapsesize+fgsize+elapsesize: -bg2size] 
+		else:
+			quad_bg2cnts_list = np.zeros(shape=len(quad_fgcnts_list))
 
 		snr_vals_img = calc_SNR(Nbk1=quad_bg1cnts_list, tbk1=bg1dur, 
 								Nfg=quad_fgcnts_list, tfg=fgdur, 
