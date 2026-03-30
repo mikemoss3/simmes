@@ -260,7 +260,7 @@ def sample_detectoin_rate_curve(grb, trials,
 		parfunc = partial(_calc_det_rat, trials = trials,
 								imx=imx, imy=imy, ndets=ndets,
 								bgd_size = bgd_size, ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
-								time_resolved=time_resolved, sim_triggers=sim_triggers, verbose=False)
+								time_resolved=time_resolved, measure_durs=measure_durs, sim_triggers=sim_triggers, verbose=False)
 
 		# # Set up a pool of workers
 		# pool = mp.Pool(processes=workers, initializer=_init_process_seed)
@@ -278,7 +278,7 @@ def sample_detectoin_rate_curve(grb, trials,
 			detection_rates[i] = _calc_det_rat(grb, z=z_vals[i], trials = trials,
 									imx=imx, imy=imy, ndets=ndets,
 									bgd_size = bgd_size, ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
-									time_resolved=time_resolved, sim_triggers=sim_triggers, verbose=verbose)
+									time_resolved=time_resolved, measure_durs=measure_durs, sim_triggers=sim_triggers, verbose=verbose)
 
 	if fn_prefix is not None:
 		_save_det_curve_samples(fn_prefix=fn_prefix, z_vals=z_vals, detection_rates=detection_rates)
@@ -336,8 +336,8 @@ def _calc_det_rat(grb, z, trials,
 	
 	sim_results = many_simulations(grb, param_list, trials, resp_mat=resp_mat, 
 									ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max,
-									bgd_size=bgd_size, measure_durs=measure_durs, quick=True,
-									time_resolved=time_resolved, sim_triggers=sim_triggers, verbose=verbose)  # Perform simulations of burst at this redshift
+									bgd_size=bgd_size, quick=True,
+									time_resolved=time_resolved, measure_durs=measure_durs, sim_triggers=sim_triggers, verbose=verbose)  # Perform simulations of burst at this redshift
 
 	detection_rate = len( sim_results[ sim_results['Triggered']>0 ] ) / trials  # Calculate ratio of successful detections
 
