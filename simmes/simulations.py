@@ -314,6 +314,7 @@ def many_simulations(template_grb, param_list, trials,
 										ndet_max=ndet_max, band_rate_min=band_rate_min, band_rate_max=band_rate_max, 
 										time_resolved = time_resolved, sim_triggers=sim_triggers, quick=quick, sim_bgd=sim_bgd, sim_var=sim_var, bgd_size=bgd_size)
 
+			sim_results['Triggered'] = trigger_flag
 			if (trigger_flag is True) and (measure_durs is True):
 				sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
 
