@@ -215,6 +215,7 @@ def test_trigger_alg(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0
 			index = np.where(snr_vals==snr_max)[0][0]
 			trig_time_start = quad_band_light_curve['TIME'][index] + bg1dur + elapsedur
 
+
 	if image_threshold_flag:
 		return image_threshold_flag, snr_max, trig_time_start
 	else: 
@@ -260,7 +261,8 @@ def calc_SNR(Nbk1, tbk1, Nfg, tfg, Nbk2, tbk2):
 
 	# Avoid divide by zero results.
 	beta = np.asarray(beta)
-	beta[beta==0] = 1
+	beta += (np.sign(beta) * 1e-3)
+	beta[beta==0] = 1e-3
 
 	snr = np.sqrt((Nfg - beta)**2 / np.abs(beta))
 
