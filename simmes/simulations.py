@@ -124,7 +124,7 @@ def simulate_observation(synth_grb, resp_mat,
 	# If we are testing the trigger algorithm:
 	if sim_triggers is True:
 		# Import here because heasoftpy takes a second to import.
-		from simmes.trigger_scan import make_BAT_quad_band_light_curves, scan_BAT_trigalgs
+		from simmes.trigger_scan import make_BAT_quad_band_light_curves, scan_BAT_trigalgs, Trigger
 		
 		# Make folded spectrum 
 		folded_spec = resp_mat.fold_spec(synth_grb.specfunc, add_fluc=False)
@@ -133,10 +133,15 @@ def simulate_observation(synth_grb, resp_mat,
 		# Make quad-band light curves
 		quad_lc = make_BAT_quad_band_light_curves(light_curve=normalized_light_curve, folded_spec=folded_spec, imx=imx, imy=imy, sim_var=sim_var, variance=variance)
 
-		# Scan trigger algorithms 
-		trigger = scan_BAT_trigalgs(quad_band_light_curve=quad_lc, quick=quick)
-
-		return synth_grb, trigger
+		# If an error code was returned, then return a False trigger without testing
+		if isinstance(quad_lc, int):
+			trigger = Trigger()
+			return synth_grb, trigger
+		# Else, test the trigger algorithms.
+		else:
+			# Scan trigger algorithms 
+			trigger = scan_BAT_trigalgs(quad_band_light_curve=quad_lc, quick=quick)
+			return synth_grb, trigger
 
 	else:
 		return synth_grb

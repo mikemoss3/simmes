@@ -322,7 +322,12 @@ def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy, sim_var=
 		print("Wrong! Failed to created src.mask.{}, return code: {}\nPerhaps initialize Heasoft and CALDB?\n".format(rand_int, maskwt_res.returncode))
 		return maskwt_res.returncode
 
-	mask = fits.getdata("src.mask.{}".format(rand_int))
+	try:
+		mask = fits.getdata("src.mask.{}".format(rand_int))
+	except: 
+		print("Could not load src.mask.{}".format(rand_int))
+		return 
+	
 	mask = np.flip(mask, axis=0)
 	# For Swift BAT: mask.shape = (173, 286)
 
