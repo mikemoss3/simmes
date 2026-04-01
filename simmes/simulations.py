@@ -141,6 +141,7 @@ def simulate_observation(synth_grb, resp_mat,
 		else:
 			# Scan trigger algorithms 
 			trigger = scan_BAT_trigalgs(quad_band_light_curve=quad_lc, quick=quick)
+			print(trigger.flag)
 			return synth_grb, trigger
 
 	else:

@@ -326,8 +326,8 @@ def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy, sim_var=
 		mask = fits.getdata("src.mask.{}".format(rand_int))
 	except: 
 		print("Could not load src.mask.{}".format(rand_int))
-		return 
-	
+		return 1
+
 	mask = np.flip(mask, axis=0)
 	# For Swift BAT: mask.shape = (173, 286)
 
