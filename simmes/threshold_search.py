@@ -188,7 +188,7 @@ def _save_det_curve_samples(fn_prefix, z_vals, detection_rates):
 def sample_detectoin_rate_curve(grb, trials,
 	imx, imy, ndets, 
 	z_vals = None, z_max = 15, num_samples = 15,
-	bgd_size = 20, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
+	bgd_size = 20, ndet_max=32768, band_rate_min=15, band_rate_max=150, 
 	multiproc=True, workers = mp.cpu_count(),
 	time_resolved=False, measure_durs=False, sim_triggers=True, verbose = False, fn_prefix=None):
 	"""
@@ -292,7 +292,7 @@ def _init_process_seed():
 
 def _calc_det_rat(grb, z, trials,
 	imx, imy, ndets, 
-	bgd_size = 20, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
+	bgd_size = 20, ndet_max=32768, band_rate_min=15, band_rate_max=150, 
 	time_resolved=False, measure_durs=False, sim_triggers=True, verbose=False):
 	"""
 	Calculates the ratio of successful detections vs the number of simulations performed, i.e., the detection ratio
