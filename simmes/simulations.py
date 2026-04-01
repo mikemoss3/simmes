@@ -128,7 +128,6 @@ def simulate_observation(synth_grb, resp_mat,
 		
 		# Make folded spectrum 
 		folded_spec = resp_mat.fold_spec(synth_grb.specfunc, add_fluc=False)
-		rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * 2.
 
 		# Make quad-band light curves
 		quad_lc = make_BAT_quad_band_light_curves(light_curve=normalized_light_curve, folded_spec=folded_spec, imx=imx, imy=imy, sim_var=sim_var, variance=variance)
@@ -141,7 +140,6 @@ def simulate_observation(synth_grb, resp_mat,
 		else:
 			# Scan trigger algorithms 
 			trigger = scan_BAT_trigalgs(quad_band_light_curve=quad_lc, quick=quick)
-			print(trigger.flag)
 			return synth_grb, trigger
 
 	else:
