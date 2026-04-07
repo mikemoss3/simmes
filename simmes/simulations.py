@@ -120,6 +120,8 @@ def simulate_observation(synth_grb, resp_mat,
 	# Add variations
 	if sim_var == True:
 		synth_grb.light_curve, variance = add_light_curve_flucations(synth_grb.light_curve, t_bin_size, PCODE=find_pcode(imx, imy), NDETS=ndets, ret_var=True)
+	else:
+		variance = None
 
 	# If we are testing the trigger algorithm:
 	if sim_triggers is True:
