@@ -82,10 +82,6 @@ def simulate_observation(synth_grb, resp_mat,
 		# Add mask-weighted background rate to either side of mask-weighted source signal
 		synth_grb.light_curve = add_background_buff(synth_grb.light_curve, bgd_size=bgd_size, dt = t_bin_size) # counts / sec / on-axis fully-illuminated detector
 
-	# Keep copy of normalized light curve if triggers are to be simulated
-	if sim_triggers is True:
-		normalized_light_curve = np.copy(synth_grb.light_curve)
-
 	if time_resolved == False:
 		# Fold spectrum through instrument response and calculate the count rate in the observation band
 		folded_spec = resp_mat.fold_spec(synth_grb.specfunc, add_fluc=False)  # Counts / sec / keV / on-axis fully-illuminated detector
@@ -132,7 +128,7 @@ def simulate_observation(synth_grb, resp_mat,
 		folded_spec = resp_mat.fold_spec(synth_grb.specfunc, add_fluc=False)
 
 		# Make quad-band light curves
-		quad_lc = make_BAT_quad_band_light_curves(light_curve=normalized_light_curve, folded_spec=folded_spec, imx=imx, imy=imy, sim_var=sim_var, variance=variance)
+		quad_lc = make_BAT_quad_band_light_curves(light_curve=synth_grb.light_curve, folded_spec=folded_spec, imx=imx, imy=imy)
 
 		# If an error code was returned, then return a False trigger without testing
 		if isinstance(quad_lc, int):

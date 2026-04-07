@@ -268,7 +268,7 @@ def calc_SNR(Nbk1, tbk1, Nfg, tfg, Nbk2, tbk2):
 
 	return snr
 
-def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy, sim_var=True, variance=None):
+def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy):
 	"""
 	Method that takes in a BAT light curve and splits it into four 
 	quadrant light curve components based on the location of the source on the detector plane. 
@@ -283,10 +283,6 @@ def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy, sim_var=
 		Source position on the BAT detector plane
 	ndets : int
 		Number of detectors enabled during the synthetic observation 
-	sim_var : boolean
-		Whether or not to include noise fluctuations (e.g., for when you want to test things without variations)
-	variance : float 
-		Variance level (in counts / sec / on-axis fully-illuminated detector)
 
 
 	Returns:
@@ -301,15 +297,11 @@ def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy, sim_var=
 						)
 		Array storing the four quadrant four energy band light curves
 	"""
-	if (sim_var is True) and (variance is None):
-		print("Wrong! If sim_var is True, a variance level must be given.")
-		return 1
-
 
 	quad_lc = np.zeros(shape=len(light_curve), dtype=datatypes.quad_lc_dtype)
 	
 	quad_lc['TIME'] = light_curve['TIME']
-	quad_lc['RATE'] = light_curve['RATE'] * band_rate(folded_spec, 15., 350.) * 2.
+	quad_lc['RATE'] = light_curve['RATE']
 
 	rand_int = np.random.randint(low=0, high=1e3) # use random interger for file creation, mostly to avoid multiprocessing error
 
@@ -338,11 +330,12 @@ def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy, sim_var=
 	elem_fracs[2] = np.sum(mask[ :87, :144] !=0) / tot_num_elems #  q2
 	elem_fracs[3] = np.sum(mask[ :87, 144:] !=0) / tot_num_elems #  q3
 
+	total_band_rate = band_rate(folded_spec, 15., 350.)
 	rates_in_bands = np.zeros(shape=4)
-	rates_in_bands[0] = band_rate(folded_spec, 15, 25) * 2.
-	rates_in_bands[1] = band_rate(folded_spec, 15, 50) * 2.
-	rates_in_bands[2] = band_rate(folded_spec, 25, 100) * 2.
-	rates_in_bands[3] = band_rate(folded_spec, 50, 350) * 2.
+	rates_in_bands[0] = band_rate(folded_spec, 15., 25.) / total_band_rate
+	rates_in_bands[1] = band_rate(folded_spec, 15., 50.) / total_band_rate
+	rates_in_bands[2] = band_rate(folded_spec, 25., 100.) / total_band_rate
+	rates_in_bands[3] = band_rate(folded_spec, 50., 350.) / total_band_rate
 
 	en_ranges = ["1525", "1550", "25100", "50350"]
 	quads = ["q0", "q1", "q2", "q3"]
@@ -350,9 +343,6 @@ def make_BAT_quad_band_light_curves(light_curve, folded_spec, imx, imy, sim_var=
 		for j in range(4):
 			quad_lc[en_ranges[i]][quads[j]] = light_curve['RATE'] * rates_in_bands[i] * elem_fracs[j]
 			
-			if sim_var is True:
-				quad_lc[en_ranges[i]][quads[j]] += np.random.normal( loc=np.zeros(shape=len(light_curve)), scale=variance) * rates_in_bands[i] * elem_fracs[j]
-
 	subprocess.run(["rm src.mask.{}".format(rand_int)], shell=True, stderr=STDOUT)
 
 	return quad_lc
