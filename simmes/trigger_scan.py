@@ -145,10 +145,10 @@ def test_trigger_alg(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0
 	if dt is None:
 		dt = quad_band_light_curve['TIME'][2] - quad_band_light_curve['TIME'][1]
 
-	bg1size = int(np.floor(bg1dur / dt))
-	fgsize = int(np.floor(fgdur / dt))
-	bg2size = int(np.floor(bg2dur / dt))
-	elapsesize = int(np.floor(elapsedur / dt))
+	bg1size = int(np.ceil(bg1dur / dt))
+	fgsize = int(np.ceil(fgdur / dt))
+	bg2size = int(np.ceil(bg2dur / dt))
+	elapsesize = int(np.ceil(elapsedur / dt))
 
 	lc_duration = quad_band_light_curve['TIME'][-1] - quad_band_light_curve['TIME'][0]
 	if (lc_duration < tot_interval) and (verbose==True):
@@ -161,11 +161,6 @@ def test_trigger_alg(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0
 	# Use the prefix sum algorithm (a.k.a. use the cumulative sum)
 	summed_lc = np.cumsum(comb_quad_light_curve)
 	summed_lc = np.concatenate([[0.0], summed_lc]) # Necessary for correct indexing
-
-	# Calculate summations for each interval by taking the difference of the cumulative sum curve at different offsets. 
-	# bg1cnts_list = summed_lc[bg1size:-(elapsesize+fgsize+elapsesize+bg2size)] - summed_lc[:-bg1size - (elapsesize+fgsize+elapsesize+bg2size)]
-	# fgcnts_list = summed_lc[bg1size+elapsesize+fgsize:-(elapsesize+bg2size)] - summed_lc[:-(bg1size+elapsesize+fgsize)-(elapsesize+bg2size)]
-	# bg2cnts_list = summed_lc[bg1size+elapsesize+fgsize+elapsesize+bg2size:] - summed_lc[:-(bg1size+elapsesize+fgsize+elapsesize+bg2size)] 
 
 	fgcnts_list = summed_lc[bg1size+elapsesize+fgsize : -(elapsesize+bg2size)] - summed_lc[bg1size+elapsesize: -fgsize - (elapsesize+bg2size)]
 
