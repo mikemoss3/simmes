@@ -74,8 +74,11 @@ def scan_BAT_trigalgs(quad_band_light_curve, quick=False):
 
 	# Time bin size
 	tbin_size = (quad_band_light_curve['TIME'][1] - quad_band_light_curve['TIME'][0])
-	# Only test trigger algorithms that have foregrounds shorter than the time bin size
-	trigalg_list = all_trigalgs[all_trigalgs["fgdur"] >= tbin_size]
+	# Only test trigger algorithms that have foregrounds greater than the time bin size
+	trigalg_list = all_trigalgs[all_trigalgs["fgdur"] > tbin_size]
+
+	# Only test trigger criteria that are flagged true (some triggers are ignored)
+	trigalg_list = trigalg_list[trigalg_list["flag"] >= 0]
 
 	# Apply each trigger algorithm to light curve
 	for i in range(len(trigalg_list)):
