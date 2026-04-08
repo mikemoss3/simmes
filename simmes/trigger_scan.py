@@ -149,11 +149,13 @@ def test_trigger_alg(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0
 	elapsesize = int(np.ceil(elapsedur / dt))
 
 	lc_duration = quad_band_light_curve['TIME'][-1] - quad_band_light_curve['TIME'][0]
-	if (lc_duration < tot_interval) and (verbose==True):
-		print("Wrong! Light curve is shorter than the trigger time bracket! Algorithm skipped.")
+	if (lc_duration < tot_interval):
+		if (verbose==True):
+			print("Wrong! Light curve is shorter than the trigger time bracket! Algorithm skipped.")
 		return False, 1e-20, 1e-20
-	if (fgsize == 0) and (verbose==True):
-		print("Wrong! Foreground size cannot be zero. Algorithm skipped.")
+	if (fgsize == 0):
+		if (verbose==True):
+			print("Wrong! Foreground size cannot be zero. Algorithm skipped.")
 		return False, 1e-20, 1e-20
 
 	# Use the prefix sum algorithm (a.k.a. use the cumulative sum)
