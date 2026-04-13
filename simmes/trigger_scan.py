@@ -209,13 +209,13 @@ def test_trigger_alg(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0
 
 		quad_fgcnts_list = quad_summed_lc[bg1size+elapsesize+fgsize : -(elapsesize+bg2size)] - quad_summed_lc[bg1size+elapsesize: -fgsize - (elapsesize+bg2size)]
 
-		n = quad_summed_lc.strides[0] 
+		n = quad_band_light_curve['RATE'].strides[0] 
 
 		if bg1size != 0:
 			quad_bg1cnts_list = quad_summed_lc[bg1size : -(elapsesize+fgsize+elapsesize+bg2size)] - quad_summed_lc[: -bg1size - (elapsesize+fgsize+elapsesize+bg2size)]
 
 			W = bg1size 
-			slides = np.lib.stride_tricks.as_strided(quad_summed_lc[:-(elapsesize+fgsize+elapsesize+bg2size)], shape=(nrows, W), strides=(n,n))
+			slides = np.lib.stride_tricks.as_strided(quad_band_light_curve['RATE'][:-(elapsesize+fgsize+elapsesize+bg2size)], shape=(nrows, W), strides=(n,n))
 			quad_bg1std_list = np.std(slides, axis=1)
 		else: 
 			quad_bg1cnts_list = np.zeros(shape=len(quad_fgcnts_list))
@@ -225,7 +225,7 @@ def test_trigger_alg(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0
 			quad_bg2cnts_list = quad_summed_lc[bg1size+elapsesize+fgsize+elapsesize+bg2size:] - quad_summed_lc[bg1size+elapsesize+fgsize+elapsesize: -bg2size] 
 
 			W = bg2size
-			slides = np.lib.stride_tricks.as_strided(quad_summed_lc[bg1size+elapsesize+fgsize+elapsesize:], shape=(nrows, W), strides=(n,n))
+			slides = np.lib.stride_tricks.as_strided(quad_band_light_curve['RATE'][bg1size+elapsesize+fgsize+elapsesize:], shape=(nrows, W), strides=(n,n))
 			quad_bg2std_list = np.std(slides, axis=1)
 		else:
 			quad_bg2cnts_list = np.zeros(shape=len(quad_fgcnts_list))
