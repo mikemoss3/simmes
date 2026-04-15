@@ -162,41 +162,24 @@ def test_trigger_alg(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0
 	summed_lc = np.cumsum(comb_quad_light_curve)
 	summed_lc = np.concatenate([[0.0], summed_lc]) # Necessary for correct indexing
 
+	stdev = np.std(comb_quad_light_curve) * np.sqrt(fgsize)
+	
 	# Calculate summations for each interval by taking the difference of the cumulative sum curve at different offsets. 
 	fgcnts_list = summed_lc[bg1size+elapsesize+fgsize : -(elapsesize+bg2size)] - summed_lc[bg1size+elapsesize: -fgsize - (elapsesize+bg2size)]
 
-	# Number of bytes we have to skip in memory to move to the next position along a certain axis
-	n = comb_quad_light_curve.strides[0]
-	# Number of sliding windows to calculate standard deviation over
-	nrows = comb_quad_light_curve.size - (bg1size +elapsesize+fgsize+elapsesize+bg2size) + 1
-
 	if bg1size != 0:
 		bg1cnts_list = summed_lc[bg1size : -(elapsesize+fgsize+elapsesize+bg2size)] - summed_lc[: -bg1size - (elapsesize+fgsize+elapsesize+bg2size)]
-
-		# Window size
-		W = bg1size
-		# Make sliding windows a strides
-		a2D = np.lib.stride_tricks.as_strided(comb_quad_light_curve[:-(elapsesize+fgsize+elapsesize+bg2size)], shape=(nrows, W), strides=(n,n))
-		# Calculate standard deviation for all windows
-		bg1std_list = np.std(a2D, axis=1)
 	else: 
 		bg1cnts_list = np.zeros(shape=len(fgcnts_list))
-		bg1std_list = np.zeros(shape=len(fgcnts_list))
 
 	if bg2size != 0:
 		bg2cnts_list = summed_lc[bg1size+elapsesize+fgsize+elapsesize+bg2size:] - summed_lc[bg1size+elapsesize+fgsize+elapsesize: -bg2size] 
 
-		W = bg2size
-		a2D = np.lib.stride_tricks.as_strided(comb_quad_light_curve[bg1size+elapsesize+fgsize+elapsesize:], shape=(nrows, W), strides=(n,n))
-		bg2std_list = np.std(a2D, axis=1)
 	else:
 		bg2cnts_list = np.zeros(shape=len(fgcnts_list))
-		bg2std_list = np.zeros(shape=len(fgcnts_list))
 
 	# Calculate SNR for all summation combinations.
-	snr_vals = calc_SNR(Nbk1=bg1cnts_list, tbk1=bg1dur, stdbk1= bg1std_list,
-						Nfg=fgcnts_list, tfg=fgdur, 
-						Nbk2=bg2cnts_list, tbk2=bg2dur, stdbk2=bg2std_list)
+	snr_vals = calc_SNR(Nfg=fgcnts_list, stdev=stdev)
 
 	# Is any snr value > np.sqrt(sigmasquare)? 
 	snr_thresh = np.sqrt(sigmasquare)
@@ -207,34 +190,22 @@ def test_trigger_alg(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0
 		quad_summed_lc = np.cumsum(quad_band_light_curve['RATE'])
 		quad_summed_lc = np.concatenate([[0.0], quad_summed_lc])
 
-		quad_fgcnts_list = quad_summed_lc[bg1size+elapsesize+fgsize : -(elapsesize+bg2size)] - quad_summed_lc[bg1size+elapsesize: -fgsize - (elapsesize+bg2size)]
+		stdev = np.std(quad_band_light_curve['RATE']) * np.sqrt(fgsize)
 
-		n = quad_band_light_curve['RATE'].strides[0] 
+		quad_fgcnts_list = quad_summed_lc[bg1size+elapsesize+fgsize : -(elapsesize+bg2size)] - quad_summed_lc[bg1size+elapsesize: -fgsize - (elapsesize+bg2size)]
 
 		if bg1size != 0:
 			quad_bg1cnts_list = quad_summed_lc[bg1size : -(elapsesize+fgsize+elapsesize+bg2size)] - quad_summed_lc[: -bg1size - (elapsesize+fgsize+elapsesize+bg2size)]
-
-			W = bg1size 
-			slides = np.lib.stride_tricks.as_strided(quad_band_light_curve['RATE'][:-(elapsesize+fgsize+elapsesize+bg2size)], shape=(nrows, W), strides=(n,n))
-			quad_bg1std_list = np.std(slides, axis=1)
 		else: 
 			quad_bg1cnts_list = np.zeros(shape=len(quad_fgcnts_list))
-			quad_bg1std_list = np.zeros(shape=len(quad_fgcnts_list))
 
 		if bg2size != 0:
 			quad_bg2cnts_list = quad_summed_lc[bg1size+elapsesize+fgsize+elapsesize+bg2size:] - quad_summed_lc[bg1size+elapsesize+fgsize+elapsesize: -bg2size] 
-
-			W = bg2size
-			slides = np.lib.stride_tricks.as_strided(quad_band_light_curve['RATE'][bg1size+elapsesize+fgsize+elapsesize:], shape=(nrows, W), strides=(n,n))
-			quad_bg2std_list = np.std(slides, axis=1)
 		else:
 			quad_bg2cnts_list = np.zeros(shape=len(quad_fgcnts_list))
-			quad_bg2std_list = np.zeros(shape=len(quad_fgcnts_list))
 
 
-		snr_vals_img = calc_SNR(Nbk1=quad_bg1cnts_list, tbk1=bg1dur, stdbk1=quad_bg1std_list, 
-								Nfg=quad_fgcnts_list, tfg=fgdur, 
-								Nbk2=quad_bg2cnts_list, tbk2=bg2dur, stdbk2=quad_bg2std_list)
+		snr_vals_img = calc_SNR(Nfg=quad_fgcnts_list, stdev=stdev)
 
 		# If any snr_vals_img are > 7, 
 		if any(x > 7 for x in snr_vals_img):
@@ -252,29 +223,17 @@ def test_trigger_alg(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0
 		return image_threshold_flag, -1e20, -1e20 
 
 
-def calc_SNR(Nbk1, tbk1, stdbk1, Nfg, tfg, Nbk2, tbk2, stdbk2):
+def calc_SNR(Nfg, stdev):
 	"""
 	Method to calculate signal score for input trigger algorithm parameters. This 
 	method reduces to Fenimore et al. 2003 (Eq. 1) when a single background interval is used.
 
 	Attributes:
 	--------------
-	Nbk1 : float or np.ndarray of floats
-		Counts in the first background interval
-	tbk1 : float or np.ndarray of floats
-		Duration of the first background interval
-	stdbk1 : float or np.ndarray of floats
-		Standard deviation of the first background interval
 	Nfg : float or np.ndarray of floats
 		Counts in the foreground interval
-	tfg : float or np.ndarray of floats
-		Duration of the foreground interval
-	Nbk2 : float or np.ndarray of floats
-		Counts in the Second background interval
-	tbk2 : float or np.ndarray of floats
-		Duration of the Second background interval
-	stdbk2 : float or np.ndarray of floats
-		Standard deviation of the second background interval
+	stdev : float or np.ndarray of floats
+		Standard deviation of the light curve
 
 	Returns:
 	--------------
@@ -283,22 +242,7 @@ def calc_SNR(Nbk1, tbk1, stdbk1, Nfg, tfg, Nbk2, tbk2, stdbk2):
 
 	"""
 
-	if (tbk1 != 0) and (tbk2 != 0):
-		beta = 0.5 * ((Nbk1*tfg/tbk1) + (Nbk2*tfg/tbk2) )
-	elif (tbk1 == 0) and (tbk2 != 0):
-		beta = Nbk2*tfg/tbk2
-	elif (tbk1 != 0) and (tbk2 == 0):
-		beta = Nbk1*tfg/tbk1
-	else:
-		print("Wrong! Both background intervals have zero durations.")
-		return -1e20
-
-	# Avoid divide by zero results.
-	beta = np.asarray(beta)
-	beta += (np.sign(beta) * 1e-3)
-	beta[beta==0] = 1e-3
-
-	snr = (Nfg - beta) / (stdbk1 + stdbk2)/2.
+	snr = Nfg / stdev
 
 	return snr
 
