@@ -161,11 +161,45 @@ def test_trigger_alg(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0
 	# Use the prefix sum algorithm (a.k.a. use the cumulative sum)
 	summed_lc = np.cumsum(comb_quad_light_curve)
 	summed_lc = np.concatenate([[0.0], summed_lc]) # Necessary for correct indexing
-
-	stdev = np.std(comb_quad_light_curve) * np.sqrt(fgsize)
 	
 	# Calculate summations for each interval by taking the difference of the cumulative sum curve at different offsets. 
 	fgcnts_list = summed_lc[bg1size+elapsesize+fgsize : -(elapsesize+bg2size)] - summed_lc[bg1size+elapsesize: -fgsize - (elapsesize+bg2size)]
+
+	# Number of bytes we have to skip in memory to move to the next position along a certain axis
+	n = comb_quad_light_curve.strides[0]
+	# Number of sliding windows to calculate standard deviation over
+	nrows = comb_quad_light_curve.size - (bg1size +elapsesize+fgsize+elapsesize+bg2size) + 1
+
+	if (bg1size != 0) & ( bg2size != 0):
+		# Window size
+		W = bg1size
+		# Make sliding windows a strides
+		a2D = np.lib.stride_tricks.as_strided(comb_quad_light_curve[:-(elapsesize+fgsize+elapsesize+bg2size)], shape=(nrows, W), strides=(n,n))
+		# Calculate standard deviation for all windows
+		bg1std_list = np.std(a2D, axis=1)*np.sqrt(fgsize)
+
+		W = bg2size
+		a2D = np.lib.stride_tricks.as_strided(comb_quad_light_curve[bg1size+elapsesize+fgsize+elapsesize:], shape=(nrows, W), strides=(n,n))
+		bg2std_list = np.std(a2D, axis=1)*np.sqrt(fgsize)
+
+		stdev = (bg1std_list + bg2std_list)/2.
+
+	elif (bg1size != 0) & ( bg2size == 0):
+		# Window size
+		W = bg1size
+		# Make sliding windows a strides
+		a2D = np.lib.stride_tricks.as_strided(comb_quad_light_curve[:-(elapsesize+fgsize+elapsesize+bg2size)], shape=(nrows, W), strides=(n,n))
+		# Calculate standard deviation for all windows
+		stdev = np.std(a2D, axis=1)*np.sqrt(fgsize)
+
+	elif (bg1size == 0) & ( bg2size != 0):
+		W = bg2size
+		a2D = np.lib.stride_tricks.as_strided(comb_quad_light_curve[bg1size+elapsesize+fgsize+elapsesize:], shape=(nrows, W), strides=(n,n))
+		stdev = np.std(a2D, axis=1)*np.sqrt(fgsize)
+	
+	else:
+		print("Wrong! Both background intervals have zero durations.")
+		return False, -1e20, -1e20 
 
 	# Calculate SNR for all summation combinations.
 	snr_vals = calc_SNR(Nfg=fgcnts_list, stdev=stdev)
@@ -179,11 +213,34 @@ def test_trigger_alg(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0
 		quad_summed_lc = np.cumsum(quad_band_light_curve['RATE'])
 		quad_summed_lc = np.concatenate([[0.0], quad_summed_lc])
 
-		stdev = np.std(quad_band_light_curve['RATE']) * np.sqrt(fgsize)
-
 		quad_fgcnts_list = quad_summed_lc[bg1size+elapsesize+fgsize : -(elapsesize+bg2size)] - quad_summed_lc[bg1size+elapsesize: -fgsize - (elapsesize+bg2size)]
 
-		snr_vals_img = calc_SNR(Nfg=quad_fgcnts_list, stdev=stdev)
+		n = quad_band_light_curve['RATE'].strides[0] 
+
+		if (bg1size != 0) & ( bg2size != 0):
+			W = bg1size 
+			slides = np.lib.stride_tricks.as_strided(quad_band_light_curve['RATE'][:-(elapsesize+fgsize+elapsesize+bg2size)], shape=(nrows, W), strides=(n,n))
+			quad_bg1std_list = np.std(slides, axis=1)*np.sqrt(fgsize)
+
+			W = bg2size
+			slides = np.lib.stride_tricks.as_strided(quad_band_light_curve['RATE'][bg1size+elapsesize+fgsize+elapsesize:], shape=(nrows, W), strides=(n,n))
+			quad_bg2std_list = np.std(slides, axis=1)*np.sqrt(fgsize)
+
+			quad_stdev = (quad_bg1std_list + quad_bg2std_list)/2.
+
+		elif (bg1size != 0) & ( bg2size == 0):
+			W = bg1size 
+			slides = np.lib.stride_tricks.as_strided(quad_band_light_curve['RATE'][:-(elapsesize+fgsize+elapsesize+bg2size)], shape=(nrows, W), strides=(n,n))
+			quad_stdev = np.std(slides, axis=1)*np.sqrt(fgsize)
+		elif (bg1size == 0) & ( bg2size != 0):
+			W = bg2size
+			slides = np.lib.stride_tricks.as_strided(quad_band_light_curve['RATE'][bg1size+elapsesize+fgsize+elapsesize:], shape=(nrows, W), strides=(n,n))
+			quad_stdev = np.std(slides, axis=1)*np.sqrt(fgsize)
+		else:
+			print("Wrong! Both background intervals have zero durations.")
+			return False, -1e20, -1e20 
+
+		snr_vals_img = calc_SNR(Nfg=quad_fgcnts_list, stdev=quad_stdev)
 
 		# If any snr_vals_img are > 7, 
 		if any(x > 7 for x in snr_vals_img):
