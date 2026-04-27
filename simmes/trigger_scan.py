@@ -1,5 +1,6 @@
 import numpy as np
 import heasoftpy as hsp
+hsp.Config.allow_failure = True
 import subprocess
 from subprocess import STDOUT
 from astropy.io import fits
