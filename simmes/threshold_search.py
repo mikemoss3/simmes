@@ -46,19 +46,19 @@ class PARAMS:
 
 	# Parameter bounds
 	B_lo : float = 0.
-	B_hi : float = 10.
+	B_hi : float = 50.
 
 	C_lo : float = 0.
-	C_hi : float = 2.
+	C_hi : float = 20.
 
 	Q_lo : float = 0.
-	Q_hi : float = 20.
+	Q_hi : float = 40.
 
-	M_lo : float = -10.
-	M_hi : float = 40.
+	M_lo : float = -30.
+	M_hi : float = 70.
 
 	nu_lo : float = 0.
-	nu_hi : float = 3.
+	nu_hi : float = 10.
 
 	def __init__(self, B=None, C=None, Q=None, M=None, nu=None):
 		"""
