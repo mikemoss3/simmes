@@ -15,6 +15,7 @@ def calc_fluence(light_curve, duration, tstart):
 	"""
 	# Light curve time step
 	dt = light_curve['TIME'][1] - light_curve['TIME'][0]
+	dt = round(dt, 6)
 
 	# Grab light curve in desired interval
 	subint_light_curve = light_curve[(light_curve['TIME'] >= tstart ) & (light_curve['TIME'] <= tstart+duration)]

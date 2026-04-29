@@ -78,6 +78,8 @@ def simulate_observation(synth_grb, resp_mat,
 	# Else, z_p is None and we assume z_p = z_o (i.e., no redshift change)
 
 	t_bin_size = (synth_grb.light_curve['TIME'][1] - synth_grb.light_curve['TIME'][0])
+	t_bin_size = round(t_bin_size, 6)
+	
 	if sim_bgd == True:
 		# Add mask-weighted background rate to either side of mask-weighted source signal
 		synth_grb.light_curve = add_background_buff(synth_grb.light_curve, bgd_size=bgd_size, dt = t_bin_size) # counts / sec / on-axis fully-illuminated detector

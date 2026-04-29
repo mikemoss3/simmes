@@ -353,7 +353,8 @@ class GRB(object):
 			self.light_curve = np.genfromtxt(file_name, dtype=[('TIME',float), ('RATE',float), ('UNC',float)])
 
 		# Time bin size
-		self.dt = (self.light_curve['TIME'][1] - self.light_curve['TIME'][0])
+		dt = (self.light_curve['TIME'][1] - self.light_curve['TIME'][0])
+		self.dt = round(dt, 6)
 
 		if norm is True:
 			# Normalize light curves by the max count rate (but keep relative uncertainty sizes)
@@ -533,6 +534,7 @@ def move_light_curve(light_curve, z_o, z_p):
 
 	# Bin size of the light curve curve
 	bin_size = (light_curve['TIME'][1] - light_curve['TIME'][0])
+	bin_size = round(bin_size, 6)
 	# Create a time axis from tpstart to tpend with proper bin size
 	tmp_time_arr = np.arange(tpstart, tpend+bin_size, bin_size)
 

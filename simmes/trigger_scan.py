@@ -143,6 +143,7 @@ def test_trigger_alg(quad_band_light_curve, bg1dur, fgdur, bg2dur, elapsedur, q0
 	tot_interval = bg1dur + elapsedur + fgdur + elapsedur + bg2dur
 	if dt is None:
 		dt = quad_band_light_curve['TIME'][2] - quad_band_light_curve['TIME'][1]
+		dt = round(dt, 6)
 
 	bg1size = int(np.ceil(bg1dur / dt))
 	fgsize = int(np.ceil(fgdur / dt))
