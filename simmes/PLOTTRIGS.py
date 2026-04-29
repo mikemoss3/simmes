@@ -5,7 +5,7 @@ Contact: mikejmoss3@gmail.com
 Defines the class and methods used for creating plots related to trigger algorithms 
 
 """
-from fits.io import fits
+from astropy.io import fits
 import matplotlib.pyplot as plt
 
 from simmes.PLOTS import PLOTS
