@@ -31,6 +31,9 @@ def lum_dis(z):
 	
 	lum_dis_arr = lum_dis_arr * 3.086e24 # Mpc -> cm
 
+	if len(lum_dis_arr) == 1:
+		lum_dis_arr = lum_dis_arr[0]
+
 	return lum_dis_arr
 
 def k_corr(specfunc, z, emin, emax, Emin=None, Emax=None):
@@ -61,5 +64,8 @@ def k_corr(specfunc, z, emin, emax, Emin=None, Emax=None):
 		denominator = integrate.quad(lambda en: en*specfunc(en), emin, emax)[0]
 
 		rat[i] = numerator/denominator
+
+	if len(rat) == 1:
+		rat = rat[0]
 	
 	return rat
