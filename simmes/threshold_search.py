@@ -38,8 +38,6 @@ class PARAMS:
 	nu : float = 1.
 
 	# Parameter uncertainties
-	uncA : float = 0.
-	uncK : float = 0.
 	uncB : float = 0.
 	uncC : float = 0.
 	uncQ : float = 0.
@@ -47,12 +45,6 @@ class PARAMS:
 	uncnu : float = 0.
 
 	# Parameter bounds
-	A_lo : float = 0.
-	A_hi : float = 1.
-	
-	K_lo : float = 0.
-	K_hi : float = 1.
-
 	B_lo : float = 0.
 	B_hi : float = 50.
 
@@ -68,14 +60,12 @@ class PARAMS:
 	nu_lo : float = 0.
 	nu_hi : float = 10.
 
-	def __init__(self, A=None, K=None, B=None, C=None, Q=None, M=None, nu=None):
+	def __init__(self, B=None, C=None, Q=None, M=None, nu=None):
 		"""
 		Initialize the PARAMS object with initial parameter values. 
 
 		Attributes:
 		------------------------
-		A : float
-		K : float
 		B : float
 		C : float
 		Q : float
@@ -86,10 +76,6 @@ class PARAMS:
 		------------------------
 		None
 		"""
-		if A is not None:
-			self.A = A
-		if K is not None:
-			self.K = K
 		if B is not None:
 			self.B = B
 		if C is not None:
@@ -102,8 +88,8 @@ class PARAMS:
 			self.nu = nu
 
 	def __str__(self):
-		names = ["A", "K", "B", "C", "Q", "M", "nu"]
-		fields = [self.A, self.K, self.B, self.C, self.Q, self.M, self.nu]
+		names = ["B", "C", "Q", "M", "nu"]
+		fields = [self.B, self.C, self.Q, self.M, self.nu]
 
 		return '\n'.join("{} = {:.3e}".format(names[i], fields[i]) for i in range(len(names)))
 
@@ -122,9 +108,9 @@ class PARAMS:
 			Array storing the current parameter value and uncertainty
 		"""
 		if var == "A":
-			ret = np.array([self.A, self.uncA])
+			ret = np.array([self.A, 0.])
 		if var == "K":
-			ret = np.array([self.K, self.uncK])
+			ret = np.array([self.K, 0.])
 		if var == "B":
 			ret = np.array([self.B, self.uncB])
 		if var == "C":
@@ -382,29 +368,25 @@ def fit_detection_rate_curve(z_vals, detection_rates, params=None, **kwargs):
 		params = PARAMS()
 
 	# Fit detection rates with sigmoid to obtain empirical detection rates curve
-	popt, pcov = curve_fit(detection_rate_sigmoid_fitter_test, xdata=z_vals, ydata=detection_rates, 
-							p0=[params.A, params.K, params.B, params.C, params.Q, params.M, params.nu], 
-							bounds=[(params.A_lo, params.K_lo, params.B_lo, params.C_lo, params.Q_lo, params.M_lo, params.nu_lo), 
-									(params.A_hi, params.K_hi, params.B_hi, params.C_hi, params.Q_hi, params.M_hi, params.nu_hi)], **kwargs)
+	popt, pcov = curve_fit(detection_rate_sigmoid_fitter, xdata=z_vals, ydata=detection_rates, 
+							p0=[params.B, params.C, params.Q, params.M, params.nu], 
+							bounds=[(params.B_lo, params.C_lo, params.Q_lo, params.M_lo, params.nu_lo), 
+									(params.B_hi, params.C_hi, params.Q_hi, params.M_hi, params.nu_hi)], **kwargs)
 
 	# Store best-fit values in a parameter class
-	params.A = popt[0]
-	params.K = popt[1]
-	params.B = popt[2]
-	params.C = popt[3]
-	params.Q = popt[4]
-	params.M = popt[5]
-	params.nu = popt[6]
+	params.B = popt[0]
+	params.C = popt[1]
+	params.Q = popt[2]
+	params.M = popt[3]
+	params.nu = popt[4]
 
 	perr = np.sqrt(np.diag(pcov))
 
-	params.uncA = perr[0]
-	params.uncK = perr[1]
-	params.uncB = perr[2]
-	params.uncC = perr[3]
-	params.uncQ = perr[4]
-	params.uncM = perr[5]
-	params.uncnu = perr[6]
+	params.uncB = perr[0]
+	params.uncC = perr[1]
+	params.uncQ = perr[2]
+	params.uncM = perr[3]
+	params.uncnu = perr[4]
 
 	return params
 
@@ -432,32 +414,7 @@ def detection_rate_sigmoid_fitter(z, B, C, Q, M, nu):
 
 	return val
 
-def detection_rate_sigmoid_fitter_test(z, A, K, B, C, Q, M, nu):
-	"""
-	Generalized logistics function used to fit the detection rate curve
-
-	Attributes:
-	------------------------
-	z : float
-		Redshift where the sigmoid will be evaluated
-
-	Returns:
-	------------------------
-	val : float
-		Value of the function at location z
-
-	"""
-	# A = 1 # Left horizontal asymptote 
-	# K = 0 # Right horizontal asymptote 
-	# numerator = -1 # = -(K - A)
-	numerator = -(K - A)
-	denominator = np.power(C + Q*np.exp(-B * (z-M)), 1/nu)
-
-	val = A + (numerator/denominator)
-
-	return val
-
-def calc_z_threshold(detection_rate, A, K, B, C, Q, M, nu):
+def calc_z_threshold(detection_rate, B, C, Q, M, nu):
 	"""
 	Method to calculate the redshift at which a burst has the desired detection rate. 
 	This calculation uses the Inverse of the generalized logistics functions given the input parameter values.
@@ -474,8 +431,8 @@ def calc_z_threshold(detection_rate, A, K, B, C, Q, M, nu):
 
 	"""
 
-	# A = 1
-	# K = 0
+	A = 1
+	K = 0
 	term1= np.power( (K-A)/(detection_rate-A), nu)
 	term2= (term1 - C)/Q
 	term3 = -np.log(term2)/B
