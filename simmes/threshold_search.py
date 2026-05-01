@@ -368,7 +368,9 @@ def fit_detection_rate_curve(z_vals, detection_rates, params=None, **kwargs):
 		params = PARAMS()
 
 	# Fit detection rates with sigmoid to obtain empirical detection rates curve
-	popt, pcov = curve_fit(detection_rate_sigmoid_fitter, xdata=z_vals, ydata=detection_rates, 
+	# popt, pcov = curve_fit(detection_rate_sigmoid_fitter, xdata=z_vals, ydata=detection_rates, 
+	popt, pcov = curve_fit(lambda z, B, C, Q, M, nu: detection_rate_sigmoid_fitter(z, B, C, Q, M, nu, A=1, K=0), 
+							xdata=z_vals, ydata=detection_rates, 
 							p0=[params.B, params.C, params.Q, params.M, params.nu], 
 							bounds=[(params.B_lo, params.C_lo, params.Q_lo, params.M_lo, params.nu_lo), 
 									(params.B_hi, params.C_hi, params.Q_hi, params.M_hi, params.nu_hi)], **kwargs)
@@ -390,7 +392,7 @@ def fit_detection_rate_curve(z_vals, detection_rates, params=None, **kwargs):
 
 	return params
 
-def detection_rate_sigmoid_fitter(z, B, C, Q, M, nu):
+def detection_rate_sigmoid_fitter(z, B, C, Q, M, nu, A=1, K=0):
 	"""
 	Generalized logistics function used to fit the detection rate curve
 
@@ -405,16 +407,16 @@ def detection_rate_sigmoid_fitter(z, B, C, Q, M, nu):
 		Value of the function at location z
 
 	"""
-	A = 1 # Left horizontal asymptote 
+	# A = 1 # Left horizontal asymptote 
 	# K = 0 # Right horizontal asymptote 
-	numerator = -1 # = -(K - A)
+	numerator = (K - A)
 	denominator = np.power(C + Q*np.exp(-B * (z-M)), 1/nu)
 
 	val = A + (numerator/denominator)
 
 	return val
 
-def calc_z_threshold(detection_rate, B, C, Q, M, nu):
+def calc_z_threshold(detection_rate, B, C, Q, M, nu, A=1, K=0):
 	"""
 	Method to calculate the redshift at which a burst has the desired detection rate. 
 	This calculation uses the Inverse of the generalized logistics functions given the input parameter values.
@@ -431,10 +433,8 @@ def calc_z_threshold(detection_rate, B, C, Q, M, nu):
 
 	"""
 
-	A = 1
-	K = 0
-	term1= np.power( (K-A)/(detection_rate-A), nu)
-	term2= (term1 - C)/Q
+	term1 = np.power( (K-A)/(detection_rate-A), nu)
+	term2 = (term1 - C)/Q
 	term3 = -np.log(term2)/B
 	z = term3 + M
 
