@@ -46,16 +46,16 @@ class PARAMS:
 
 	# Parameter bounds
 	B_lo : float = 0.
-	B_hi : float = 50.
+	B_hi : float = 100.
 
 	C_lo : float = 0.
 	C_hi : float = 20.
 
 	Q_lo : float = 0.
-	Q_hi : float = 40.
+	Q_hi : float = 20.
 
-	M_lo : float = -30.
-	M_hi : float = 70.
+	M_lo : float = -20.
+	M_hi : float = 20.
 
 	nu_lo : float = 0.
 	nu_hi : float = 10.
@@ -88,8 +88,8 @@ class PARAMS:
 			self.nu = nu
 
 	def __str__(self):
-		names = ["B", "C", "Q", "M", "nu"]
-		fields = [self.B, self.C, self.Q, self.M, self.nu]
+		names = ["A", "K", "B", "C", "Q", "M", "nu"]
+		fields = [self.A, self.K, self.B, self.C, self.Q, self.M, self.nu]
 
 		return '\n'.join("{} = {:.3e}".format(names[i], fields[i]) for i in range(len(names)))
 
