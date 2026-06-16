@@ -46,7 +46,7 @@ class PARAMS:
 
 	# Parameter bounds
 	B_lo : float = 0.
-	B_hi : float = 100.
+	B_hi : float = 300.
 
 	C_lo : float = 0.
 	C_hi : float = 20.
